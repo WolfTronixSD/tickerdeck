@@ -10,6 +10,13 @@ A real-time stock watchlist for iPhone. Prices stream from [Finnhub](https://fin
 3. Optional: tap **Data settings** and add a free [Twelve Data](https://twelvedata.com/register) key for full 1D–1Y charts.
 4. Tap Share → **Add to Home Screen**.
 
+## What it does
+- **Home:** live watchlist, market index tiles, holdings, signals, earnings calendar, market news
+- **Sectors:** sector rotation heatmap and risk-on / risk-off reading
+- **AI** and **Space:** curated theme stocks grouped by sub-industry
+- **Trends:** nuclear & power, quantum, crypto, robotics and semiconductors
+- **Stock detail:** charts with S&P 500 comparison and a statistical forecast cone, trend signals, RSI, volatility, beta, insider trades, analyst ratings, and an "Ask Claude" button
+
 ## Files
 - `index.html` – the whole app
 - `manifest.json`, `icon-*.png` – Home Screen app icon and name
