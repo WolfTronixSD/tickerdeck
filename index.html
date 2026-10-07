@@ -202,10 +202,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .ctab{width:100%;border-collapse:collapse;font-size:13px}
 .ctab th{font-size:11px;color:var(--muted);text-align:right;font-weight:600;padding:6px 4px;letter-spacing:.04em}
 .ctab th:first-child{text-align:left}
-.ctab td{padding:8px 4px;border-top:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
-.ctab td:first-child{text-align:left;font-family:var(--display);color:var(--muted)}
+.ctab td{white-space:nowrap;font-size:12.5px;padding:8px 3px;border-top:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ctab td:first-child{text-align:left;font-family:var(--display);color:var(--muted);white-space:normal}
 .ctab td.win{color:var(--text);font-weight:700}
-.ctab td.win::after{content:" ●";font-size:8px;vertical-align:middle;color:var(--accent)}
+.ctab td.win::after{content:"●";margin-left:2px;font-size:7px;vertical-align:middle;color:var(--accent)}
 .brief-sec{display:flex;flex-direction:column;gap:8px}
 .brief-sec h4{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .brief-li{display:flex;justify-content:space-between;gap:10px;font-size:14px;line-height:1.4}
@@ -509,11 +509,11 @@ function parseET(str){ const [d,t="16:00:00"]=str.split(" "); const [y,mo,dd]=d.
 const chunks=(a,n)=>{ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; };
 async function loadDaily(force){
   if(!S.tdKey) return;
-  const need=[...new Set(["SPY"].concat(S.list))].filter(s=>force||!S.daily[s]||S.daily[s].day!==today());
+  const need=[...new Set(["SPY"].concat(S.list,["QQQ"]))].filter(s=>force||!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v2);
   for(const grp of chunks(need,8)){
-    try{ const res=await td(grp,"interval=1day&outputsize=260");
+    try{ const res=await td(grp,"interval=1day&outputsize=460");
       grp.forEach(s=>{ const r=res[s]; if(!r||r.status!=="ok"||!r.values) return;
-        S.daily[s]={day:today(),c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
+        S.daily[s]={day:today(),v2:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
       LS.set("daily",S.daily); render(); if(S.open&&S.daily[S.open]) redrawChart(true);
     }catch(e){ render(); if(S.tdErr==="key") return; }
   }
@@ -589,7 +589,7 @@ function api(path,opt={}){
 async function loadQuote(s){ try{ const q=await api(`/quote?symbol=${encodeURIComponent(s)}`); if(q&&q.c){ S.quotes[s]=q; seedTicks(s); } else if(q&&q.c===0&&q.pc===0) S.quotes[s]={bad:true}; }catch(e){} }
 async function loadStatic(s,{metric=true}={}){
   const fresh=o=>o&&o.at&&Date.now()-o.at<12*3600e3;
-  if(!fresh(S.profile[s])){ try{ const p=await api(`/stock/profile2?symbol=${encodeURIComponent(s)}`); S.profile[s]={name:p.name||"",logo:p.logo||"",industry:p.finnhubIndustry||"",cap:p.marketCapitalization||null,web:p.weburl||"",at:Date.now()}; LS.set("profile",S.profile);}catch(e){} }
+  if(!fresh(S.profile[s])||S.profile[s].ex===undefined){ try{ const p=await api(`/stock/profile2?symbol=${encodeURIComponent(s)}`); S.profile[s]={name:p.name||"",logo:p.logo||"",industry:p.finnhubIndustry||"",cap:p.marketCapitalization||null,web:p.weburl||"",ex:p.exchange||"",at:Date.now()}; LS.set("profile",S.profile);}catch(e){} }
   if(metric&&!fresh(S.metric[s])){ try{ const m=await api(`/stock/metric?symbol=${encodeURIComponent(s)}&metric=all`); S.metric[s]={m:m.metric||{},at:Date.now()}; LS.set("metric",S.metric);}catch(e){} }
 }
 async function loadEarnings(){
@@ -749,7 +749,8 @@ function bigChart(s){
   const A=range!=="1d"&&S.showCone!==false?analytics(s):null, hDays=range==="1m"||range==="3m"?21:63, L0=pts[pts.length-1];
   const cone=A?Array.from({length:9},(_,k)=>{ const f=k/8, d=hDays*f, sg=Math.min(.6,A.sigD*Math.sqrt(d)); return [L0[0]+d*1.45*864e5, L0[1]*Math.exp(-sg), L0[1]*Math.exp(sg), L0[1]*Math.exp(-2*sg), L0[1]*Math.exp(2*sg)]; }):null;
   const tg=(S.targets[s]||[]);
-  const ps=pts.map(p=>p[1]).concat([ser.base]).concat(ov?ov.map(p=>p[1]):[]).concat(cone?cone.flatMap(c=>[c[3],c[4]]):[]).concat(tg.map(t=>t.p));
+  const MA=range!=="1d"?maSeries(s,pts[0][0]):null, maOn=k=>MA&&S.showMA[k]&&MA[k].length>1;
+  const ps=pts.map(p=>p[1]).concat([ser.base]).concat(ov?ov.map(p=>p[1]):[]).concat(cone?cone.flatMap(c=>[c[3],c[4]]):[]).concat(tg.map(t=>t.p)).concat(maOn("m50")?MA.m50.map(q=>q[1]):[]).concat(maOn("m200")?MA.m200.map(q=>q[1]):[]);
   let lo=Math.min(...ps), hi=Math.max(...ps); const pad=(hi-lo)*.06||hi*.002; lo-=pad; hi+=pad;
   const t0=pts[0][0], t1=L0[0], te=cone?cone[cone.length-1][0]:t1, vMax=Math.max(...pts.map(p=>p[2]||0));
   CS={lo,hi,t0,te};
@@ -765,7 +766,7 @@ function bigChart(s){
   if(cone){ const band=(a,b)=>cone.map((c,i)=>(i?"L":"M")+X(c[0]).toFixed(1)+" "+Y(c[a]).toFixed(1)).join(" ")+" "+cone.slice().reverse().map(c=>"L"+X(c[0]).toFixed(1)+" "+Y(c[b]).toFixed(1)).join(" ")+"Z";
     const E=cone[cone.length-1];
     coneSvg=`<rect x="${X(t1)}" y="${CPT-4}" width="${CW-X(t1)}" height="${CH-CPT-CPB+4}" fill="#6EA8FF" fill-opacity=".04"/><line x1="${X(t1)}" x2="${X(t1)}" y1="${CPT-4}" y2="${CH-CPB}" stroke="#566377" stroke-dasharray="2 3"/><path d="${band(3,4)}" fill="#6EA8FF" fill-opacity=".10"/><path d="${band(1,2)}" fill="#6EA8FF" fill-opacity=".20"/><line x1="${X(t1)}" x2="${X(E[0])}" y1="${Y(L0[1])}" y2="${Y(L0[1])}" stroke="#6EA8FF" stroke-dasharray="3 3" stroke-opacity=".8"/><text x="${CW-6}" y="${Y(E[2])-4}" text-anchor="end" font-size="8.5" fill="#9DC1FF" font-family="JetBrains Mono">${S.priv?"":fmt$(E[2],E[2]>=1000?0:2)}</text><text x="${CW-6}" y="${Y(E[1])+11}" text-anchor="end" font-size="8.5" fill="#9DC1FF" font-family="JetBrains Mono">${S.priv?"":fmt$(E[1],E[1]>=1000?0:2)}</text><text x="${(X(t1)+CW)/2}" y="${CH-14}" text-anchor="middle" font-size="9" fill="#9DC1FF" font-family="Sora">next ${hDays===21?"1M":"3M"}</text>`; }
-  return `<svg class="chart" id="bc" viewBox="0 0 ${CW} ${CH}" role="img" aria-label="${esc(s)} price, ${range}"><defs><linearGradient id="bg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".30"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>${g}${vol}${coneSvg}<line x1="0" x2="${X(t1)}" y1="${Y(ser.base)}" y2="${Y(ser.base)}" stroke="#8392A6" stroke-dasharray="3 4" stroke-opacity=".7"/><path d="${d} L${X(t1)} ${CH-CPB} L${X(t0)} ${CH-CPB}Z" fill="url(#bg)"/>${ov?`<path d="${ov.filter(p=>p[0]>=t0).map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-opacity=".75" stroke-dasharray="4 3"/>`:""}<path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(L0[0])}" cy="${Y(L0[1])}" r="4.5" fill="${col}">${range==="1d"?`<animate attributeName="r" values="4.5;7;4.5" dur="1.6s" repeatCount="indefinite"/>`:""}</circle>${tg.map(t=>{ const y=Y(t.p), pc=(t.p/L0[1]-1)*100; return `<line x1="0" x2="${CW}" y1="${y}" y2="${y}" stroke="#FFB547" stroke-width="1.3" stroke-dasharray="6 4" opacity="${t.fired?.45:1}"/><rect x="${CW-112}" y="${y-9}" width="108" height="16" rx="5" fill="#2A2112" stroke="#FFB547" stroke-opacity=".5"/><text x="${CW-58}" y="${y+3}" text-anchor="middle" font-size="9" fill="#FFB547" font-family="JetBrains Mono">${t.fired?"✓ ":"🎯 "}${S.priv?"target":fmt$(t.p,t.p>=1000?0:2)} ${fmtP(pc).replace(".00","")}</text>`; }).join("")}<g id="xh" visibility="hidden"><line id="xhl" y1="${CPT}" y2="${CH-CPB}" stroke="#EAF0F6" stroke-width="1"/><circle id="xhc" r="5" fill="#EAF0F6" stroke="${col}" stroke-width="2"/></g>${S.tgtMode?`<rect x="0" y="0" width="${CW}" height="${CH}" fill="#FFB547" fill-opacity=".05"/><text x="${CW/2}" y="${CPT+4}" text-anchor="middle" font-size="10" fill="#FFB547" font-family="Sora" font-weight="700">Tap a price level to set a target</text>`:""}${ticks}</svg>`;
+  return `<svg class="chart" id="bc" viewBox="0 0 ${CW} ${CH}" role="img" aria-label="${esc(s)} price, ${range}"><defs><linearGradient id="bg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".30"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>${g}${vol}${coneSvg}<line x1="0" x2="${X(t1)}" y1="${Y(ser.base)}" y2="${Y(ser.base)}" stroke="#8392A6" stroke-dasharray="3 4" stroke-opacity=".7"/><path d="${d} L${X(t1)} ${CH-CPB} L${X(t0)} ${CH-CPB}Z" fill="url(#bg)"/>${ov?`<path d="${ov.filter(p=>p[0]>=t0).map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-opacity=".75" stroke-dasharray="4 3"/>`:""}<path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(L0[0])}" cy="${Y(L0[1])}" r="4.5" fill="${col}">${range==="1d"?`<animate attributeName="r" values="4.5;7;4.5" dur="1.6s" repeatCount="indefinite"/>`:""}</circle>${["m200","m50"].filter(maOn).map(k=>`<path d="${MA[k].map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="${MA_COL[k]}" stroke-width="1.5" stroke-opacity=".9"/>`).join("")}${tg.map(t=>{ const y=Y(t.p), pc=(t.p/L0[1]-1)*100; return `<line x1="0" x2="${CW}" y1="${y}" y2="${y}" stroke="#FFB547" stroke-width="1.3" stroke-dasharray="6 4" opacity="${t.fired?.45:1}"/><rect x="${CW-112}" y="${y-9}" width="108" height="16" rx="5" fill="#2A2112" stroke="#FFB547" stroke-opacity=".5"/><text x="${CW-58}" y="${y+3}" text-anchor="middle" font-size="9" fill="#FFB547" font-family="JetBrains Mono">${t.fired?"✓ ":"🎯 "}${S.priv?"target":fmt$(t.p,t.p>=1000?0:2)} ${fmtP(pc).replace(".00","")}</text>`; }).join("")}<g id="xh" visibility="hidden"><line id="xhl" y1="${CPT}" y2="${CH-CPB}" stroke="#EAF0F6" stroke-width="1"/><circle id="xhc" r="5" fill="#EAF0F6" stroke="${col}" stroke-width="2"/></g>${S.tgtMode?`<rect x="0" y="0" width="${CW}" height="${CH}" fill="#FFB547" fill-opacity=".05"/><text x="${CW/2}" y="${CPT+4}" text-anchor="middle" font-size="10" fill="#FFB547" font-family="Sora" font-weight="700">Tap a price level to set a target</text>`:""}${ticks}</svg>`;
 }
 function scrubText(s,i){
   const ser=seriesFor(s,S.crange), pts=ser.pts; if(pts.length<3) return "";
@@ -970,7 +971,8 @@ async function openDetail(s){
   $("saveShares").addEventListener("click",()=>{ const n=parseFloat($("shares").value), c=parseFloat($("cost").value); if(n>0) S.holdings[s]=n; else delete S.holdings[s]; if(n>0&&c>0) S.cost[s]=c; else delete S.cost[s]; LS.set("hold",S.holdings); LS.set("cost",S.cost); $("dPos").innerHTML=posHTML(s); render(); toast(n>0?`Saved ${n} ${s} shares`:`Cleared ${s} position`); });
   showSheet();
   ensureDaily(s); loadMonthly([s]); renderTargets(s);
-  $("tgtBar").addEventListener("click",e=>{ const b=e.target.closest("[data-tgt]"); if(!b) return; const v=b.dataset.tgt;
+  $("tgtBar").addEventListener("click",e=>{ const m=e.target.closest("[data-ma]"); if(m){ const k=m.dataset.ma; S.showMA[k]=!S.showMA[k]; LS.set("showMA",S.showMA); redrawChart(true); renderTargets(s); return; }
+    const b=e.target.closest("[data-tgt]"); if(!b) return; const v=b.dataset.tgt;
     if(v==="mode"){ S.tgtMode=!S.tgtMode; if(S.crange==="1d"&&S.tgtMode){ } redrawChart(true); renderTargets(s); return; }
     S.targets[s]=(S.targets[s]||[]).filter((t,i)=>String(i)!==v); LS.set("targets",S.targets); redrawChart(true); renderTargets(s); });
   (S.metric[s]?Promise.resolve():loadStatic(s)).then(()=>loadDivs(s)).then(()=>{ if(S.open===s){ const el=$("dDiv"); if(el) el.innerHTML=divHTML(s); } });
@@ -1015,7 +1017,7 @@ async function addSym(raw){
   subscribe(s,true); await loadQuote(s); render(); await loadStatic(s); render(); await loadDaily(); intraAt=0; loadIntra();
 }
 function removeSym(s){ S.list=S.list.filter(x=>x!==s); LS.set("list",S.list); subscribe(s,false); render(); toast("Removed "+s); }
-function showSheet(){ $("scrim").hidden=false; $("sheet").hidden=false; requestAnimationFrame(()=>{ $("scrim").classList.add("show"); $("sheet").classList.add("show"); }); }
+function showSheet(){ $("scrim").hidden=false; $("sheet").hidden=false; $("sheet").scrollTop=0; requestAnimationFrame(()=>{ $("scrim").classList.add("show"); $("sheet").classList.add("show"); }); }
 function closeSheet(){ S.open=null; $("scrim").classList.remove("show"); $("sheet").classList.remove("show"); setTimeout(()=>{ if(!S.open){ $("scrim").hidden=true; $("sheet").hidden=true; } },320); }
 let toastT; function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2400); }
 
@@ -1029,7 +1031,7 @@ function wire(){
   $("privBtn").addEventListener("click",()=>{ S.priv=!S.priv; LS.set("priv",S.priv); render(); });
   $("soundBtn").addEventListener("click",()=>{ S.sound=!S.sound; LS.set("sound",S.sound); render(); if(S.sound){ beep(); toast("Alert chime on"); } else toast("Alert chime off"); });
   $("banners").addEventListener("click",e=>{ const b=e.target.closest("[data-dismiss]"); if(b){ S.dismissed[b.dataset.dismiss]=1; if(b.dataset.dismiss==="tdNag") LS.set("tdNag",true); renderBanners(); } if(e.target.id==="rekey") forget(); });
-  document.addEventListener("click",e=>{ const cb=e.target.closest("[data-compare]"); if(cb){ const a=cb.dataset.compare; openCompare(a,a==="SPY"?(S.list[0]||"AAPL"):"SPY"); return; } if(e.target.closest("[data-open-brief]")){ openBriefing(); return; } if(e.target.closest("[data-open-settings]")) openSettings(); if(e.target.closest("[data-open-versions]")) openVersions(); });
+  document.addEventListener("click",e=>{ const cb=e.target.closest("[data-compare]"); if(cb){ const a=cb.dataset.compare; openCompare(a,S.list.find(x=>x!==a)||"SPY"); return; } if(e.target.closest("[data-open-brief]")){ openBriefing(); return; } if(e.target.closest("[data-open-settings]")) openSettings(); if(e.target.closest("[data-open-versions]")) openVersions(); });
   $("refreshBtn").addEventListener("click",fullRefresh);
   $("shareBtn").addEventListener("click",shareSummary);
   $("wakeBtn").addEventListener("click",toggleWake);
@@ -1103,11 +1105,27 @@ async function toggleWake(){
 }
 function forget(){ $("tabbar").hidden=true; disconnect(); S.key=""; LS.set("key",""); showOnb(); }
 
+/* ---------- moving averages ---------- */
+S.showMA=LS.get("showMA",{m50:true,m200:true});
+const MA_COL={m50:"#C084FC",m200:"#F472B6"};
+// rolling 50/200-day averages of daily closes (today uses the live price), from time t0 on
+function maSeries(x,t0){
+  const d=S.daily[x]; if(!d||!d.c||d.c.length<50) return null;
+  const bars=d.c.map(b=>[b[0],b[1]]), p=price(x);
+  if(p){ const last=bars[bars.length-1]; if(new Date(last[0]).toDateString()===new Date().toDateString()) last[1]=p; else bars.push([Date.now(),p]); }
+  const out={m50:[],m200:[]}; let s50=0,s200=0;
+  bars.forEach((b,i)=>{ s50+=b[1]; s200+=b[1]; if(i>=50) s50-=bars[i-50][1]; if(i>=200) s200-=bars[i-200][1];
+    if(b[0]>=t0){ if(i>=49) out.m50.push([b[0],s50/50]); if(i>=199) out.m200.push([b[0],s200/200]); } });
+  return out;
+}
+
 /* ---------- price targets ---------- */
 S.targets=LS.get("targets",{}); S.tgtMode=false;
 function renderTargets(s){
   const el=$("tgtBar"); if(!el) return; const p=price(s), list=S.targets[s]||[];
-  el.innerHTML=`<button class="chip ${S.tgtMode?"on":""}" data-tgt="mode">🎯 ${S.tgtMode?"Tap the chart…":"Set target"}</button>${list.map((t,i)=>`<button class="chip t" data-tgt="${i}" aria-label="Remove target ${fmt$(t.p)}">${t.fired?"✓ ":""}${fmt$(t.p,t.p>=1000?0:2)} <span style="opacity:.75">${p?fmtP((t.p/p-1)*100):""}</span> ✕</button>`).join("")}`;
+  const A=analytics(s), maChip=(k,lab,v)=>`<button class="chip" data-ma="${k}" style="${S.showMA[k]?`border-color:${MA_COL[k]};color:${MA_COL[k]}`:"opacity:.55"}"><i style="width:10px;height:2px;background:${MA_COL[k]};display:inline-block;border-radius:1px"></i>${lab}${v?` ${S.priv?"":fmt$(v,v>=1000?0:2)}`:""}</button>`;
+  const maHTML=S.daily[s]?maChip("m50","50-day",A&&A.s50)+maChip("m200","200-day",A&&A.s200):"";
+  el.innerHTML=maHTML+`<button class="chip ${S.tgtMode?"on":""}" data-tgt="mode">🎯 ${S.tgtMode?"Tap the chart…":"Set target"}</button>${list.map((t,i)=>`<button class="chip t" data-tgt="${i}" aria-label="Remove target ${fmt$(t.p)}">${t.fired?"✓ ":""}${fmt$(t.p,t.p>=1000?0:2)} <span style="opacity:.75">${p?fmtP((t.p/p-1)*100):""}</span> ✕</button>`).join("")}`;
 }
 
 /* ---------- dividends ---------- */
@@ -1192,46 +1210,62 @@ function openBriefing(){
 }
 
 /* ---------- compare ---------- */
-S.cmp={a:"AAPL",b:"SPY",range:"6m"};
-function openCompare(a,b){ S.cmp.a=a; S.cmp.b=b; S.open="__cmp"; renderCompare(); showSheet(); ensureData([a,b,"SPY"],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); }
+S.cmp={a:"AAPL",b:"SPY",range:"6m",bench:"auto"};
+const BENCH={QQQ:"Nasdaq 100",SPY:"S&P 500",DIA:"Dow 30",IWM:"Russell 2000"};
+const DOW=["AAPL","AMGN","AMZN","AXP","BA","CAT","CRM","CSCO","CVX","DIS","GS","HD","HON","IBM","JNJ","JPM","KO","MCD","MMM","MRK","MSFT","NKE","NVDA","PG","SHW","TRV","UNH","V","VZ","WMT"];
+function indexFor(x){ const ex=((S.profile[x]||{}).ex||"").toUpperCase(); if(ex.includes("NASDAQ")) return "QQQ"; if(ex) return "SPY"; return "SPY"; }
+function sectorFor(x){ const ind=((S.profile[x]||{}).industry||"").toLowerCase(); if(!ind) return null;
+  const M=[[/semicon/,"SMH"],[/tech|software|internet|it serv|electronic|computer/,"XLK"],[/bank|financ|insur|capital market/,"XLF"],[/pharma|biotech|health|medical|life sci/,"XLV"],[/oil|gas|energy|coal/,"XLE"],[/utilit/,"XLU"],[/real estate|reit/,"XLRE"],[/media|telecom|communic|entertain/,"XLC"],[/retail|auto|hotel|restaurant|leisure|textile|apparel|consumer durable|distribut/,"XLY"],[/food|beverage|tobacco|household|consumer prod|personal/,"XLP"],[/chemic|metal|mining|material|paper|packag|steel|construction mat/,"XLB"],[/aero|defen|machin|industr|electrical|airline|transport|logist|road|rail|building|construct|commercial serv|professional serv|trading/,"XLI"]];
+  const hit=M.find(([r])=>r.test(ind)); return hit?hit[1]:null; }
+function benchOf(){ const {a,bench}=S.cmp; if(bench==="sector") return sectorFor(a)||indexFor(a); return bench==="auto"?indexFor(a):bench; }
+function cmpLoad(){ const {a,b}=S.cmp; ensureData([a,b,"SPY"],{daily:true}).then(()=>{ if(S.open!=="__cmp") return; renderCompare(); const k=benchOf(); return ensureData([k],{daily:true}); }).then(()=>{ if(S.open==="__cmp") renderCompare(); }); }
+function openCompare(a,b){ S.cmp.a=a; S.cmp.b=b; S.cmp.bench="auto"; S.open="__cmp"; renderCompare(); showSheet(); cmpLoad(); }
 function cmpSeries(x,range){ const ser=seriesFor(x,range); if(ser.pts.length<2||!ser.base) return null; return ser.pts.map(p=>[p[0],(p[1]/ser.base-1)*100]); }
 function renderCompare(){
   const {a,b,range}=S.cmp, opts=[...new Set(S.list.concat(["SPY","QQQ"],Object.keys(THEMES).flatMap(themeSyms),[a,b]))];
   const sel=(id,v)=>`<select id="${id}" aria-label="Stock">${opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
-  const A=cmpSeries(a,range), B=cmpSeries(b,range), CA="#FFB547", CB="#6EA8FF";
+  const k=benchOf(), kName=BENCH[k]||(SECTORS.find(x=>x[0]===k)||[0,k])[1], sec=sectorFor(a);
+  const A=cmpSeries(a,range), B=cmpSeries(b,range), K=k!==a&&k!==b?cmpSeries(k,range):null, CA="#FFB547", CB="#6EA8FF", CK="#C4CDD8";
   let chart=`<div class="card"><p class="hint">Loading price history… ${S.tdKey?"":"Add the free Twelve Data key for full compare charts."}</p></div>`;
-  if(A&&B){ const W=340,H=190,pt=14,pb=26, all=A.concat(B), t0=Math.max(A[0][0],B[0][0]), t1=Math.max(A[A.length-1][0],B[B.length-1][0]);
+  if(A&&B){ const W=340,H=190,pt=14,pb=26, all=A.concat(B).concat(K||[]), t0=Math.max(A[0][0],B[0][0]), t1=Math.max(A[A.length-1][0],B[B.length-1][0]);
     let lo=Math.min(0,...all.map(p=>p[1])), hi=Math.max(0,...all.map(p=>p[1])); const pad=(hi-lo)*.1||1; lo-=pad; hi+=pad;
     const X=t=>6+(t-t0)/(t1-t0||1)*(W-12), Y=v=>pt+(1-(v-lo)/(hi-lo))*(H-pt-pb), path=s=>s.filter(p=>p[0]>=t0).map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
     const la=A[A.length-1][1], lb=B[B.length-1][1];
-    chart=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(a)} vs ${esc(b)} performance"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#566377" stroke-dasharray="3 4"/><text x="4" y="${Y(0)-4}" font-size="8.5" fill="#566377" font-family="JetBrains Mono">0%</text><path d="${path(B)}" fill="none" stroke="${CB}" stroke-width="2.2"/><path d="${path(A)}" fill="none" stroke="${CA}" stroke-width="2.2"/><circle cx="${X(A[A.length-1][0])}" cy="${Y(la)}" r="4" fill="${CA}"/><circle cx="${X(B[B.length-1][0])}" cy="${Y(lb)}" r="4" fill="${CB}"/><text x="6" y="${H-8}" font-size="9.5" fill="#8392A6" font-family="Sora">${new Date(t0).toLocaleDateString([], {month:"short",day:"numeric",year:"2-digit"})}</text><text x="${W-6}" y="${H-8}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">Today</text></svg>
-      <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px"><span><b style="color:${CA}">● ${esc(a)}</b> <span class="num ${tcls(la)}">${fmtP(la)}</span></span><span><b style="color:${CB}">● ${esc(b)}</b> <span class="num ${tcls(lb)}">${fmtP(lb)}</span></span></div>`; }
+    chart=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(a)} vs ${esc(b)} performance"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#566377" stroke-dasharray="3 4"/><text x="4" y="${Y(0)-4}" font-size="8.5" fill="#566377" font-family="JetBrains Mono">0%</text>${K?`<path d="${path(K)}" fill="none" stroke="${CK}" stroke-width="1.6" stroke-dasharray="5 3"/>`:""}<path d="${path(B)}" fill="none" stroke="${CB}" stroke-width="2.2"/><path d="${path(A)}" fill="none" stroke="${CA}" stroke-width="2.2"/><circle cx="${X(A[A.length-1][0])}" cy="${Y(la)}" r="4" fill="${CA}"/><circle cx="${X(B[B.length-1][0])}" cy="${Y(lb)}" r="4" fill="${CB}"/><text x="6" y="${H-8}" font-size="9.5" fill="#8392A6" font-family="Sora">${new Date(t0).toLocaleDateString([], {month:"short",day:"numeric",year:"2-digit"})}</text><text x="${W-6}" y="${H-8}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">Today</text></svg>
+      <div style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px;flex-wrap:wrap"><span><b style="color:${CA}">● ${esc(a)}</b> <span class="num ${tcls(la)}">${fmtP(la)}</span></span><span><b style="color:${CB}">● ${esc(b)}</b> <span class="num ${tcls(lb)}">${fmtP(lb)}</span></span>${K?`<span><b style="color:${CK}">┅ ${esc(kName)}</b> <span class="num ${tcls(K[K.length-1][1])}">${fmtP(K[K.length-1][1])}</span></span>`:""}</div>
+      ${!K&&k!==a&&k!==b?`<p class="hint">Loading ${esc(kName)} history… (free plan loads 8 symbols a minute)</p>`:""}${K?(()=>{ const lk=K[K.length-1][1], line=(x,v)=>`<div class="kv"><span>${esc(x)} vs ${esc(kName)}</span><b class="num ${v>=lk?"tup":"tdown"}">${v>=lk?"Beat":"Trailed"} by ${Math.abs(v-lk).toFixed(1)} pts</b></div>`; return `<div class="card" style="gap:6px">${line(a,la)}${b!==k?line(b,lb):""}</div>`; })():""}`; }
   const xa=analytics(a), xb=analytics(b), ma=(S.metric[a]&&S.metric[a].m)||{}, mb=(S.metric[b]&&S.metric[b].m)||{}, pa=S.profile[a]||{}, pb2=S.profile[b]||{};
   let corr=null; const ca=closes(a), cb=closes(b); if(ca&&cb){ const n=Math.min(ca.length,cb.length,126)-1, ra=[], rb=[]; for(let i=1;i<=n;i++){ ra.push(Math.log(ca[ca.length-i]/ca[ca.length-i-1])); rb.push(Math.log(cb[cb.length-i]/cb[cb.length-i-1])); } const m1=mean(ra), m2=mean(rb); let cv=0,v1=0,v2=0; for(let i=0;i<ra.length;i++){ cv+=(ra[i]-m1)*(rb[i]-m2); v1+=(ra[i]-m1)**2; v2+=(rb[i]-m2)**2; } corr=cv/Math.sqrt(v1*v2); }
   const cap=v=>v?(v>=1e6?"$"+(v/1e6).toFixed(2)+"T":"$"+(v/1e3).toFixed(0)+"B"):"—";
   const cm=new Date().getMonth(), sa=(season(a)||[])[cm], sb=(season(b)||[])[cm];
   // rows: label, value a, value b, formatter, which is better ("hi"/"lo"/null)
   const R=[["Price",price(a),price(b),v=>fmt$(v),null],["Today",r1d(a),r1d(b),fmtP,"hi"],["1 month",ret(a,"1m"),ret(b,"1m"),fmtP,"hi"],["6 months",ret(a,"6m"),ret(b,"6m"),fmtP,"hi"],["1 year",ret(a,"1y"),ret(b,"1y"),fmtP,"hi"],["YTD",ret(a,"ytd"),ret(b,"ytd"),fmtP,"hi"],
-    ["Signal",xa&&xa.score,xb&&xb.score,(v,i)=>(i?xb:xa)?(i?xb:xa).label:"—","hi"],["RSI",xa&&xa.R,xb&&xb.R,v=>v.toFixed(0),null],["Volatility",xa&&xa.vol*100,xb&&xb.vol*100,v=>v.toFixed(0)+"%","lo"],["Beta",xa&&xa.beta,xb&&xb.beta,v=>v.toFixed(2),null],["Max drop 1Y",xa&&xa.mdd,xb&&xb.mdd,v=>v.toFixed(0)+"%","hi"],
+    ["Signal",xa&&xa.score,xb&&xb.score,(v,i)=>{ const o=[xa,xb,xk][i]; return o?o.label:"—"; },"hi"],["RSI",xa&&xa.R,xb&&xb.R,v=>v.toFixed(0),null],["Volatility",xa&&xa.vol*100,xb&&xb.vol*100,v=>v.toFixed(0)+"%","lo"],["Beta",xa&&xa.beta,xb&&xb.beta,v=>v.toFixed(2),null],["Max drop 1Y",xa&&xa.mdd,xb&&xb.mdd,v=>v.toFixed(0)+"%","hi"],
     ["P/E",ma.peTTM,mb.peTTM,v=>v.toFixed(1),"lo"],["Market cap",pa.cap,pb2.cap,cap,null],["Dividend yield",divInfo(a).yield,divInfo(b).yield,v=>v.toFixed(2)+"%","hi"],[`${MONTHS[cm]} avg (10y)`,sa&&sa.avg,sb&&sb.avg,fmtP,"hi"]];
+  const xk=analytics(k), cmK=(season(k)||[])[cm];
+  const kv={"Price":price(k),"Today":r1d(k),"1 month":ret(k,"1m"),"6 months":ret(k,"6m"),"1 year":ret(k,"1y"),"YTD":ret(k,"ytd"),"Signal":xk&&xk.score,"RSI":xk&&xk.R,"Volatility":xk&&xk.vol*100,"Max drop 1Y":xk&&xk.mdd,[`${MONTHS[cm]} avg (10y)`]:cmK&&cmK.avg};
   const tbl=R.map(([l,va,vb,f,better])=>{ const ok=v=>v!=null&&!isNaN(v), wa=better&&ok(va)&&ok(vb)&&(better==="hi"?va>vb:va<vb), wb=better&&ok(va)&&ok(vb)&&(better==="hi"?vb>va:vb<va);
-    const fa=ok(va)?f(va,0):"—", fb=ok(vb)?f(vb,1):"—"; return `<tr><td>${l}</td><td class="${wa?"win":""}">${fa}</td><td class="${wb?"win":""}">${fb}</td></tr>`; }).join("");
+    const fa=ok(va)?f(va,0):"—", fb=ok(vb)?f(vb,1):"—", vk=kv[l], fk=ok(vk)?f(vk,2):"—"; return `<tr><td>${l}</td><td class="${wa?"win":""}">${fa}</td><td class="${wb?"win":""}">${fb}</td><td style="color:var(--muted)">${fk}</td></tr>`; }).join("");
   $("sheetIn").innerHTML=`<div class="grab"></div>
     <div class="d-head"><div><h3>Compare</h3><p>Side by side, same starting line</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
     <div class="cmp-pick">${sel("cmpA",a)}<span class="vs">VS</span>${sel("cmpB",b)}</div>
+    <div class="chipbar" id="cmpBench"><span class="hint" style="align-self:center;flex:none">Index:</span>${[["auto",`Auto · ${BENCH[indexFor(a)]}`],["SPY","S&P 500"],["QQQ","Nasdaq 100"],["DIA","Dow 30"]].concat(sec?[["sector",`Sector · ${(SECTORS.find(x=>x[0]===sec)||[0,sec])[1]}`]]:[]).map(([v,l])=>`<button data-bench="${v}" aria-pressed="${S.cmp.bench===v}">${esc(l)}</button>`).join("")}</div>
+    ${DOW.includes(a)?`<p class="hint" style="margin-top:-6px">${esc(a)} is also in the Dow 30.</p>`:""}
     <div class="rtabs" id="cmpRange" style="grid-template-columns:repeat(5,1fr)">${[["1m","1M"],["3m","3M"],["6m","6M"],["1y","1Y"],["ytd","YTD"]].map(([k,l])=>`<button data-crange="${k}" aria-pressed="${k===range}">${l}</button>`).join("")}</div>
     ${chart}
     ${corr!=null?`<p class="hint">Correlation over 6 months: <b style="color:var(--text)">${corr.toFixed(2)}</b>. ${corr>.7?"They move closely together, so owning both adds little diversification.":corr>.3?"They're moderately related.":corr>-.3?"They move fairly independently, which helps diversify.":"They tend to move in opposite directions."}</p>`:""}
-    <div class="card"><table class="ctab"><thead><tr><th></th><th style="color:${CA}">${esc(a)}</th><th style="color:${CB}">${esc(b)}</th></tr></thead><tbody>${tbl}</tbody></table><p class="hint" style="font-size:11px">● marks the better number in each row (higher return, lower volatility, cheaper P/E…).</p></div>
+    <div class="card"><table class="ctab"><thead><tr><th></th><th style="color:${CA}">${esc(a)}</th><th style="color:${CB}">${esc(b)}</th><th style="color:${CK}">${esc(k)}</th></tr></thead><tbody>${tbl}</tbody></table><p class="hint" style="font-size:11px">● marks the better number in each row (higher return, lower volatility, cheaper P/E…).</p></div>
     <a class="claude" href="${claudeURL(`Compare ${a} vs ${b} as investments right now. Search the web for the latest news. My live data:\n${R.map(([l,va,vb,f])=>`${l}: ${a} ${va!=null&&!isNaN(va)?f(va,0):"n/a"} vs ${b} ${vb!=null&&!isNaN(vb)?f(vb,1):"n/a"}`).join("\n")}\nCover business quality, growth, valuation, risks, and which fits better for a long-term holder.`)}" target="_blank" rel="noopener">✨ Ask Claude: ${esc(a)} or ${esc(b)}?</a>`;
-  $("cmpA").addEventListener("change",e=>{ S.cmp.a=e.target.value; renderCompare(); ensureData([S.cmp.a],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); });
-  $("cmpB").addEventListener("change",e=>{ S.cmp.b=e.target.value; renderCompare(); ensureData([S.cmp.b],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); });
+  $("cmpA").addEventListener("change",e=>{ S.cmp.a=e.target.value; renderCompare(); cmpLoad(); });
+  $("cmpB").addEventListener("change",e=>{ S.cmp.b=e.target.value; renderCompare(); cmpLoad(); });
+  $("cmpBench").addEventListener("click",e=>{ const x=e.target.closest("[data-bench]"); if(!x) return; S.cmp.bench=x.dataset.bench; renderCompare(); ensureData([benchOf()],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); });
   $("cmpRange").addEventListener("click",e=>{ const x=e.target.closest("[data-crange]"); if(x){ S.cmp.range=x.dataset.crange; renderCompare(); } });
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="2.2";
+const APP_VERSION="2.3";
 const CHANGELOG=[
+  {v:"2.3",date:"2026-10-07",title:"Index benchmark and moving averages",items:["Compare now adds the stock's own index automatically (Nasdaq 100 for Nasdaq stocks, S&P 500 otherwise) as a third line and column, with beat/trail by how many points","Switch the benchmark to S&P 500, Nasdaq 100, Dow 30 or the stock's sector fund","50-day and 200-day moving average lines on 1M to YTD charts, with tap-to-hide chips showing today's values","Price history extended to ~22 months so the 200-day line covers the full year"]},
   {v:"2.2",date:"2026-10-07",title:"Dividends, targets, briefing and compare",items:["Dividends: yield, yearly amount, payout ratio, next ex-dividend and pay dates, and your yearly dividend income","Price targets: tap 🎯 then tap the chart to drop a target line; you get a chime when it's hit","Daily briefing: overnight moves, your biggest movers, this week's earnings, dividends and holidays, alerts you're close to, signals and headlines","Compare: two stocks on one chart from the same starting line, plus a side-by-side scorecard and correlation"]},
   {v:"2.1",date:"2026-10-07",title:"Ideas, seasonality and tracking",items:["Stock ideas: momentum leaders, pullbacks in uptrends, oversold and overheated screens","This month in history: average return and win rate by calendar month over 10 years","Seasonality chart on every stock","Portfolio performance over the past year vs the S&P 500, plus a daily tracking log","Version history (you're reading it)"]},
   {v:"2.0",date:"2026-10-07",title:"Tabs, themes and analytics",items:["Bottom tab bar: Home, Sectors, AI, Space, Trends","Sector rotation heatmap with a risk-on / risk-off reading","AI and Space theme pages grouped by sub-industry","Trends: nuclear & power, quantum, crypto, robotics, semis","Signals, RSI, volatility, beta, max drawdown, golden/death cross","1-month forecast cone on the chart","Ask Claude buttons"]},
@@ -1455,10 +1489,10 @@ async function ensureData(list,{daily=false,gen=null}={}){
   const need=list.filter(s=>{ const q=S.quotes[s]; return !q||!q.at||Date.now()-q.at>120000; });
   for(const s of need){ if(!live()) return; await loadQuote(s); if(S.quotes[s]) S.quotes[s].at=Date.now(); scheduleTab(); }
   for(const s of list){ if(!live()) return; if(!loading[s]){ loading[s]=1; await loadStatic(s,{metric:!S.tdKey}); loading[s]=0; scheduleTab(); } }
-  if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today());
-    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=260"); grp.forEach(s=>{ const r=res[s]; if(r&&r.status==="ok"&&r.values) S.daily[s]={day:today(),c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
+  if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v2);
+    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(r&&r.status==="ok"&&r.values) S.daily[s]={day:today(),v2:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
 }
-async function ensureDaily(s){ if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today())) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); } }
+async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v2)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); done(); } }
 function setActiveSubs(){
   const want=new Set(tabSyms(S.tab));
   S.extra.forEach(s=>{ if(!want.has(s)&&!S.list.includes(s)&&!IDX.some(x=>x[0]===s)) subscribe(s,false); });
