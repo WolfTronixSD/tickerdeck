@@ -400,13 +400,22 @@ function seriesFor(s,range){
     if(p&&pts.length) pts.push([Math.max(Date.now(),pts[pts.length-1][0]+1),p,0]);
     return {pts,base:q&&q.pc?q.pc:(pts[0]&&pts[0][1])};
   }
-  const d=S.daily[s]; if(!d||!d.c||d.c.length<3) return {pts:[],base:null};
+  const d=S.daily[s]; if(!d||!d.c||d.c.length<3) return checkpoints(s,range);
   const st=rangeStart(range); const c=d.c;
   let i=c.findIndex(b=>b[0]>=st); if(i<0) return {pts:[],base:null};
   const baseBar=i>0?c[i-1]:c[i];
   let pts=c.slice(i);
   if(p){ const last=pts[pts.length-1]; if(last&&new Date(last[0]).toDateString()===new Date().toDateString()) pts[pts.length-1]=[last[0],p,last[2]]; else pts.push([Date.now(),p,0]); }
   return {pts:[baseBar].concat(pts),base:baseBar[1]};
+}
+// without price history, connect Finnhub's return figures (1Y, 6M, 3M, YTD, MTD ago) into a coarse line
+function checkpoints(s,range){
+  const p=price(s), st=rangeStart(range); if(!p||!S.metric[s]||st==null) return {pts:[],base:null,approx:true};
+  const n=new Date(), now=Date.now();
+  const defs=[["1y",now-365*864e5],["6m",now-182*864e5],["3m",now-91*864e5],["ytd",+new Date(n.getFullYear(),0,1)],["mtd",+new Date(n.getFullYear(),n.getMonth(),1)]];
+  const pts=defs.filter(([,t])=>t>=st-2*864e5).map(([k,t])=>{ const r=ret(s,k); return r==null?null:[t,p/(1+r/100),0]; }).filter(Boolean).sort((a,b)=>a[0]-b[0]);
+  pts.push([now,p,0]);
+  const r=ret(s,range); return {pts,base:r!=null?p/(1+r/100):pts[0][1],approx:true};
 }
 function ret(s,tf){
   if(tf==="1d") return r1d(s);
@@ -549,14 +558,14 @@ function renderClock(){
 /* ---------- charts ---------- */
 function spark(s){
   const ser=seriesFor(s,S.tf==="mtd"?"1m":S.tf);
-  if(ser.pts.length>=3){
+  if(ser.pts.length>=3||(ser.approx&&ser.pts.length>=2)){
     const pts=ser.pts, ps=pts.map(p=>p[1]).concat([ser.base]), lo=Math.min(...ps), hi=Math.max(...ps), t0=pts[0][0], t1=pts[pts.length-1][0];
     const X=t=>2+(t-t0)/(t1-t0||1)*80, Y=v=>31-(v-lo)/(hi-lo||1)*28, L=pts[pts.length-1], col=L[1]>=ser.base?"#2BD99A":"#FF5C72";
     const d=pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
     return `<svg class="spark" viewBox="0 0 84 34" aria-hidden="true"><line x1="2" x2="82" y1="${Y(ser.base)}" y2="${Y(ser.base)}" stroke="#566377" stroke-dasharray="2 3" stroke-width=".8"/><path d="${d} L${X(t1)} 34 L2 34Z" fill="${col}" fill-opacity=".10"/><path d="${d}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(L[0])}" cy="${Y(L[1])}" r="2.4" fill="${col}"/></svg>`;
   }
   const tk=S.ticks[s], q=S.quotes[s];
-  let pts=tk?tk.pts.slice():[]; if(q&&q.pc&&pts.length) pts.unshift([pts[0][0]-1,q.o||q.pc]);
+  let pts=[];
   if(pts.length<2){ const m=S.metric[s]&&S.metric[s].m, p=price(s);
     if(m&&m["52WeekHigh"]&&p){ const x=Math.max(0,Math.min(1,(p-m["52WeekLow"])/(m["52WeekHigh"]-m["52WeekLow"])))*80+2; return `<svg class="spark" viewBox="0 0 84 34"><rect x="2" y="15" width="80" height="4" rx="2" fill="#1F2A37"/><rect x="${x-1.5}" y="9" width="3" height="16" rx="1.5" fill="#EAF0F6"/><text x="2" y="32" font-size="7" fill="#566377" font-family="JetBrains Mono">52W</text></svg>`; }
     return `<svg class="spark" viewBox="0 0 84 34"></svg>`; }
