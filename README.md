@@ -15,7 +15,10 @@ A real-time stock watchlist for iPhone. Prices stream from [Finnhub](https://fin
 - **Sectors:** sector rotation heatmap and risk-on / risk-off reading
 - **AI** and **Space:** curated theme stocks grouped by sub-industry
 - **Trends:** nuclear & power, quantum, crypto, robotics and semiconductors
-- **Stock detail:** charts with S&P 500 comparison and a statistical forecast cone, trend signals, RSI, volatility, beta, insider trades, analyst ratings, and an "Ask Claude" button
+- **Dividends:** yield, yearly income from your shares, next ex-dividend and pay dates
+- **Daily briefing:** overnight moves, this week's earnings, dividends and holidays, alerts you're close to
+- **Compare:** two stocks on one chart plus a side-by-side scorecard
+- **Stock detail:** tap-to-set price targets on the chart, charts with S&P 500 comparison and a statistical forecast cone, trend signals, RSI, volatility, beta, insider trades, analyst ratings, and an "Ask Claude" button
 
 ## Files
 - `index.html` – the whole app

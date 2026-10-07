@@ -192,6 +192,26 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .ver b{font-size:15px}
 .ver ul{margin:0;padding-left:18px;color:#C9D3DF;font-size:13px;line-height:1.55}
 .vtag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:6px;background:var(--accent-bg);color:var(--accent);font-weight:600}
+.tgtbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tgtbar .chip{height:30px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;font-size:12px}
+.tgtbar .chip.on{background:var(--accent);color:#1b1204;border-color:var(--accent)}
+.tgtbar .chip.t{background:var(--accent-bg);border-color:rgba(255,181,71,.4);color:var(--accent);font-family:var(--mono)}
+.cmp-pick{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.cmp-pick select{appearance:none;-webkit-appearance:none;height:44px;border-radius:12px;background:var(--ink);border:1px solid var(--line);color:var(--text);font:700 16px var(--display);padding:0 12px;width:100%}
+.cmp-pick .vs{font-weight:800;color:var(--muted);font-size:12px}
+.ctab{width:100%;border-collapse:collapse;font-size:13px}
+.ctab th{font-size:11px;color:var(--muted);text-align:right;font-weight:600;padding:6px 4px;letter-spacing:.04em}
+.ctab th:first-child{text-align:left}
+.ctab td{padding:8px 4px;border-top:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ctab td:first-child{text-align:left;font-family:var(--display);color:var(--muted)}
+.ctab td.win{color:var(--text);font-weight:700}
+.ctab td.win::after{content:" ●";font-size:8px;vertical-align:middle;color:var(--accent)}
+.brief-sec{display:flex;flex-direction:column;gap:8px}
+.brief-sec h4{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.brief-li{display:flex;justify-content:space-between;gap:10px;font-size:14px;line-height:1.4}
+.brief-li span:first-child{color:#C9D3DF}
+.brief-hero{border-radius:20px;padding:18px;background:radial-gradient(120% 100% at 0% 0%,rgba(255,181,71,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(110,168,255,.18),transparent 60%),#0E131B;border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.brief-hero h3{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
 .rtabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:3px}
 .rtabs button{height:30px;border-radius:9px;font-size:12px;font-weight:600;color:var(--muted)}
 .rtabs button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
@@ -367,7 +387,9 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="actions" id="actions">
     <button id="refreshBtn">⟳ Refresh</button>
     <button id="shareBtn">⇪ Share summary</button>
-    <button id="wakeBtn">☀ Keep screen on</button>
+    <button id="briefBtn">☕ Briefing</button>
+    <button id="cmpBtn">⇄ Compare</button>
+    <button id="wakeBtn">🔆 Keep screen on</button>
     <a class="" id="askList" href="#" target="_blank" rel="noopener" style="flex:none;height:34px;padding:0 12px;border-radius:999px;background:linear-gradient(135deg,#F5C46B,#E8915B);color:#1A1206;font-size:12.5px;font-weight:700;display:flex;align-items:center;text-decoration:none">✨ Ask Claude</a>
     <button data-open-settings>⚙ Settings</button>
   </div>
@@ -403,6 +425,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="section-h"><h2>Signals</h2><small>trend, momentum, RSI</small></div>
   <div class="feed" id="sigFeed"></div>
   <div id="pfWrap"></div>
+  <div id="divWrap"></div>
   <div class="section-h"><h2 id="seaTitle">This month in history</h2><small>avg return, last 10 years</small></div>
   <div class="feed" id="seaFeed"></div>
   <div class="section-h"><h2>Earnings coming up</h2><small>next 30 days</small></div>
@@ -553,11 +576,11 @@ function ret(s,tf){
   return q&&q.pc&&p?((1+v/100)*(p/q.pc)-1)*100:v;
 }
 let queue=Promise.resolve(), lastCall=0; const fhLog=[]; // free plan: 60 calls a minute
-function api(path){
+function api(path,opt={}){
   // gentle pacing: free tier allows 60 calls/min
   const run=async()=>{ for(;;){ const now=Date.now(); while(fhLog.length&&now-fhLog[0]>60000) fhLog.shift(); if(fhLog.length<55) break; await new Promise(r=>setTimeout(r,60000-(now-fhLog[0])+100)); } const wait=Math.max(0,lastCall+120-Date.now()); if(wait) await new Promise(r=>setTimeout(r,wait)); lastCall=Date.now(); fhLog.push(lastCall);
     const r=await fetch(`${API}${path}${path.includes("?")?"&":"?"}token=${encodeURIComponent(S.key)}`);
-    if(r.status===401||r.status===403){ S.apiErr="key"; throw new Error("key"); }
+    if(r.status===401||r.status===403){ if(opt.soft) throw new Error("forbidden"); S.apiErr="key"; throw new Error("key"); }
     if(r.status===429){ S.apiErr="rate"; throw new Error("rate"); }
     if(!r.ok) throw new Error("http "+r.status);
     S.apiErr=null; return r.json(); };
@@ -640,6 +663,8 @@ function flush(){
 
 /* ---------- alerts ---------- */
 function checkAlerts(s){
+  const p0=price(s), tg=S.targets&&S.targets[s];
+  if(tg&&p0!=null){ let ch=false; tg.forEach(t=>{ if(!t.fired&&((t.dir>0&&p0>=t.p)||(t.dir<0&&p0<=t.p))){ t.fired=Date.now(); ch=true; toast(`🎯 ${s} hit your ${fmt$(t.p)} target`); beep(); } }); if(ch){ LS.set("targets",S.targets); if(S.open===s) redrawChart(true); } }
   const a=S.alerts[s], p=price(s); if(!a||p==null) return;
   [["above",a.above,p>=a.above],["below",a.below,p<=a.below]].forEach(([dir,v,hit])=>{
     if(!v) return; const k=s+dir+v;
@@ -722,8 +747,9 @@ function bigChart(s){
   const spy=s!=="SPY"?seriesFor("SPY",range):null, ov=spy&&!spy.approx&&spy.pts.length>=3&&spy.base?spy.pts.map(p=>[p[0],ser.base*p[1]/spy.base]):null;
   // statistical forecast cone (68% / 95%) to the right of today
   const A=range!=="1d"&&S.showCone!==false?analytics(s):null, hDays=range==="1m"||range==="3m"?21:63, L0=pts[pts.length-1];
-  const cone=A?Array.from({length:9},(_,k)=>{ const f=k/8, d=hDays*f, sg=A.sigD*Math.sqrt(d); return [L0[0]+d*1.45*864e5, L0[1]*Math.exp(-sg), L0[1]*Math.exp(sg), L0[1]*Math.exp(-2*sg), L0[1]*Math.exp(2*sg)]; }):null;
-  const ps=pts.map(p=>p[1]).concat([ser.base]).concat(ov?ov.map(p=>p[1]):[]).concat(cone?cone.flatMap(c=>[c[3],c[4]]):[]);
+  const cone=A?Array.from({length:9},(_,k)=>{ const f=k/8, d=hDays*f, sg=Math.min(.6,A.sigD*Math.sqrt(d)); return [L0[0]+d*1.45*864e5, L0[1]*Math.exp(-sg), L0[1]*Math.exp(sg), L0[1]*Math.exp(-2*sg), L0[1]*Math.exp(2*sg)]; }):null;
+  const tg=(S.targets[s]||[]);
+  const ps=pts.map(p=>p[1]).concat([ser.base]).concat(ov?ov.map(p=>p[1]):[]).concat(cone?cone.flatMap(c=>[c[3],c[4]]):[]).concat(tg.map(t=>t.p));
   let lo=Math.min(...ps), hi=Math.max(...ps); const pad=(hi-lo)*.06||hi*.002; lo-=pad; hi+=pad;
   const t0=pts[0][0], t1=L0[0], te=cone?cone[cone.length-1][0]:t1, vMax=Math.max(...pts.map(p=>p[2]||0));
   CS={lo,hi,t0,te};
@@ -739,7 +765,7 @@ function bigChart(s){
   if(cone){ const band=(a,b)=>cone.map((c,i)=>(i?"L":"M")+X(c[0]).toFixed(1)+" "+Y(c[a]).toFixed(1)).join(" ")+" "+cone.slice().reverse().map(c=>"L"+X(c[0]).toFixed(1)+" "+Y(c[b]).toFixed(1)).join(" ")+"Z";
     const E=cone[cone.length-1];
     coneSvg=`<rect x="${X(t1)}" y="${CPT-4}" width="${CW-X(t1)}" height="${CH-CPT-CPB+4}" fill="#6EA8FF" fill-opacity=".04"/><line x1="${X(t1)}" x2="${X(t1)}" y1="${CPT-4}" y2="${CH-CPB}" stroke="#566377" stroke-dasharray="2 3"/><path d="${band(3,4)}" fill="#6EA8FF" fill-opacity=".10"/><path d="${band(1,2)}" fill="#6EA8FF" fill-opacity=".20"/><line x1="${X(t1)}" x2="${X(E[0])}" y1="${Y(L0[1])}" y2="${Y(L0[1])}" stroke="#6EA8FF" stroke-dasharray="3 3" stroke-opacity=".8"/><text x="${CW-6}" y="${Y(E[2])-4}" text-anchor="end" font-size="8.5" fill="#9DC1FF" font-family="JetBrains Mono">${S.priv?"":fmt$(E[2],E[2]>=1000?0:2)}</text><text x="${CW-6}" y="${Y(E[1])+11}" text-anchor="end" font-size="8.5" fill="#9DC1FF" font-family="JetBrains Mono">${S.priv?"":fmt$(E[1],E[1]>=1000?0:2)}</text><text x="${(X(t1)+CW)/2}" y="${CH-14}" text-anchor="middle" font-size="9" fill="#9DC1FF" font-family="Sora">next ${hDays===21?"1M":"3M"}</text>`; }
-  return `<svg class="chart" id="bc" viewBox="0 0 ${CW} ${CH}" role="img" aria-label="${esc(s)} price, ${range}"><defs><linearGradient id="bg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".30"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>${g}${vol}${coneSvg}<line x1="0" x2="${X(t1)}" y1="${Y(ser.base)}" y2="${Y(ser.base)}" stroke="#8392A6" stroke-dasharray="3 4" stroke-opacity=".7"/><path d="${d} L${X(t1)} ${CH-CPB} L${X(t0)} ${CH-CPB}Z" fill="url(#bg)"/>${ov?`<path d="${ov.filter(p=>p[0]>=t0).map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-opacity=".75" stroke-dasharray="4 3"/>`:""}<path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(L0[0])}" cy="${Y(L0[1])}" r="4.5" fill="${col}">${range==="1d"?`<animate attributeName="r" values="4.5;7;4.5" dur="1.6s" repeatCount="indefinite"/>`:""}</circle><g id="xh" visibility="hidden"><line id="xhl" y1="${CPT}" y2="${CH-CPB}" stroke="#EAF0F6" stroke-width="1"/><circle id="xhc" r="5" fill="#EAF0F6" stroke="${col}" stroke-width="2"/></g>${ticks}</svg>`;
+  return `<svg class="chart" id="bc" viewBox="0 0 ${CW} ${CH}" role="img" aria-label="${esc(s)} price, ${range}"><defs><linearGradient id="bg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".30"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>${g}${vol}${coneSvg}<line x1="0" x2="${X(t1)}" y1="${Y(ser.base)}" y2="${Y(ser.base)}" stroke="#8392A6" stroke-dasharray="3 4" stroke-opacity=".7"/><path d="${d} L${X(t1)} ${CH-CPB} L${X(t0)} ${CH-CPB}Z" fill="url(#bg)"/>${ov?`<path d="${ov.filter(p=>p[0]>=t0).map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-opacity=".75" stroke-dasharray="4 3"/>`:""}<path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(L0[0])}" cy="${Y(L0[1])}" r="4.5" fill="${col}">${range==="1d"?`<animate attributeName="r" values="4.5;7;4.5" dur="1.6s" repeatCount="indefinite"/>`:""}</circle>${tg.map(t=>{ const y=Y(t.p), pc=(t.p/L0[1]-1)*100; return `<line x1="0" x2="${CW}" y1="${y}" y2="${y}" stroke="#FFB547" stroke-width="1.3" stroke-dasharray="6 4" opacity="${t.fired?.45:1}"/><rect x="${CW-112}" y="${y-9}" width="108" height="16" rx="5" fill="#2A2112" stroke="#FFB547" stroke-opacity=".5"/><text x="${CW-58}" y="${y+3}" text-anchor="middle" font-size="9" fill="#FFB547" font-family="JetBrains Mono">${t.fired?"✓ ":"🎯 "}${S.priv?"target":fmt$(t.p,t.p>=1000?0:2)} ${fmtP(pc).replace(".00","")}</text>`; }).join("")}<g id="xh" visibility="hidden"><line id="xhl" y1="${CPT}" y2="${CH-CPB}" stroke="#EAF0F6" stroke-width="1"/><circle id="xhc" r="5" fill="#EAF0F6" stroke="${col}" stroke-width="2"/></g>${S.tgtMode?`<rect x="0" y="0" width="${CW}" height="${CH}" fill="#FFB547" fill-opacity=".05"/><text x="${CW/2}" y="${CPT+4}" text-anchor="middle" font-size="10" fill="#FFB547" font-family="Sora" font-weight="700">Tap a price level to set a target</text>`:""}${ticks}</svg>`;
 }
 function scrubText(s,i){
   const ser=seriesFor(s,S.crange), pts=ser.pts; if(pts.length<3) return "";
@@ -757,7 +783,12 @@ function wireChart(s){
     $("xh").setAttribute("visibility","visible"); $("xhl").setAttribute("x1",px); $("xhl").setAttribute("x2",px); $("xhc").setAttribute("cx",px); $("xhc").setAttribute("cy",py);
     $("dScrub").innerHTML=scrubText(s,bi); };
   const end=()=>{ S.scrubbing=false; const xh=$("xh"); xh&&xh.setAttribute("visibility","hidden"); const sc=$("dScrub"); if(sc) sc.innerHTML=scrubText(s); };
-  svg.addEventListener("pointerdown",e=>{ S.scrubbing=true; try{svg.setPointerCapture(e.pointerId);}catch(_){} at(e); });
+  svg.addEventListener("pointerdown",e=>{
+    if(S.tgtMode){ const r=svg.getBoundingClientRect(), y=(e.clientY-r.top)/r.height*CH, {lo,hi}=CS; let v=hi-(y-CPT)/(CH-CPT-CPB)*(hi-lo); const p=price(s);
+      if(!(v>0)||!p) return; v=v>=100?Math.round(v):Math.round(v*100)/100;
+      const list=(S.targets[s]=S.targets[s]||[]); if(list.length>=4) list.shift(); list.push({p:v,dir:v>=p?1:-1,at:Date.now()}); LS.set("targets",S.targets);
+      S.tgtMode=false; toast(`🎯 Target set at ${fmt$(v)} (${fmtP((v/p-1)*100)})`); redrawChart(true); renderTargets(s); return; }
+    S.scrubbing=true; try{svg.setPointerCapture(e.pointerId);}catch(_){} at(e); });
   svg.addEventListener("pointermove",e=>{ if(S.scrubbing||e.pointerType==="mouse"){ S.scrubbing=S.scrubbing||e.pointerType==="mouse"; at(e); } });
   svg.addEventListener("pointerup",end); svg.addEventListener("pointercancel",end); svg.addEventListener("pointerleave",end);
 }
@@ -793,6 +824,7 @@ function renderBanners(){
   const b=[];
   if(S.apiErr==="key") b.push(`<div class="banner warn"><span><b>Finnhub didn't accept the key.</b> Check it and enter it again.</span><button class="x" id="rekey">Fix</button></div>`);
   else if(S.apiErr==="rate") b.push(`<div class="banner warn"><span><b>Slowing down.</b> The free data plan allows 60 lookups a minute; prices keep streaming.</span></div>`);
+  if(typeof briefDue==="function"&&briefDue()) b.push(`<div class="banner info"><span>☕ <b>Your morning briefing is ready.</b> Overnight moves and today's calendar.</span><button class="x" data-open-brief>Open</button></div>`);
   if(LS.get("seenVer","")!==APP_VERSION) b.push(`<div class="banner info"><span>✨ <b>Updated to v${APP_VERSION}.</b> ${esc(CHANGELOG[0].title)}.</span><button class="x" data-open-versions>See</button></div>`);
   if(S.tdErr==="key") b.push(`<div class="banner warn"><span><b>Twelve Data didn't accept the chart key.</b> Check it in settings.</span><button class="x" data-open-settings>Fix</button></div>`);
   else if(!S.tdKey&&!LS.get("tdNag",false)) b.push(`<div class="banner info"><span>📈 <b>Want full charts?</b> Add a free Twelve Data key for 1-day to 1-year price history.</span><button class="x" data-open-settings>Add</button><button class="x" data-dismiss="tdNag" aria-label="Dismiss">✕</button></div>`);
@@ -902,11 +934,13 @@ async function openDetail(s){
     <div class="d-price"><span class="big num" id="dBig" data-v="${p}">${fmt$(p)}</span><span class="pill ${cls(r1d(s))}" id="dPill">${fmtP(r1d(s))} today</span></div>
     <div class="rtabs" id="rangeTabs" role="group" aria-label="Chart range">${RANGES.map(([k,l])=>`<button data-range="${k}" aria-pressed="${k===S.crange}">${l}</button>`).join("")}</div>
     <div class="scrub" id="dScrub">${scrubText(s)}</div>
+    <div class="tgtbar" id="tgtBar"></div>
     <div id="dChart">${bigChart(s)}</div>
     <div class="perf" id="dPerf">${perfTiles(s)}</div>
     <div id="dAn" style="display:flex;flex-direction:column;gap:16px">${analyticsHTML(s)}</div>
     <div id="dSea">${seasonHTML(s)}</div>
-    <a class="claude" id="askOne" href="${claudeURL(stockPrompt(s))}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(s)}</a>
+    <div id="dDiv">${divHTML(s)}</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><a class="claude" id="askOne" href="${claudeURL(stockPrompt(s))}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(s)}</a><button class="ghost" style="height:46px;border-radius:14px" data-compare="${esc(s)}">⇄ Compare</button></div>
     <div class="card">${rangeBar(q&&Math.min(q.l,p),q&&Math.max(q.h,p),p,"Day range","rDay")}${rangeBar(m["52WeekLow"],m["52WeekHigh"],p,"52-week range","r52")}
       ${q?kv("Open · Prev close",`${fmt$(q.o)} · ${fmt$(q.pc)}`):""}
       ${pr.cap?kv("Market cap",pr.cap>=1e6?"$"+(pr.cap/1e6).toFixed(2)+"T":"$"+(pr.cap/1e3).toFixed(1)+"B"):""}
@@ -935,7 +969,11 @@ async function openDetail(s){
   $("clearAlert")&&$("clearAlert").addEventListener("click",()=>saveAlert(s,"",""));
   $("saveShares").addEventListener("click",()=>{ const n=parseFloat($("shares").value), c=parseFloat($("cost").value); if(n>0) S.holdings[s]=n; else delete S.holdings[s]; if(n>0&&c>0) S.cost[s]=c; else delete S.cost[s]; LS.set("hold",S.holdings); LS.set("cost",S.cost); $("dPos").innerHTML=posHTML(s); render(); toast(n>0?`Saved ${n} ${s} shares`:`Cleared ${s} position`); });
   showSheet();
-  ensureDaily(s); loadMonthly([s]);
+  ensureDaily(s); loadMonthly([s]); renderTargets(s);
+  $("tgtBar").addEventListener("click",e=>{ const b=e.target.closest("[data-tgt]"); if(!b) return; const v=b.dataset.tgt;
+    if(v==="mode"){ S.tgtMode=!S.tgtMode; if(S.crange==="1d"&&S.tgtMode){ } redrawChart(true); renderTargets(s); return; }
+    S.targets[s]=(S.targets[s]||[]).filter((t,i)=>String(i)!==v); LS.set("targets",S.targets); redrawChart(true); renderTargets(s); });
+  (S.metric[s]?Promise.resolve():loadStatic(s)).then(()=>loadDivs(s)).then(()=>{ if(S.open===s){ const el=$("dDiv"); if(el) el.innerHTML=divHTML(s); } });
   if(!S.profile[s]||!S.metric[s]) loadStatic(s);
   try{ const r=await api(`/stock/recommendation?symbol=${encodeURIComponent(s)}`); const x=r&&r[0]; if(S.open!==s) return;
     if(!x){ $("recCard").innerHTML=`<h4>Analyst ratings</h4><p class="hint">No analyst ratings available.</p>`; }
@@ -991,10 +1029,12 @@ function wire(){
   $("privBtn").addEventListener("click",()=>{ S.priv=!S.priv; LS.set("priv",S.priv); render(); });
   $("soundBtn").addEventListener("click",()=>{ S.sound=!S.sound; LS.set("sound",S.sound); render(); if(S.sound){ beep(); toast("Alert chime on"); } else toast("Alert chime off"); });
   $("banners").addEventListener("click",e=>{ const b=e.target.closest("[data-dismiss]"); if(b){ S.dismissed[b.dataset.dismiss]=1; if(b.dataset.dismiss==="tdNag") LS.set("tdNag",true); renderBanners(); } if(e.target.id==="rekey") forget(); });
-  document.addEventListener("click",e=>{ if(e.target.closest("[data-open-settings]")) openSettings(); if(e.target.closest("[data-open-versions]")) openVersions(); });
+  document.addEventListener("click",e=>{ const cb=e.target.closest("[data-compare]"); if(cb){ const a=cb.dataset.compare; openCompare(a,a==="SPY"?(S.list[0]||"AAPL"):"SPY"); return; } if(e.target.closest("[data-open-brief]")){ openBriefing(); return; } if(e.target.closest("[data-open-settings]")) openSettings(); if(e.target.closest("[data-open-versions]")) openVersions(); });
   $("refreshBtn").addEventListener("click",fullRefresh);
   $("shareBtn").addEventListener("click",shareSummary);
   $("wakeBtn").addEventListener("click",toggleWake);
+  $("briefBtn").addEventListener("click",openBriefing);
+  $("cmpBtn").addEventListener("click",()=>openCompare(S.list[0]||"AAPL",S.list[1]||"SPY"));
   $("erFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
   $("idx").addEventListener("click",e=>{ const b=e.target.closest("[data-idx]"); if(b&&price(b.dataset.idx)!=null) openDetail(b.dataset.idx); });
   // pull down from the top to refresh
@@ -1063,9 +1103,136 @@ async function toggleWake(){
 }
 function forget(){ $("tabbar").hidden=true; disconnect(); S.key=""; LS.set("key",""); showOnb(); }
 
+/* ---------- price targets ---------- */
+S.targets=LS.get("targets",{}); S.tgtMode=false;
+function renderTargets(s){
+  const el=$("tgtBar"); if(!el) return; const p=price(s), list=S.targets[s]||[];
+  el.innerHTML=`<button class="chip ${S.tgtMode?"on":""}" data-tgt="mode">🎯 ${S.tgtMode?"Tap the chart…":"Set target"}</button>${list.map((t,i)=>`<button class="chip t" data-tgt="${i}" aria-label="Remove target ${fmt$(t.p)}">${t.fired?"✓ ":""}${fmt$(t.p,t.p>=1000?0:2)} <span style="opacity:.75">${p?fmtP((t.p/p-1)*100):""}</span> ✕</button>`).join("")}`;
+}
+
+/* ---------- dividends ---------- */
+S.divs=LS.get("divs",{});
+function divInfo(s){ const m=(S.metric[s]&&S.metric[s].m)||{}, y=m.currentDividendYieldTTM??m.dividendYieldIndicatedAnnual, dps=m.dividendPerShareAnnual??m.dividendsPerShareTTM??m.dividendPerShareTTM;
+  return {yield:typeof y==="number"?y:null, dps:typeof dps==="number"?dps:null, payout:typeof m.payoutRatioTTM==="number"?m.payoutRatioTTM:null, growth:typeof m.dividendGrowthRate5Y==="number"?m.dividendGrowthRate5Y:null}; }
+const pays=s=>{ const d=divInfo(s); return (d.yield||0)>0||(d.dps||0)>0; };
+async function loadDivs(s){
+  if(!pays(s)) return; const c=S.divs[s]; if(c&&Date.now()-c.at<5*864e5) return;
+  const from=new Date(Date.now()-760*864e5).toISOString().slice(0,10), to=new Date(Date.now()+150*864e5).toISOString().slice(0,10);
+  let list=null, src="";
+  try{ const r=await api(`/stock/dividend?symbol=${encodeURIComponent(s)}&from=${from}&to=${to}`,{soft:true}); if(Array.isArray(r)){ list=r.map(d=>({ex:d.date,pay:d.payDate||null,amt:+d.amount})).filter(d=>d.ex); src="Finnhub"; } }catch(e){}
+  if(!list&&S.tdKey){ try{ const r=await fetch(`${TD}/dividends?symbol=${encodeURIComponent(s)}&start_date=${from}&apikey=${encodeURIComponent(S.tdKey)}`).then(x=>x.json()); if(r&&Array.isArray(r.dividends)){ list=r.dividends.map(d=>({ex:d.ex_date||d.payment_date,pay:d.payment_date||null,amt:+d.amount})).filter(d=>d.ex); src="Twelve Data"; } }catch(e){} }
+  S.divs[s]={at:Date.now(),list:list?list.sort((a,b)=>a.ex.localeCompare(b.ex)):null,src}; LS.set("divs",S.divs);
+}
+// next ex-dividend date: announced if available, else estimated from the usual spacing between past payments
+function nextDiv(s){
+  const c=S.divs[s]; if(!c||!c.list||!c.list.length) return null; const t=today();
+  const up=c.list.find(d=>d.ex>=t||(d.pay&&d.pay>=t)); if(up) return {...up,est:false,freq:freqOf(c.list)};
+  const past=c.list.filter(d=>d.ex<t); if(past.length<2) return null;
+  const gaps=[]; for(let i=1;i<past.length;i++) gaps.push((new Date(past[i].ex)-new Date(past[i-1].ex))/864e5); gaps.sort((a,b)=>a-b); const g=gaps[Math.floor(gaps.length/2)];
+  let n=new Date(past[past.length-1].ex+"T12:00:00"); while(n<new Date()) n=new Date(n.getTime()+g*864e5);
+  return {ex:n.toISOString().slice(0,10),pay:null,amt:past[past.length-1].amt,est:true,freq:freqOf(past)};
+}
+function freqOf(l){ const n=l.filter(d=>d.ex>=new Date(Date.now()-366*864e5).toISOString().slice(0,10)&&d.ex<=today()).length; return n>=11?"Monthly":n>=4?"Quarterly":n>=2?"Semi-annual":n===1?"Annual":""; }
+const dShort=d=>new Date(d+"T12:00:00").toLocaleDateString([], {month:"short",day:"numeric"});
+function divHTML(s){
+  const d=divInfo(s); if(!pays(s)) return S.metric[s]?`<div class="card"><h4>Dividends</h4><p class="hint">${esc(s)} doesn't pay a dividend.</p></div>`:"";
+  const n=nextDiv(s), c=S.divs[s], sh=S.holdings[s]||0, last=c&&c.list?c.list.filter(x=>x.ex<=today()).slice(-6).reverse():[];
+  return `<div class="card"><h4>Dividends${n&&n.freq?` · ${n.freq}`:""}</h4>
+    <div class="stats"><div>Yield<span class="num tup">${d.yield!=null?d.yield.toFixed(2)+"%":"—"}</span></div><div>Per share / yr<span class="num">${d.dps!=null?fmt$(d.dps):"—"}</span></div><div>Payout ratio<span class="num">${d.payout!=null?d.payout.toFixed(0)+"%":"—"}</span></div></div>
+    ${n?`<div class="kv"><span>Next ex-dividend${n.est?" (est.)":""}</span><b class="num">${dShort(n.ex)}${n.amt?` · ${fmt$(n.amt,3)}`:""}</b></div>${n.pay?`<div class="kv"><span>Pay date</span><b class="num">${dShort(n.pay)}</b></div>`:""}`:c&&!c.list?`<p class="hint">Payout dates aren't included in your free data plans, so only yield and annual amount are shown.</p>`:`<p class="hint">Loading payout dates…</p>`}
+    ${d.growth!=null?`<div class="kv"><span>Dividend growth, 5 yrs</span><b class="num ${tcls(d.growth)}">${fmtP(d.growth)}/yr</b></div>`:""}
+    ${sh&&d.dps?`<div class="kv"><span>Your yearly income (${sh} sh)</span><b class="num tup">${money(fmt$(sh*d.dps))}</b></div>`:""}
+    ${last.length?`<h4 style="margin-top:4px">Recent payments</h4>${last.map(x=>`<div class="kv"><span>${dShort(x.ex)}${x.ex.slice(0,4)!==today().slice(0,4)?" "+x.ex.slice(0,4):""}</span><b class="num">${fmt$(x.amt,3)}</b></div>`).join("")}`:""}
+    <p class="hint" style="font-size:11px">Own the stock before the ex-dividend date to receive the next payment.</p></div>`;
+}
+function renderDividends(){
+  const el=$("divWrap"); if(!el) return; const payers=S.list.filter(pays); if(!payers.length){ el.innerHTML=""; return; }
+  const income=payers.reduce((a,x)=>a+(S.holdings[x]||0)*(divInfo(x).dps||0),0), held=S.list.filter(x=>S.holdings[x]>0&&price(x)!=null), val=held.reduce((a,x)=>a+price(x)*S.holdings[x],0);
+  const rows=payers.map(x=>({x,d:divInfo(x),n:nextDiv(x)})).sort((a,b)=>(a.n?a.n.ex:"9")>(b.n?b.n.ex:"9")?1:-1);
+  el.innerHTML=`<div class="section-h"><h2>Dividends</h2><small>${payers.length} of ${S.list.length} pay</small></div>
+    <div class="feed">${income>0?`<div class="er"><div style="flex:1"><b>Your dividend income</b><br><span>${val?`portfolio yield ${(income/val*100).toFixed(2)}% · `:""}about ${money(fmt$(income/12))} a month</span></div><b class="num tup" style="font-size:17px">${money(fmt$(income))}/yr</b></div>`:""}
+    ${rows.map(({x,d,n})=>`<div class="er" data-sym="${esc(x)}" role="button" tabindex="0">${logo(x)}<div style="flex:1;min-width:0"><b>${esc(x)}</b><br><span>${d.yield!=null?d.yield.toFixed(2)+"% yield":""}${d.dps!=null?` · ${fmt$(d.dps)}/sh a year`:""}</span></div><div class="when">${n?`${n.est?"~":""}${dShort(n.ex)}<br><span>ex-div${n.pay?` · paid ${dShort(n.pay)}`:""}</span>`:`<span>—</span>`}</div></div>`).join("")}</div>`;
+}
+
+/* ---------- morning briefing ---------- */
+function briefDue(){ const st=marketState(); return st.t.open&&st.p.h>=4&&st.p.h<11&&LS.get("briefSeen","")!==today(); }
+function openBriefing(){
+  S.open="__brief"; LS.set("briefSeen",today()); renderBanners();
+  const st=marketState(), now=new Date(), hr=now.getHours(), greet=hr<12?"Good morning":hr<18?"Good afternoon":"Good evening";
+  const L=S.list.filter(x=>price(x)!=null).map(x=>({x,r:r1d(x)})).filter(o=>o.r!=null).sort((a,b)=>b.r-a.r);
+  const idx=IDX.map(([x,n])=>({n,r:r1d(x)})).filter(o=>o.r!=null);
+  const pre=st.phase==="pre"||(st.phase==="closed"&&st.p.h<9);
+  const week=new Date(Date.now()+7*864e5).toISOString().slice(0,10), t=today();
+  const er=S.list.filter(x=>S.earnings.map&&S.earnings.map[x]&&S.earnings.map[x].date>=t&&S.earnings.map[x].date<=week).map(x=>({x,e:S.earnings.map[x]})).sort((a,b)=>a.e.date.localeCompare(b.e.date));
+  const dv=S.list.map(x=>({x,n:nextDiv(x)})).filter(o=>o.n&&o.n.ex>=t&&o.n.ex<=week);
+  const near=[]; S.list.forEach(x=>{ const p=price(x); if(!p) return; const a=S.alerts[x]||{}; [a.above,a.below].concat((S.targets[x]||[]).filter(q=>!q.fired).map(q=>q.p)).forEach(v=>{ if(v&&Math.abs(v/p-1)<.03) near.push({x,v,d:(v/p-1)*100}); }); });
+  const sig=S.list.map(x=>({x,A:analytics(x)})).filter(o=>o.A&&(o.A.R>=70||o.A.R<=30||o.A.cross));
+  const cm=new Date().getMonth(), sea=S.list.map(x=>({x,m:(season(x)||[])[cm]})).filter(o=>o.m).sort((a,b)=>b.m.avg-a.m.avg);
+  const held=S.list.filter(x=>S.holdings[x]>0&&price(x)!=null), val=held.reduce((a,x)=>a+price(x)*S.holdings[x],0), prev=held.reduce((a,x)=>a+((S.quotes[x]&&S.quotes[x].pc)||price(x))*S.holdings[x],0);
+  const li=(a,b,c="")=>`<div class="brief-li"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
+  const sec=(title,body)=>body?`<div class="card brief-sec"><h4>${title}</h4>${body}</div>`:"";
+  const target=st.phase==="open"?st.nextClose:st.nextOpen;
+  $("sheetIn").innerHTML=`<div class="grab"></div>
+    <div class="d-head"><div><h3>Daily briefing</h3><p>${now.toLocaleDateString([], {weekday:"long",month:"long",day:"numeric"})}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="brief-hero"><h3>☕ ${greet}</h3>
+      <p class="hint" style="font-size:14px;color:#D5DEE9">${st.phase==="open"?"The market is open.":st.phase==="pre"?"Pre-market trading is under way.":st.phase==="after"?"The market has closed; after-hours trading is on.":"The market is closed."} ${target?`${st.phase==="open"?"Closing bell":"Opening bell"} in ${cd(target-now)}.`:""}${st.t.early?` Early close at 1:00 PM ET today.`:""}${!st.t.open&&st.t.why!=="Weekend"?` Closed today for ${esc(st.t.why)}.`:""}</p>
+      ${held.length?`<div class="brief-li"><span>Your holdings</span><b class="num ${tcls(val-prev)}">${money(fmt$(val))} · ${fmtP(prev?(val/prev-1)*100:null)}</b></div>`:""}</div>
+    ${sec(pre?"Moves since last close":"Market today",idx.map(o=>li(o.n,fmtP(o.r),tcls(o.r))).join(""))}
+    ${sec("Your biggest movers",L.length?L.slice(0,3).concat(L.length>3?L.slice(Math.max(3,L.length-2)).reverse():[]).map(o=>li(`${o.r>=0?"🟢":"🔴"} ${o.x}`,fmtP(o.r),tcls(o.r))).join(""):"")}
+    ${sec("On the calendar this week",[...er.map(o=>li(`📣 ${o.x} earnings`,`${dShort(o.e.date)}${o.e.hour==="bmo"?" · pre-mkt":o.e.hour==="amc"?" · after close":""}`)),...dv.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}`,dShort(o.n.ex))),...Object.entries(HOLIDAYS).filter(([d])=>d>=t&&d<=week).map(([d,n])=>li(`🏖 Market closed: ${n}`,dShort(d))),...Object.entries(EARLY).filter(([d])=>d>=t&&d<=week).map(([d,n])=>li(`⏰ Early close (1 PM ET)`,dShort(d)))].join("")||`<p class="hint">No earnings, dividends or holidays for your stocks this week.</p>`)}
+    ${sec("Close to your alerts and targets",near.map(o=>li(`🎯 ${o.x} at ${fmt$(price(o.x))}`,`${fmt$(o.v)} (${fmtP(o.d)})`)).join(""))}
+    ${sec("Signals to know",sig.map(o=>li(`${o.A.R>=70?"🔥":o.A.R<=30?"🧊":"★"} ${o.x}`,o.A.cross?(o.A.cross==="golden"?"Golden cross":"Death cross"):`RSI ${o.A.R.toFixed(0)} · ${rsiLabel(o.A.R)}`)).join(""))}
+    ${sea.length?sec(`${MONTHS[cm]} seasonality`,li(`Historically strongest: ${sea[0].x}`,fmtP(sea[0].m.avg),tcls(sea[0].m.avg))+li(`Historically weakest: ${sea[sea.length-1].x}`,fmtP(sea[sea.length-1].m.avg),tcls(sea[sea.length-1].m.avg))):""}
+    <div class="card brief-sec" id="briefNews"><h4>Headlines</h4>${(S.mnews||[]).slice(0,3).map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:14px;font-weight:600;line-height:1.4">${esc(a.headline)} <span class="hint" style="font-weight:400">· ${esc(a.source)}</span></a>`).join("")||`<p class="hint">Loading…</p>`}<div id="briefStockNews"></div></div>
+    <a class="claude" href="${claudeURL(`Write my morning market briefing for ${now.toLocaleDateString()}. Search the web for overnight news, futures, and today's economic calendar. My watchlist with live moves:\n${L.map(o=>`${o.x} ${fmt$(price(o.x))} ${fmtP(o.r)}`).join("\n")}\n${er.length?`Earnings this week: ${er.map(o=>o.x+" "+o.e.date).join(", ")}\n`:""}Keep it tight: what happened overnight, what matters today, and what to watch for my stocks.`)}" target="_blank" rel="noopener">✨ Ask Claude to expand this briefing</a>`;
+  showSheet();
+  (async()=>{ const top=L.length?[L[0],L[L.length-1]].filter((o,i,a)=>a.indexOf(o)===i):[]; let html="";
+    for(const o of top){ try{ const from=new Date(Date.now()-2*864e5).toISOString().slice(0,10); const n=await api(`/company-news?symbol=${encodeURIComponent(o.x)}&from=${from}&to=${today()}`); const a=(n||[])[0]; if(a) html+=`<a href="${esc(a.url)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:14px;font-weight:600;line-height:1.4;display:block;margin-top:8px"><span class="vtag">${esc(o.x)}</span> ${esc(a.headline)}</a>`; }catch(e){} }
+    const el=$("briefStockNews"); if(el&&S.open==="__brief") el.innerHTML=html; })();
+}
+
+/* ---------- compare ---------- */
+S.cmp={a:"AAPL",b:"SPY",range:"6m"};
+function openCompare(a,b){ S.cmp.a=a; S.cmp.b=b; S.open="__cmp"; renderCompare(); showSheet(); ensureData([a,b,"SPY"],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); }
+function cmpSeries(x,range){ const ser=seriesFor(x,range); if(ser.pts.length<2||!ser.base) return null; return ser.pts.map(p=>[p[0],(p[1]/ser.base-1)*100]); }
+function renderCompare(){
+  const {a,b,range}=S.cmp, opts=[...new Set(S.list.concat(["SPY","QQQ"],Object.keys(THEMES).flatMap(themeSyms),[a,b]))];
+  const sel=(id,v)=>`<select id="${id}" aria-label="Stock">${opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  const A=cmpSeries(a,range), B=cmpSeries(b,range), CA="#FFB547", CB="#6EA8FF";
+  let chart=`<div class="card"><p class="hint">Loading price history… ${S.tdKey?"":"Add the free Twelve Data key for full compare charts."}</p></div>`;
+  if(A&&B){ const W=340,H=190,pt=14,pb=26, all=A.concat(B), t0=Math.max(A[0][0],B[0][0]), t1=Math.max(A[A.length-1][0],B[B.length-1][0]);
+    let lo=Math.min(0,...all.map(p=>p[1])), hi=Math.max(0,...all.map(p=>p[1])); const pad=(hi-lo)*.1||1; lo-=pad; hi+=pad;
+    const X=t=>6+(t-t0)/(t1-t0||1)*(W-12), Y=v=>pt+(1-(v-lo)/(hi-lo))*(H-pt-pb), path=s=>s.filter(p=>p[0]>=t0).map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
+    const la=A[A.length-1][1], lb=B[B.length-1][1];
+    chart=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(a)} vs ${esc(b)} performance"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#566377" stroke-dasharray="3 4"/><text x="4" y="${Y(0)-4}" font-size="8.5" fill="#566377" font-family="JetBrains Mono">0%</text><path d="${path(B)}" fill="none" stroke="${CB}" stroke-width="2.2"/><path d="${path(A)}" fill="none" stroke="${CA}" stroke-width="2.2"/><circle cx="${X(A[A.length-1][0])}" cy="${Y(la)}" r="4" fill="${CA}"/><circle cx="${X(B[B.length-1][0])}" cy="${Y(lb)}" r="4" fill="${CB}"/><text x="6" y="${H-8}" font-size="9.5" fill="#8392A6" font-family="Sora">${new Date(t0).toLocaleDateString([], {month:"short",day:"numeric",year:"2-digit"})}</text><text x="${W-6}" y="${H-8}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">Today</text></svg>
+      <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px"><span><b style="color:${CA}">● ${esc(a)}</b> <span class="num ${tcls(la)}">${fmtP(la)}</span></span><span><b style="color:${CB}">● ${esc(b)}</b> <span class="num ${tcls(lb)}">${fmtP(lb)}</span></span></div>`; }
+  const xa=analytics(a), xb=analytics(b), ma=(S.metric[a]&&S.metric[a].m)||{}, mb=(S.metric[b]&&S.metric[b].m)||{}, pa=S.profile[a]||{}, pb2=S.profile[b]||{};
+  let corr=null; const ca=closes(a), cb=closes(b); if(ca&&cb){ const n=Math.min(ca.length,cb.length,126)-1, ra=[], rb=[]; for(let i=1;i<=n;i++){ ra.push(Math.log(ca[ca.length-i]/ca[ca.length-i-1])); rb.push(Math.log(cb[cb.length-i]/cb[cb.length-i-1])); } const m1=mean(ra), m2=mean(rb); let cv=0,v1=0,v2=0; for(let i=0;i<ra.length;i++){ cv+=(ra[i]-m1)*(rb[i]-m2); v1+=(ra[i]-m1)**2; v2+=(rb[i]-m2)**2; } corr=cv/Math.sqrt(v1*v2); }
+  const cap=v=>v?(v>=1e6?"$"+(v/1e6).toFixed(2)+"T":"$"+(v/1e3).toFixed(0)+"B"):"—";
+  const cm=new Date().getMonth(), sa=(season(a)||[])[cm], sb=(season(b)||[])[cm];
+  // rows: label, value a, value b, formatter, which is better ("hi"/"lo"/null)
+  const R=[["Price",price(a),price(b),v=>fmt$(v),null],["Today",r1d(a),r1d(b),fmtP,"hi"],["1 month",ret(a,"1m"),ret(b,"1m"),fmtP,"hi"],["6 months",ret(a,"6m"),ret(b,"6m"),fmtP,"hi"],["1 year",ret(a,"1y"),ret(b,"1y"),fmtP,"hi"],["YTD",ret(a,"ytd"),ret(b,"ytd"),fmtP,"hi"],
+    ["Signal",xa&&xa.score,xb&&xb.score,(v,i)=>(i?xb:xa)?(i?xb:xa).label:"—","hi"],["RSI",xa&&xa.R,xb&&xb.R,v=>v.toFixed(0),null],["Volatility",xa&&xa.vol*100,xb&&xb.vol*100,v=>v.toFixed(0)+"%","lo"],["Beta",xa&&xa.beta,xb&&xb.beta,v=>v.toFixed(2),null],["Max drop 1Y",xa&&xa.mdd,xb&&xb.mdd,v=>v.toFixed(0)+"%","hi"],
+    ["P/E",ma.peTTM,mb.peTTM,v=>v.toFixed(1),"lo"],["Market cap",pa.cap,pb2.cap,cap,null],["Dividend yield",divInfo(a).yield,divInfo(b).yield,v=>v.toFixed(2)+"%","hi"],[`${MONTHS[cm]} avg (10y)`,sa&&sa.avg,sb&&sb.avg,fmtP,"hi"]];
+  const tbl=R.map(([l,va,vb,f,better])=>{ const ok=v=>v!=null&&!isNaN(v), wa=better&&ok(va)&&ok(vb)&&(better==="hi"?va>vb:va<vb), wb=better&&ok(va)&&ok(vb)&&(better==="hi"?vb>va:vb<va);
+    const fa=ok(va)?f(va,0):"—", fb=ok(vb)?f(vb,1):"—"; return `<tr><td>${l}</td><td class="${wa?"win":""}">${fa}</td><td class="${wb?"win":""}">${fb}</td></tr>`; }).join("");
+  $("sheetIn").innerHTML=`<div class="grab"></div>
+    <div class="d-head"><div><h3>Compare</h3><p>Side by side, same starting line</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="cmp-pick">${sel("cmpA",a)}<span class="vs">VS</span>${sel("cmpB",b)}</div>
+    <div class="rtabs" id="cmpRange" style="grid-template-columns:repeat(5,1fr)">${[["1m","1M"],["3m","3M"],["6m","6M"],["1y","1Y"],["ytd","YTD"]].map(([k,l])=>`<button data-crange="${k}" aria-pressed="${k===range}">${l}</button>`).join("")}</div>
+    ${chart}
+    ${corr!=null?`<p class="hint">Correlation over 6 months: <b style="color:var(--text)">${corr.toFixed(2)}</b>. ${corr>.7?"They move closely together, so owning both adds little diversification.":corr>.3?"They're moderately related.":corr>-.3?"They move fairly independently, which helps diversify.":"They tend to move in opposite directions."}</p>`:""}
+    <div class="card"><table class="ctab"><thead><tr><th></th><th style="color:${CA}">${esc(a)}</th><th style="color:${CB}">${esc(b)}</th></tr></thead><tbody>${tbl}</tbody></table><p class="hint" style="font-size:11px">● marks the better number in each row (higher return, lower volatility, cheaper P/E…).</p></div>
+    <a class="claude" href="${claudeURL(`Compare ${a} vs ${b} as investments right now. Search the web for the latest news. My live data:\n${R.map(([l,va,vb,f])=>`${l}: ${a} ${va!=null&&!isNaN(va)?f(va,0):"n/a"} vs ${b} ${vb!=null&&!isNaN(vb)?f(vb,1):"n/a"}`).join("\n")}\nCover business quality, growth, valuation, risks, and which fits better for a long-term holder.`)}" target="_blank" rel="noopener">✨ Ask Claude: ${esc(a)} or ${esc(b)}?</a>`;
+  $("cmpA").addEventListener("change",e=>{ S.cmp.a=e.target.value; renderCompare(); ensureData([S.cmp.a],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); });
+  $("cmpB").addEventListener("change",e=>{ S.cmp.b=e.target.value; renderCompare(); ensureData([S.cmp.b],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); });
+  $("cmpRange").addEventListener("click",e=>{ const x=e.target.closest("[data-crange]"); if(x){ S.cmp.range=x.dataset.crange; renderCompare(); } });
+}
+
 /* ---------- version history ---------- */
-const APP_VERSION="2.1";
+const APP_VERSION="2.2";
 const CHANGELOG=[
+  {v:"2.2",date:"2026-10-07",title:"Dividends, targets, briefing and compare",items:["Dividends: yield, yearly amount, payout ratio, next ex-dividend and pay dates, and your yearly dividend income","Price targets: tap 🎯 then tap the chart to drop a target line; you get a chime when it's hit","Daily briefing: overnight moves, your biggest movers, this week's earnings, dividends and holidays, alerts you're close to, signals and headlines","Compare: two stocks on one chart from the same starting line, plus a side-by-side scorecard and correlation"]},
   {v:"2.1",date:"2026-10-07",title:"Ideas, seasonality and tracking",items:["Stock ideas: momentum leaders, pullbacks in uptrends, oversold and overheated screens","This month in history: average return and win rate by calendar month over 10 years","Seasonality chart on every stock","Portfolio performance over the past year vs the S&P 500, plus a daily tracking log","Version history (you're reading it)"]},
   {v:"2.0",date:"2026-10-07",title:"Tabs, themes and analytics",items:["Bottom tab bar: Home, Sectors, AI, Space, Trends","Sector rotation heatmap with a risk-on / risk-off reading","AI and Space theme pages grouped by sub-industry","Trends: nuclear & power, quantum, crypto, robotics, semis","Signals, RSI, volatility, beta, max drawdown, golden/death cross","1-month forecast cone on the chart","Ask Claude buttons"]},
   {v:"1.3",date:"2026-10-07",title:"Market context",items:["Live S&P 500, Nasdaq, Dow and Russell tiles","Big daily move alerts","Earnings calendar and market news","S&P 500 comparison line, insider trades, similar companies","Share summary, keep screen on, pull to refresh"]},
@@ -1360,7 +1527,7 @@ function renderTrends(){
     <a class="claude" href="${claudeURL(`Analyze the ${T.title} stock theme right now: ${themeSyms(S.trend).join(", ")}. Search the web for the latest news. Who are the leaders and laggards and why, what are the catalysts and risks, and which names look most stretched?`)}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(T.name)}</a>`;
 }
 function renderTab(){
-  if(S.tab==="home"){ renderSignals(); renderSeasonHome(); renderPortfolio(); const a=$("askList"); if(a) a.href=claudeURL(listPrompt()); return; }
+  if(S.tab==="home"){ renderSignals(); renderSeasonHome(); renderPortfolio(); renderDividends(); const a=$("askList"); if(a) a.href=claudeURL(listPrompt()); return; }
   if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else renderTheme(S.tab);
 }
 function setTab(t){
@@ -1380,6 +1547,7 @@ function wireTabs(){
     if(e.target.closest("#scanAll")){ scanAll(); return; }
     const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
+  $("divWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   ["sigFeed","seaFeed"].forEach(id=>$(id).addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
 }
 
@@ -1389,6 +1557,7 @@ async function start(){
   $("onb").hidden=true; $("app").hidden=false; $("tabbar").hidden=false; wireTabs(); setTab(S.tab);
   S.list.forEach(seedTicks); render(); connect();
   setTimeout(()=>loadMonthly(S.list.concat(["SPY"])),90000);
+  setTimeout(async()=>{ for(const x of S.list) await loadDivs(x); renderDividends(); },20000);
   setInterval(()=>{ if(S.tab==="home"&&!S.open) renderPortfolio(); },60000);
   (async()=>{ for(const x of IDX) await loadQuote(x[0]); renderIdx(); loadMarketNews(); await refreshAll(); await loadDaily(); await loadIntra(); })();
   setInterval(()=>{ if(!document.hidden) loadMarketNews(); renderNews(); },60000);
