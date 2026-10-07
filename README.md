@@ -7,7 +7,8 @@ A real-time stock watchlist for iPhone. Prices stream from [Finnhub](https://fin
 ## Set up on iPhone
 1. Open the link above in Safari.
 2. Paste your free Finnhub API key (from your Finnhub dashboard). It is saved only on your phone.
-3. Tap Share → **Add to Home Screen**.
+3. Optional: tap **Data settings** and add a free [Twelve Data](https://twelvedata.com/register) key for full 1D–1Y charts.
+4. Tap Share → **Add to Home Screen**.
 
 ## Files
 - `index.html` – the whole app
