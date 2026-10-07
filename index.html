@@ -171,6 +171,27 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .stats .num{font-size:13.5px;color:var(--text)}
 .sigpill{font-size:11px;font-weight:700;padding:3px 8px;border-radius:7px;white-space:nowrap}
 .claude{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:14px;font-weight:700;text-decoration:none;color:#1A1206;background:linear-gradient(135deg,#F5C46B,#E8915B);box-shadow:0 6px 24px rgba(232,145,91,.25)}
+.sea{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;align-items:end;height:110px;position:relative}
+.sea div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+.sea i{display:block;width:100%;border-radius:3px 3px 1px 1px;min-height:2px}
+.sea i.neg{border-radius:1px 1px 3px 3px}
+.sea small{font-size:9px;color:var(--faint);font-weight:600}
+.sea .cur small{color:var(--accent)}
+.sea-wrap{display:grid;grid-template-rows:1fr 1fr;height:120px;position:relative}
+.sea-axis{position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--faint);opacity:.5}
+.sbar{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;height:120px;position:relative}
+.sbar .col{position:relative;height:100%}
+.sbar .col i{position:absolute;left:0;right:0;border-radius:3px}
+.sbar .col.cur::after{content:"";position:absolute;inset:-3px -1px;border:1px solid var(--accent);border-radius:5px;opacity:.7}
+.smon{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;font-size:9px;color:var(--faint);font-weight:600;text-align:center}
+.smon .cur{color:var(--accent)}
+.idea h3{margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.idea p{margin:0}
+.ver{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--line)}
+.ver:first-of-type{border-top:0}
+.ver b{font-size:15px}
+.ver ul{margin:0;padding-left:18px;color:#C9D3DF;font-size:13px;line-height:1.55}
+.vtag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:6px;background:var(--accent-bg);color:var(--accent);font-weight:600}
 .rtabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:3px}
 .rtabs button{height:30px;border-radius:9px;font-size:12px;font-weight:600;color:var(--muted)}
 .rtabs button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
@@ -381,6 +402,9 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 
   <div class="section-h"><h2>Signals</h2><small>trend, momentum, RSI</small></div>
   <div class="feed" id="sigFeed"></div>
+  <div id="pfWrap"></div>
+  <div class="section-h"><h2 id="seaTitle">This month in history</h2><small>avg return, last 10 years</small></div>
+  <div class="feed" id="seaFeed"></div>
   <div class="section-h"><h2>Earnings coming up</h2><small>next 30 days</small></div>
   <div class="feed" id="erFeed"><p class="hint" style="padding:10px 0">Loading…</p></div>
   <div class="section-h"><h2>Market news</h2><small id="mnAt"></small></div>
@@ -769,6 +793,7 @@ function renderBanners(){
   const b=[];
   if(S.apiErr==="key") b.push(`<div class="banner warn"><span><b>Finnhub didn't accept the key.</b> Check it and enter it again.</span><button class="x" id="rekey">Fix</button></div>`);
   else if(S.apiErr==="rate") b.push(`<div class="banner warn"><span><b>Slowing down.</b> The free data plan allows 60 lookups a minute; prices keep streaming.</span></div>`);
+  if(LS.get("seenVer","")!==APP_VERSION) b.push(`<div class="banner info"><span>✨ <b>Updated to v${APP_VERSION}.</b> ${esc(CHANGELOG[0].title)}.</span><button class="x" data-open-versions>See</button></div>`);
   if(S.tdErr==="key") b.push(`<div class="banner warn"><span><b>Twelve Data didn't accept the chart key.</b> Check it in settings.</span><button class="x" data-open-settings>Fix</button></div>`);
   else if(!S.tdKey&&!LS.get("tdNag",false)) b.push(`<div class="banner info"><span>📈 <b>Want full charts?</b> Add a free Twelve Data key for 1-day to 1-year price history.</span><button class="x" data-open-settings>Add</button><button class="x" data-dismiss="tdNag" aria-label="Dismiss">✕</button></div>`);
   const st=marketState();
@@ -818,7 +843,7 @@ function renderBoard(){
   $("board").innerHTML=rows.map(x=>{const w=Math.abs(x.r)/mx*50, st=x.r>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row"><b>${esc(x.s)}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(x.r)}">${fmtP(x.r)}</span></div>`;}).join("");
 }
 function renderFoot(){
-  $("foot").innerHTML=`<b>${S.wsState==="on"?"Streaming live trades":"Live stream paused"}</b>${S.lastTick?` · last trade ${ago(S.lastTick)} · ${S.tickCount.toLocaleString()} trades this session`:""}. Live prices from Finnhub${S.tdKey?", price history from Twelve Data":""}. Not investment advice. <button data-open-settings>Data settings</button>`;
+  $("foot").innerHTML=`<b>${S.wsState==="on"?"Streaming live trades":"Live stream paused"}</b>${S.lastTick?` · last trade ${ago(S.lastTick)} · ${S.tickCount.toLocaleString()} trades this session`:""}. Live prices from Finnhub${S.tdKey?", price history from Twelve Data":""}. Not investment advice. <button data-open-settings>Settings</button> · <button data-open-versions>v${APP_VERSION} · What's new</button>`;
 }
 function renderIdx(){
   $("idx").innerHTML=IDX.map(([sym,name])=>{ const p=price(sym), r=r1d(sym); return `<button data-idx="${sym}" aria-label="${name}"><small>${name}</small><span class="num ${tcls(r)}">${fmtP(r)}</span><small class="num" style="font-weight:400">${p?fmt$(p):"—"}</small></button>`; }).join("");
@@ -880,6 +905,7 @@ async function openDetail(s){
     <div id="dChart">${bigChart(s)}</div>
     <div class="perf" id="dPerf">${perfTiles(s)}</div>
     <div id="dAn" style="display:flex;flex-direction:column;gap:16px">${analyticsHTML(s)}</div>
+    <div id="dSea">${seasonHTML(s)}</div>
     <a class="claude" id="askOne" href="${claudeURL(stockPrompt(s))}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(s)}</a>
     <div class="card">${rangeBar(q&&Math.min(q.l,p),q&&Math.max(q.h,p),p,"Day range","rDay")}${rangeBar(m["52WeekLow"],m["52WeekHigh"],p,"52-week range","r52")}
       ${q?kv("Open · Prev close",`${fmt$(q.o)} · ${fmt$(q.pc)}`):""}
@@ -909,7 +935,7 @@ async function openDetail(s){
   $("clearAlert")&&$("clearAlert").addEventListener("click",()=>saveAlert(s,"",""));
   $("saveShares").addEventListener("click",()=>{ const n=parseFloat($("shares").value), c=parseFloat($("cost").value); if(n>0) S.holdings[s]=n; else delete S.holdings[s]; if(n>0&&c>0) S.cost[s]=c; else delete S.cost[s]; LS.set("hold",S.holdings); LS.set("cost",S.cost); $("dPos").innerHTML=posHTML(s); render(); toast(n>0?`Saved ${n} ${s} shares`:`Cleared ${s} position`); });
   showSheet();
-  ensureDaily(s);
+  ensureDaily(s); loadMonthly([s]);
   if(!S.profile[s]||!S.metric[s]) loadStatic(s);
   try{ const r=await api(`/stock/recommendation?symbol=${encodeURIComponent(s)}`); const x=r&&r[0]; if(S.open!==s) return;
     if(!x){ $("recCard").innerHTML=`<h4>Analyst ratings</h4><p class="hint">No analyst ratings available.</p>`; }
@@ -965,7 +991,7 @@ function wire(){
   $("privBtn").addEventListener("click",()=>{ S.priv=!S.priv; LS.set("priv",S.priv); render(); });
   $("soundBtn").addEventListener("click",()=>{ S.sound=!S.sound; LS.set("sound",S.sound); render(); if(S.sound){ beep(); toast("Alert chime on"); } else toast("Alert chime off"); });
   $("banners").addEventListener("click",e=>{ const b=e.target.closest("[data-dismiss]"); if(b){ S.dismissed[b.dataset.dismiss]=1; if(b.dataset.dismiss==="tdNag") LS.set("tdNag",true); renderBanners(); } if(e.target.id==="rekey") forget(); });
-  document.addEventListener("click",e=>{ if(e.target.closest("[data-open-settings]")) openSettings(); });
+  document.addEventListener("click",e=>{ if(e.target.closest("[data-open-settings]")) openSettings(); if(e.target.closest("[data-open-versions]")) openVersions(); });
   $("refreshBtn").addEventListener("click",fullRefresh);
   $("shareBtn").addEventListener("click",shareSummary);
   $("wakeBtn").addEventListener("click",toggleWake);
@@ -1004,6 +1030,7 @@ function openSettings(){
       <p class="hint">Powers the 1D to 1Y charts and exact 1-month, 6-month and 1-year returns. Free: create an account at <a href="https://twelvedata.com/register" target="_blank" rel="noopener" style="color:var(--accent)">twelvedata.com/register</a>, then copy the API key from your dashboard.</p>
       <form class="calc" id="tdForm" style="flex-wrap:nowrap"><input class="field" id="tdIn" placeholder="Twelve Data API key" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:14px" value="${esc(S.tdKey)}"><button class="primary" type="submit">Save</button></form>
       <p class="err" id="tdErrTxt"></p></div>
+    <div class="card"><h4>About</h4><div class="kv"><span>Version</span><b class="num">v${APP_VERSION}</b></div><button class="ghost" data-open-versions style="align-self:flex-start">What's new & version history</button></div>
     <div class="card"><h4>Live prices · Finnhub</h4><p class="hint">Connected. Change it if you made a new key.</p><button class="ghost" id="forget" style="align-self:flex-start">Change Finnhub key</button></div>`;
   $("forget").addEventListener("click",()=>{ closeSheet(); forget(); });
   $("mvChips").addEventListener("click",e=>{ const b=e.target.closest("[data-mv]"); if(!b) return; S.moveAlert=+b.dataset.mv; LS.set("moveAlert",S.moveAlert); toast(S.moveAlert?`Alerts at ${S.moveAlert}% daily moves`:"Big move alerts off"); openSettings(); });
@@ -1035,6 +1062,125 @@ async function toggleWake(){
   render();
 }
 function forget(){ $("tabbar").hidden=true; disconnect(); S.key=""; LS.set("key",""); showOnb(); }
+
+/* ---------- version history ---------- */
+const APP_VERSION="2.1";
+const CHANGELOG=[
+  {v:"2.1",date:"2026-10-07",title:"Ideas, seasonality and tracking",items:["Stock ideas: momentum leaders, pullbacks in uptrends, oversold and overheated screens","This month in history: average return and win rate by calendar month over 10 years","Seasonality chart on every stock","Portfolio performance over the past year vs the S&P 500, plus a daily tracking log","Version history (you're reading it)"]},
+  {v:"2.0",date:"2026-10-07",title:"Tabs, themes and analytics",items:["Bottom tab bar: Home, Sectors, AI, Space, Trends","Sector rotation heatmap with a risk-on / risk-off reading","AI and Space theme pages grouped by sub-industry","Trends: nuclear & power, quantum, crypto, robotics, semis","Signals, RSI, volatility, beta, max drawdown, golden/death cross","1-month forecast cone on the chart","Ask Claude buttons"]},
+  {v:"1.3",date:"2026-10-07",title:"Market context",items:["Live S&P 500, Nasdaq, Dow and Russell tiles","Big daily move alerts","Earnings calendar and market news","S&P 500 comparison line, insider trades, similar companies","Share summary, keep screen on, pull to refresh"]},
+  {v:"1.2",date:"2026-10-07",title:"Trend line fix",items:["Mini charts draw a real trend that matches the return shown"]},
+  {v:"1.1",date:"2026-10-07",title:"Price history",items:["1D to 1Y charts with touch scrubbing and volume (Twelve Data)","Exact 1M / 6M / 1Y / YTD returns from closing prices"]},
+  {v:"1.0",date:"2026-10-07",title:"TickerDeck Live",items:["Real-time prices streamed from Finnhub","Watchlist with add, remove, sort, heatmap and leaderboard","Price alerts, holdings and cost basis, market clock with holidays","Logos, analyst ratings, news and installable iPhone app"]}
+];
+function openVersions(){
+  S.open="__versions";
+  $("sheetIn").innerHTML=`<div class="grab"></div>
+    <div class="d-head"><div><h3>What's new</h3><p>TickerDeck v${APP_VERSION}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="card" style="gap:0">${CHANGELOG.map(c=>`<div class="ver"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="vtag">v${c.v}</span><b>${esc(c.title)}</b><span class="hint" style="margin-left:auto">${new Date(c.date+"T12:00:00").toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"})}</span></div><ul>${c.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>
+    <a class="hint" href="https://github.com/WolfTronixSD/tickerdeck/commits/main" target="_blank" rel="noopener" style="color:var(--accent)">Full change history on GitHub ↗</a>`;
+  LS.set("seenVer",APP_VERSION); renderBanners(); showSheet();
+}
+
+/* ---------- seasonality (monthly closes, 10 years) ---------- */
+S.monthly=LS.get("monthly",{});
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+async function loadMonthly(list){
+  if(!S.tdKey) return;
+  const need=list.filter(x=>!S.monthly[x]||Date.now()-S.monthly[x].at>20*864e5);
+  for(const grp of chunks(need,8)){
+    try{ const res=await td(grp,"interval=1month&outputsize=121");
+      grp.forEach(x=>{ const r=res[x]; if(!r||r.status!=="ok"||!r.values) return;
+        const v=r.values.slice().reverse(), rets=[]; const nowKey=today().slice(0,7);
+        for(let i=1;i<v.length;i++){ const ym=v[i].datetime.slice(0,7); if(ym===nowKey) continue; rets.push([+ym.slice(0,4),+ym.slice(5,7)-1,(+v[i].close/+v[i-1].close-1)*100]); }
+        S.monthly[x]={at:Date.now(),rets}; });
+      try{ LS.set("monthly",S.monthly); }catch(e){}
+      renderSeasonHome(); if(S.open&&S.monthly[S.open]){ const el=$("dSea"); if(el) el.innerHTML=seasonHTML(S.open); }
+    }catch(e){ if(S.tdErr==="key") return; }
+  }
+}
+function season(x){ const m=S.monthly[x]; if(!m||m.rets.length<12) return null;
+  return MONTHS.map((_,i)=>{ const rs=m.rets.filter(r=>r[1]===i).map(r=>r[2]); return rs.length?{avg:mean(rs),win:rs.filter(r=>r>0).length,n:rs.length,best:Math.max(...rs),worst:Math.min(...rs)}:null; }); }
+function seasonHTML(x){
+  const se=season(x), cm=new Date().getMonth();
+  if(!se) return S.tdKey?`<div class="card"><h4>Seasonality</h4><p class="hint">Loading 10 years of monthly prices…</p></div>`:"";
+  const mx=Math.max(...se.map(m=>m?Math.abs(m.avg):0))||1, c=se[cm], yrs=S.monthly[x].rets.length/12;
+  const best=se.map((m,i)=>({m,i})).filter(o=>o.m).sort((a,b)=>b.m.avg-a.m.avg);
+  return `<div class="card"><h4>Seasonality · avg return by month (${Math.round(yrs)} yrs)</h4>
+    ${c?`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-size:17px">${MONTHS[cm]} historically</b><b class="num ${tcls(c.avg)}" style="font-size:17px">${fmtP(c.avg)}</b></div><p class="hint">Up in ${c.win} of ${c.n} years · best ${fmtP(c.best)} · worst ${fmtP(c.worst)}</p>`:""}
+    <div class="sbar">${se.map((m,i)=>{ if(!m) return `<div class="col"></div>`; const h=Math.abs(m.avg)/mx*50; return `<div class="col ${i===cm?"cur":""}" title="${MONTHS[i]} ${fmtP(m.avg)}"><i style="${m.avg>=0?`bottom:50%;height:${h}%`:`top:50%;height:${h}%`};background:${m.avg>=0?"var(--gain)":"var(--loss)"};opacity:${.45+.55*(m.win/m.n)}"></i></div>`; }).join("")}<div class="sea-axis"></div></div>
+    <div class="smon">${MONTHS.map((m,i)=>`<span class="${i===cm?"cur":""}">${m[0]}</span>`).join("")}</div>
+    <p class="hint">Strongest: ${best.slice(0,2).map(o=>`${MONTHS[o.i]} ${fmtP(o.m.avg)}`).join(", ")} · Weakest: ${best.slice(-2).reverse().map(o=>`${MONTHS[o.i]} ${fmtP(o.m.avg)}`).join(", ")}. Brighter bars were up more often.</p></div>`;
+}
+function renderSeasonHome(){
+  const el=$("seaFeed"); if(!el) return; const cm=new Date().getMonth(); $("seaTitle").textContent=`${new Date().toLocaleDateString([], {month:"long"})} in history`;
+  if(!S.tdKey){ el.innerHTML=`<div class="er"><span class="hint" style="flex:1">See how your stocks usually do this month. Needs the free Twelve Data key.</span><button class="minibtn" data-open-settings>Add key</button></div>`; return; }
+  const rows=S.list.concat(["SPY"]).map(x=>({x,m:(season(x)||[])[cm]})).filter(o=>o.m).sort((a,b)=>b.m.avg-a.m.avg);
+  el.innerHTML=rows.length?rows.map(({x,m})=>`<div class="er" data-sym="${esc(x)}" role="button" tabindex="0">${logo(x)}<div style="flex:1;min-width:0"><b>${esc(x==="SPY"?"S&P 500":x)}</b><br><span>Up ${m.win} of ${m.n} years · best ${fmtP(m.best)} · worst ${fmtP(m.worst)}</span></div><b class="num ${tcls(m.avg)}">${fmtP(m.avg)}</b></div>`).join(""):`<p class="hint" style="padding:10px 0">Loading 10 years of monthly prices…</p>`;
+}
+
+/* ---------- portfolio tracking ---------- */
+S.track=LS.get("track",{});
+function snapshot(){
+  const held=S.list.filter(x=>S.holdings[x]>0&&price(x)!=null); if(!held.length) return;
+  const v=held.reduce((a,x)=>a+price(x)*S.holdings[x],0), d=today();
+  S.track[d]={v:+v.toFixed(2),spy:price("SPY")||null,n:held.length}; const keys=Object.keys(S.track).sort(); if(keys.length>400) delete S.track[keys[0]];
+  LS.set("track",S.track);
+}
+function pfSeries(){
+  const held=S.list.filter(x=>S.holdings[x]>0); if(!held.length||held.some(x=>!S.daily[x])) return null;
+  const spy=S.daily.SPY&&S.daily.SPY.c, map={};
+  held.forEach(x=>S.daily[x].c.forEach(b=>{ const k=new Date(b[0]).toDateString(); (map[k]=map[k]||{t:b[0],v:0,n:0}); map[k].v+=b[1]*S.holdings[x]; map[k].n++; }));
+  const pts=Object.values(map).filter(o=>o.n===held.length).sort((a,b)=>a.t-b.t).map(o=>[o.t,o.v]);
+  if(pts.length<30) return null; const nowV=held.reduce((a,x)=>a+(price(x)||0)*S.holdings[x],0); pts.push([Date.now(),nowV]);
+  const sp=spy?spy.map(b=>[b[0],b[1]]).concat(price("SPY")?[[Date.now(),price("SPY")]]:[]):null;
+  return {pts,sp};
+}
+function renderPortfolio(){
+  const el=$("pfWrap"); if(!el) return; snapshot();
+  const held=S.list.filter(x=>S.holdings[x]>0); if(!held.length){ el.innerHTML=""; return; }
+  const P=pfSeries(), log=Object.entries(S.track).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,10);
+  let chart=`<p class="hint">${S.tdKey?"Loading price history…":"Add the free Twelve Data key to see a year of portfolio performance."}</p>`, stats="";
+  if(P){ const W=340,H=150, pts=P.pts, t0=pts[0][0], t1=pts[pts.length-1][0], b0=pts[0][1];
+    const spN=P.sp?(()=>{ const f=P.sp.find(q=>q[0]>=t0)||P.sp[0]; return P.sp.filter(q=>q[0]>=t0).map(q=>[q[0],b0*q[1]/f[1]]); })():null;
+    const all=pts.map(q=>q[1]).concat(spN?spN.map(q=>q[1]):[]); let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*.08; lo-=pad; hi+=pad;
+    const X=t=>4+(t-t0)/(t1-t0)*(W-8), Y=v=>10+(1-(v-lo)/(hi-lo))*(H-30), path=a=>a.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ");
+    const last=pts[pts.length-1][1], r=(last/b0-1)*100, spr=spN&&spN.length?(spN[spN.length-1][1]/b0-1)*100:null, col=r>=0?"#2BD99A":"#FF5C72";
+    let pk=pts[0][1], dd=0; pts.forEach(q=>{ pk=Math.max(pk,q[1]); dd=Math.min(dd,q[1]/pk-1); });
+    chart=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Portfolio value over the past year"><defs><linearGradient id="pfg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".28"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs><path d="${path(pts)} L${X(t1)} ${H-20} L${X(t0)} ${H-20}Z" fill="url(#pfg)"/>${spN?`<path d="${path(spN)}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-dasharray="4 3"/>`:""}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.2"/><text x="6" y="${H-6}" font-size="9.5" fill="#8392A6" font-family="Sora">${new Date(t0).toLocaleDateString([], {month:"short",year:"2-digit"})}</text><text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">Today</text></svg>`;
+    stats=`<div class="stats"><div>Your shares, 1Y<span class="num ${tcls(r)}">${fmtP(r)}</span></div><div>S&amp;P 500, 1Y<span class="num ${tcls(spr)}">${fmtP(spr)}</span></div><div>Biggest drop<span class="num tdown">${(dd*100).toFixed(0)}%</span></div></div>`; }
+  el.innerHTML=`<div class="section-h"><h2>Portfolio performance</h2><small>current shares, past year</small></div>
+    <div class="card" style="background:var(--panel)">${chart}${stats}
+      <p class="hint" style="font-size:11.5px">Shows how today's holdings would have done over the past year (solid) vs the S&amp;P 500 (dashed). Your actual value is logged each day you open the app.</p>
+      ${log.length?`<h4 style="margin-top:4px">Tracking log</h4>${log.map(([d,o],i)=>{ const prev=log[i+1]; const ch=prev?(o.v/prev[1].v-1)*100:null; return `<div class="kv"><span>${new Date(d+"T12:00:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</span><b class="num">${money(fmt$(o.v))}${ch!=null?` <span class="${tcls(ch)}">${fmtP(ch)}</span>`:""}</b></div>`; }).join("")}`:""}</div>`;
+}
+
+/* ---------- stock ideas (screens) ---------- */
+function universe(){ const ex=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX"].concat(SECTORS.map(x=>x[0]))); return [...new Set(S.list.concat(Object.keys(THEMES).flatMap(themeSyms)))].filter(x=>!ex.has(x)); }
+function ideas(){
+  const rows=universe().map(x=>({x,A:analytics(x)})).filter(o=>o.A);
+  const lead=rows.filter(o=>o.A.score>=.8&&o.A.R>=50&&o.A.R<=70).sort((a,b)=>b.A.trendY-a.A.trendY).slice(0,5);
+  const dip=rows.filter(o=>o.A.s200&&o.A.p>o.A.s200&&o.A.s50>o.A.s200&&o.A.R<45).sort((a,b)=>a.A.R-b.A.R).slice(0,5);
+  const over=rows.filter(o=>o.A.R<30).sort((a,b)=>a.A.R-b.A.R).slice(0,5);
+  const hot=rows.filter(o=>o.A.R>75).sort((a,b)=>b.A.R-a.A.R).slice(0,5);
+  const cm=new Date().getMonth(), seas=rows.map(o=>({...o,m:(season(o.x)||[])[cm]})).filter(o=>o.m&&o.m.n>=6&&o.m.win/o.m.n>=.7).sort((a,b)=>b.m.avg-a.m.avg).slice(0,5);
+  return {n:rows.length,total:universe().length,lead,dip,over,hot,seas};
+}
+function ideasHTML(){
+  if(!S.tdKey) return `<div class="card idea"><h3>💡 Stock ideas</h3><p class="hint">Ideas are screened from a year of price history. Add the free Twelve Data key in Settings to turn them on.</p><button class="primary" data-open-settings style="align-self:flex-start">Add key</button></div>`;
+  const I=ideas(), row=(o,why)=>`<div class="er" data-sym="${esc(o.x)}" role="button" tabindex="0">${logo(o.x)}<div style="flex:1;min-width:0"><b>${esc(o.x)}</b><br><span>${why(o)}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><b class="num">${fmt$(price(o.x))}</b><span class="pill ${cls(r1d(o.x))}" style="min-width:0">${fmtP(r1d(o.x))}</span></div></div>`;
+  const block=(icon,title,sub,list,why)=>`<div class="section-h"><h2>${icon} ${title}</h2><small>${sub}</small></div><div class="feed">${list.length?list.map(o=>row(o,why)).join(""):`<p class="hint" style="padding:10px 0">Nothing matches right now.</p>`}</div>`;
+  const cm=MONTHS[new Date().getMonth()];
+  return `<div class="card idea" style="background:linear-gradient(150deg,rgba(255,181,71,.10),rgba(110,168,255,.08));border-color:rgba(255,181,71,.25)"><h3>💡 Stock ideas</h3>
+      <p class="hint">Screens across your watchlist and every theme, using a year of prices. Scanned ${I.n} of ${I.total} stocks.${I.n<I.total?" More fill in as history loads.":""} These are starting points for research, not recommendations.</p>
+      ${I.n<I.total?`<button class="ghost" id="scanAll" style="align-self:flex-start">Scan all ${I.total} stocks</button>`:""}</div>
+    ${I.n===0?"":`${block("🚀","Momentum leaders","strong uptrend, not overheated",I.lead,o=>`${o.A.label} · RSI ${o.A.R.toFixed(0)} · trend ${fmtP(o.A.trendY)}/yr`)}
+    ${block("🎯","Pullbacks in uptrends","above 200-day, RSI dipped",I.dip,o=>`RSI ${o.A.R.toFixed(0)} · ${fmtP((o.A.p/o.A.s50-1)*100)} vs 50-day avg`)}
+    ${block("📅",`Strong in ${cm}`,"up 70%+ of years",I.seas,o=>`${cm} avg ${fmtP(o.m.avg)} · up ${o.m.win} of ${o.m.n} years`)}
+    ${block("🧊","Oversold","RSI under 30",I.over,o=>`RSI ${o.A.R.toFixed(0)} · ${o.A.label}`)}
+    ${block("🔥","Overheated","RSI over 75, be careful chasing",I.hot,o=>`RSI ${o.A.R.toFixed(0)} · ${fmtP((o.A.p/o.A.s50-1)*100)} above 50-day avg`)}`}`;
+}
+async function scanAll(){ toast("Scanning… history loads about 8 stocks a minute"); S.gen=(S.gen||0)+1; const g=S.gen; const u=universe(); await ensureData(u,{daily:true,gen:g}); loadMonthly(u); }
 
 /* ---------- analytics ---------- */
 const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
@@ -1205,6 +1351,7 @@ function renderTrends(){
       <h2>Hot Trends</h2><p>The market's big themes ranked by performance. Tap a theme to dig in.</p>
       <div class="board" style="background:rgba(0,0,0,.25)">${cards.map(c=>{ const mx=Math.max(...cards.map(x=>Math.abs(x.avg||0)))||1, w=Math.abs(c.avg||0)/mx*50, st=(c.avg||0)>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row" style="grid-template-columns:110px 1fr 70px"><b style="font-size:12px">${THEMES[c.k].name}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(c.avg)}">${fmtP(c.avg)}</span></div>`; }).join("")}</div></section>
     ${tfChips()}
+    ${ideasHTML()}
     <div class="section-h"><h2>Today's biggest movers</h2><small>across all trends</small></div>
     <div class="list">${movers.slice(0,3).concat(movers.length>6?movers.slice(-3):[]).map(x=>trowHTML(x.s)).join("")||`<p class="hint" style="padding:14px">Loading…</p>`}</div>
     <div class="chipbar">${TREND_KEYS.map(k=>`<button data-trend="${k}" aria-pressed="${S.trend===k}">${THEMES[k].name}</button>`).join("")}</div>
@@ -1213,7 +1360,7 @@ function renderTrends(){
     <a class="claude" href="${claudeURL(`Analyze the ${T.title} stock theme right now: ${themeSyms(S.trend).join(", ")}. Search the web for the latest news. Who are the leaders and laggards and why, what are the catalysts and risks, and which names look most stretched?`)}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(T.name)}</a>`;
 }
 function renderTab(){
-  if(S.tab==="home"){ renderSignals(); const a=$("askList"); if(a) a.href=claudeURL(listPrompt()); return; }
+  if(S.tab==="home"){ renderSignals(); renderSeasonHome(); renderPortfolio(); const a=$("askList"); if(a) a.href=claudeURL(listPrompt()); return; }
   if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else renderTheme(S.tab);
 }
 function setTab(t){
@@ -1230,9 +1377,10 @@ function wireTabs(){
   ["sectors","ai","space","trends"].forEach(k=>$("tab-"+k).addEventListener("click",e=>{
     const add=e.target.closest("[data-add]"); if(add){ e.stopPropagation(); const s=add.dataset.add; if(S.list.includes(s)) removeSym(s); else addSym(s); setTimeout(renderTab,50); return; }
     const tf=e.target.closest("[data-ttf]"); if(tf){ S.ttf=tf.dataset.ttf; LS.set("ttf",S.ttf); renderTab(); return; }
+    if(e.target.closest("#scanAll")){ scanAll(); return; }
     const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
-  $("sigFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
+  ["sigFeed","seaFeed"].forEach(id=>$(id).addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
 }
 
 /* ---------- boot ---------- */
@@ -1240,6 +1388,8 @@ function showOnb(){ $("app").hidden=true; $("onb").hidden=false; }
 async function start(){
   $("onb").hidden=true; $("app").hidden=false; $("tabbar").hidden=false; wireTabs(); setTab(S.tab);
   S.list.forEach(seedTicks); render(); connect();
+  setTimeout(()=>loadMonthly(S.list.concat(["SPY"])),90000);
+  setInterval(()=>{ if(S.tab==="home"&&!S.open) renderPortfolio(); },60000);
   (async()=>{ for(const x of IDX) await loadQuote(x[0]); renderIdx(); loadMarketNews(); await refreshAll(); await loadDaily(); await loadIntra(); })();
   setInterval(()=>{ if(!document.hidden) loadMarketNews(); renderNews(); },60000);
   setInterval(()=>{ if(!document.hidden) loadIntra(); },60000);
