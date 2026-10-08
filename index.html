@@ -98,7 +98,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .clock-meta div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:3px}
 .clock-meta b{font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
 
-.seg{display:grid;grid-template-columns:repeat(5,1fr);background:rgba(15,21,29,.92);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.seg{display:grid;grid-template-columns:repeat(7,1fr);background:rgba(15,21,29,.92);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .seg button{height:34px;border-radius:10px;font-size:13px;font-weight:600;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
 .idx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -119,8 +119,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .ins{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .ins div{display:flex;justify-content:space-between;gap:8px}
 .ins span{color:var(--muted)}
-.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translate(-50%,-60px);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;z-index:30;transition:transform .2s}
-.ptr.show{transform:translate(-50%,0)}
+.sbar-bg{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:rgba(7,11,16,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:17;pointer-events:none}
+.ptr{position:fixed;left:50%;top:calc(max(env(safe-area-inset-top,0px),44px) + 10px);transform:translate(-50%,calc(-100% - 120px));opacity:0;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;z-index:30;transition:transform .2s}
+.ptr{transition:transform .2s,opacity .2s}
+.ptr.show{transform:translate(-50%,0);opacity:1}
 /* tabs */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(5,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
 .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;color:var(--faint);font-size:10.5px;font-weight:600;letter-spacing:.02em;transition:color .2s}
@@ -345,6 +347,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 </head>
 <body>
 <div class="glow" aria-hidden="true"></div>
+<div class="sbar-bg" aria-hidden="true"></div>
 
 <!-- onboarding -->
 <div class="wrap" id="onb" hidden>
@@ -397,10 +400,12 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 
   <div class="seg" role="group" aria-label="Time frame" id="seg">
     <button data-tf="1d" aria-pressed="true">1D</button>
+    <button data-tf="1w" aria-pressed="false">1W</button>
     <button data-tf="1m" aria-pressed="false">1M</button>
     <button data-tf="6m" aria-pressed="false">6M</button>
-    <button data-tf="1y" aria-pressed="false">1Y</button>
     <button data-tf="ytd" aria-pressed="false">YTD</button>
+    <button data-tf="1y" aria-pressed="false">1Y</button>
+    <button data-tf="5y" aria-pressed="false">5Y</button>
   </div>
 
   <div class="section-h">
@@ -450,14 +455,14 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 <div class="scrim" id="scrim" hidden></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details" hidden><div class="sheet-in" id="sheetIn"></div></div>
 <div class="toast" id="toast" role="status"></div>
-<div class="ptr" id="ptr">Release to refresh</div>
+<div class="ptr" id="ptr" aria-hidden="true">Pull to refresh</div>
 
 <script>
 (() => {
 const API="https://finnhub.io/api/v1";
 const DEFAULT_LIST=["AAPL","MSFT","NVDA","MU","BE","GOOG","AVGO","DELL"];
 const POPULAR=["AMD","TSLA","AMZN","META","TSM","ORCL","PLTR","NFLX","INTC","ARM","SMCI","COST"];
-const TF={"1d":"1 day","1m":"1 month","6m":"6 months","1y":"1 year","ytd":"Year to date"};
+const TF={"1d":"1 day","1w":"1 week","2w":"2 weeks","1m":"1 month","3m":"3 months","6m":"6 months","1y":"1 year","ytd":"Year to date","5y":"5 years","all":"All time"};
 const TD="https://api.twelvedata.com";
 const IDX=[["SPY","S&P 500"],["QQQ","Nasdaq 100"],["DIA","Dow 30"],["IWM","Russell 2K"]];
 const RANGES=[["1d","1D"],["1w","1W"],["2w","2W"],["1m","1M"],["3m","3M"],["6m","6M"],["ytd","YTD"],["1y","1Y"],["5y","5Y"],["all","All"]];
@@ -536,7 +541,7 @@ function rangeStart(range){
   const n=new Date();
   if(range==="ytd") return +new Date(n.getFullYear(),0,1);
   if(range==="mtd") return +new Date(n.getFullYear(),n.getMonth(),1);
-  const days={"1m":30,"3m":91,"6m":182,"1y":365}[range]; return days?Date.now()-days*864e5:null;
+  const days={"1w":7,"2w":14,"1m":30,"3m":91,"6m":182,"1y":365}[range]; return days?Date.now()-days*864e5:null;
 }
 // 1W: 30-minute bars, 2W: hourly bars. Points are spaced evenly so overnight and weekend gaps don't
 // stretch the line; the real time rides along as the 4th value for labels and scrubbing.
@@ -568,7 +573,7 @@ function longSeries(s,range){
 }
 function seriesFor(s,range){
   if(range==="5y"||range==="all") return longSeries(s,range);
-  if(range==="1w"||range==="2w") return shortSeries(s,range);
+  if(range==="1w"||range==="2w"){ const sh=shortSeries(s,range); if(sh.pts.length>=3) return sh; if(!S.daily[s]) return {pts:[],base:null}; }
   const p=price(s), q=S.quotes[s];
   if(range==="1d"){
     let pts=(S.intra[s]||[]).slice();
@@ -597,7 +602,7 @@ function checkpoints(s,range){
 function ret(s,tf){
   if(tf==="1d") return r1d(s);
   if(tf==="5y"||tf==="all"){ const {base}=longSeries(s,tf), p=price(s); return base&&p?(p/base-1)*100:null; }
-  if(tf==="1w"||tf==="2w"){ const {base}=shortSeries(s,tf), p=price(s); return base&&p?(p/base-1)*100:null; }
+  if(tf==="1w"||tf==="2w"){ const {base}=seriesFor(s,tf), p=price(s); return base&&p&&S.daily[s]||base&&p&&S.short[s]?(p/base-1)*100:null; }
   if(S.daily[s]){ const {base}=seriesFor(s,tf), p=price(s); if(base&&p) return (p/base-1)*100; }
   const m=S.metric[s]&&S.metric[s].m; if(!m) return null;
   const k={mtd:"monthToDatePriceReturnDaily","6m":"26WeekPriceReturnDaily","1y":"52WeekPriceReturnDaily",ytd:"yearToDatePriceReturnDaily","3m":"13WeekPriceReturnDaily"}[tf];
@@ -902,7 +907,7 @@ function rowHTML(s){
   return `<button class="row" data-sym="${esc(s)}" aria-label="${esc(s)} details"><span class="del" data-del="${esc(s)}" role="button" aria-label="Remove ${esc(s)}">−</span>${logo(s)}<div class="who"><b>${esc(s)}${bell}${earnChip(s)}</b><span>${esc(name)}${S.holdings[s]?" · "+money(S.holdings[s]+" sh"):""}</span></div>${spark(s)}<div class="px"><span class="num">${fmt$(p)}</span><span class="pill ${cls(r)}">${fmtP(r)}</span></div></button>`;
 }
 function renderList(){ const L=$("list"), l=sorted(); L.className="list"+(S.editing?" editing":""); L.innerHTML=l.length?l.map(rowHTML).join(""):`<div class="row"><div></div><div class="who"><b>Your watchlist is empty</b><span>Tap ＋ to add a stock.</span></div></div>`; }
-function heatColor(r){ if(r==null) return "background:#1A222D;color:#9AA8BA"; const k=Math.min(1,Math.abs(r)/({"1d":4,"1m":15}[S.tf]||80)), a=.18+k*.72; return r>=0?`background:rgba(22,160,108,${a});color:#EFFFF8`:`background:rgba(214,52,76,${a});color:#FFF1F3`; }
+function heatColor(r,tf){ if(r==null) return "background:#1A222D;color:#9AA8BA"; const k=Math.min(1,Math.abs(r)/({"1d":4,"1w":8,"2w":10,"1m":15,"3m":30,"5y":300,"all":1000}[tf||S.tf]||80)), a=.18+k*.72; return r>=0?`background:rgba(22,160,108,${a});color:#EFFFF8`:`background:rgba(214,52,76,${a});color:#FFF1F3`; }
 function renderHeat(){ if(S.view!=="heat") return; $("heat").innerHTML=sorted().map(s=>{const r=ret(s,S.tf);return `<button class="tile" data-sym="${esc(s)}" style="${heatColor(r)}"><b>${esc(s)}</b><div><div class="num">${fmtP(r)}</div><small class="num">${fmt$(price(s))}</small></div></button>`;}).join(""); }
 function renderBoard(){
   const rows=S.list.map(s=>({s,r:ret(s,S.tf)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r); $("boardTf").textContent=TF[S.tf];
@@ -1059,7 +1064,7 @@ let toastT; function toast(m){ const t=$("toast"); t.textContent=m; t.classList.
 
 /* ---------- events ---------- */
 function wire(){
-  $("seg").addEventListener("click",e=>{ const b=e.target.closest("[data-tf]"); if(!b) return; S.tf=b.dataset.tf; LS.set("tf",S.tf); render(); });
+  $("seg").addEventListener("click",e=>{ const b=e.target.closest("[data-tf]"); if(!b) return; S.tf=b.dataset.tf; LS.set("tf",S.tf); render(); loadRange(S.list,S.tf); });
   document.querySelector(".viewtoggle").addEventListener("click",e=>{ const b=e.target.closest("[data-view]"); if(!b) return; S.view=b.dataset.view; LS.set("view",S.view); render(); });
   $("sortSel").addEventListener("change",e=>{ S.sort=e.target.value; LS.set("sort",S.sort); render(); });
   $("editBtn").addEventListener("click",()=>{ S.editing=!S.editing; if(S.editing) S.view="list"; render(); });
@@ -1305,8 +1310,9 @@ function renderCompare(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="2.5";
+const APP_VERSION="2.6";
 const CHANGELOG=[
+  {v:"2.6",date:"2026-10-08",title:"More time frames everywhere",items:["AI, Space, Sectors and Trends pages now have 1D, 1W, 2W, 1M, 3M, 6M, YTD, 1Y, 5Y and All","Home watchlist adds 1W and 5Y","Shows how many stocks have loaded so far on each page","Missing prices retry automatically every 30 seconds","Solid bar behind the iPhone status bar when scrolling"]},
   {v:"2.5",date:"2026-10-08",title:"1-week and 2-week charts",items:["1W chart from 30-minute prices and 2W chart from hourly prices","Nights and weekends are squeezed out so the line only shows trading time, with thin lines between days","Scrubbing shows the day and time of each price"]},
   {v:"2.4",date:"2026-10-07",title:"5-year and all-time charts",items:["5Y chart from weekly closes and All chart from monthly closes since the stock was listed","All uses a log scale when the price has grown a lot, so early years stay readable","S&P 500 comparison line, scrubbing and price targets work on the new ranges"]},
   {v:"2.3",date:"2026-10-07",title:"Index benchmark and moving averages",items:["Compare now adds the stock's own index automatically (Nasdaq 100 for Nasdaq stocks, S&P 500 otherwise) as a third line and column, with beat/trail by how many points","Switch the benchmark to S&P 500, Nasdaq 100, Dow 30 or the stock's sector fund","50-day and 200-day moving average lines on 1M to YTD charts, with tap-to-hide chips showing today's values","Price history extended to ~22 months so the 200-day line covers the full year"]},
@@ -1338,6 +1344,7 @@ async function loadWeekly(list){
     try{ const res=await td(grp,"interval=1week&outputsize=265");
       grp.forEach(x=>{ const r=res[x]; if(r&&r.status==="ok"&&r.values) S.weekly[x]={day:today(),bars:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
       try{ LS.set("weekly",S.weekly); }catch(e){}
+      if(S.tab==="home"&&!S.open) render(); else scheduleTab();
     }catch(e){ if(S.tdErr==="key") return; }
   }
 }
@@ -1351,6 +1358,7 @@ async function loadMonthly(list){
         for(let i=1;i<v.length;i++){ const ym=v[i].datetime.slice(0,7); if(ym===nowKey) continue; rets.push([+ym.slice(0,4),+ym.slice(5,7)-1,(+v[i].close/+v[i-1].close-1)*100]); }
         S.monthly[x]={at:Date.now(),rets,bars:v.map(b=>[parseET(b.datetime),+(+b.close).toPrecision(6),Math.round(+b.volume||0)])}; });
       try{ LS.set("monthly",S.monthly); }catch(e){}
+      if(S.tab==="home"&&!S.open&&S.tf==="all") render(); else scheduleTab();
       renderSeasonHome(); if(S.open&&S.monthly[S.open]){ const el=$("dSea"); if(el) el.innerHTML=seasonHTML(S.open); }
     }catch(e){ if(S.tdErr==="key") return; }
   }
@@ -1555,7 +1563,10 @@ function setActiveSubs(){
   S.extra=want;
 }
 let tabT=null; function scheduleTab(){ if(tabT) return; tabT=setTimeout(()=>{ tabT=null; renderTab(); },400); }
-function tfChips(){ return `<div class="chipbar" data-ttf-bar>${[["1d","1D"],["1m","1M"],["3m","3M"],["6m","6M"],["1y","1Y"],["ytd","YTD"]].map(([k,l])=>`<button data-ttf="${k}" aria-pressed="${S.ttf===k}">${l}</button>`).join("")}</div>`; }
+// 5Y needs weekly closes and All needs monthly closes for each stock; fetched only when picked
+function loadRange(list,tf){ if(tf==="5y") loadWeekly(list.concat(["SPY"])); else if(tf==="all") loadMonthly(list.concat(["SPY"])); }
+function loadNote(list){ const n=list.filter(x=>ret(x,S.ttf)!=null).length; return n<list.length&&S.tdKey?`<p class="hint" style="margin-top:-6px">${TF[S.ttf]||S.ttf} figures for ${n} of ${list.length} stocks so far. The free data plan loads about 8 a minute.</p>`:""; }
+function tfChips(){ return `<div class="chipbar" data-ttf-bar>${[["1d","1D"],["1w","1W"],["2w","2W"],["1m","1M"],["3m","3M"],["6m","6M"],["ytd","YTD"],["1y","1Y"],["5y","5Y"],["all","All"]].map(([k,l])=>`<button data-ttf="${k}" aria-pressed="${S.ttf===k}">${l}</button>`).join("")}</div>`; }
 function themeStats(list,tf){
   const rs=list.map(s=>({s,r:ret(s,tf)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
   const up=rs.filter(x=>x.r>=0).length, avg=rs.length?mean(rs.map(x=>x.r)):null; return {rs,up,dn:rs.length-up,avg,best:rs[0],worst:rs[rs.length-1]};
@@ -1588,15 +1599,15 @@ function renderSectors(){
       <h2>Sector Rotation</h2><p>Where money is flowing across the 11 S&amp;P sectors plus semiconductors, using the sector ETFs.</p>
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big" style="color:${mood==="Risk-on"?"var(--gain)":mood==="Risk-off"?"var(--loss)":"var(--accent)"}">${mood}</span><span class="hint">${have?`growth sectors ${spread>=0?"leading":"trailing"} defensive ones by ${Math.abs(spread).toFixed(2)} pts`:"loading…"}</span></div>
       <div class="row3"><div><b>Leading</b><span class="tup">${tiles[0]&&tiles[0].r!=null?tiles[0].n:"—"}</span></div><div><b>Lagging</b><span class="tdown">${tiles[tiles.length-1]&&tiles[tiles.length-1].r!=null?tiles[tiles.length-1].n:"—"}</span></div><div><b>S&amp;P 500</b><span class="${tcls(ret("SPY",S.ttf))}">${fmtP(ret("SPY",S.ttf))}</span></div></div></section>
-    ${tfChips()}
-    <div class="sgrid">${tiles.map(x=>`<button class="stile" data-sym="${x.s}" style="${heatColor(x.r)}"><b>${x.n}</b><small>${x.s} · ${fmt$(price(x.s))}</small><span class="num">${fmtP(x.r)}</span>${price(x.s)!=null?spark(x.s,S.ttf):""}</button>`).join("")}</div>
+    ${tfChips()}${loadNote(tabSyms(S.tab).filter(x=>x!=="SPY"))}
+    <div class="sgrid">${tiles.map(x=>`<button class="stile" data-sym="${x.s}" style="${heatColor(x.r,S.ttf)}"><b>${x.n}</b><small>${x.s} · ${fmt$(price(x.s))}</small><span class="num">${fmtP(x.r)}</span>${price(x.s)!=null?spark(x.s,S.ttf):""}</button>`).join("")}</div>
     <div class="section-h"><h2>Ranking</h2><small>${TF[S.ttf]||"3 months"}</small></div>
     <div class="board">${tiles.map(x=>{ const w=Math.abs(x.r||0)/mx*50, st=(x.r||0)>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row" style="grid-template-columns:110px 1fr 70px"><b style="font-size:12px">${x.n}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(x.r)}">${fmtP(x.r)}</span></div>`; }).join("")}</div>
     <p class="hint">Growth sectors: tech, semis, consumer discretionary, financials, industrials, communication. Defensive: staples, utilities, health care, real estate.</p>`;
 }
 function renderTheme(t){
   const list=themeSyms(t);
-  $("tab-"+t).innerHTML=heroHTML(t,list)+tfChips()+groupsHTML(t)+`<a class="claude" href="${claudeURL(`Analyze the ${THEMES[t].title} stock theme right now: ${list.join(", ")}. Live data from my tracker:\n${list.filter(s=>price(s)!=null).map(s=>`${s} ${fmt$(price(s))} today ${fmtP(r1d(s))}, 1Y ${fmtP(ret(s,"1y"))}`).join("\n")}\n\nSearch the web for the latest news. Who are the leaders and laggards and why, what are the catalysts and risks, and which names look most stretched?`)}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(THEMES[t].name)}</a>`;
+  $("tab-"+t).innerHTML=heroHTML(t,list)+tfChips()+loadNote(list)+groupsHTML(t)+`<a class="claude" href="${claudeURL(`Analyze the ${THEMES[t].title} stock theme right now: ${list.join(", ")}. Live data from my tracker:\n${list.filter(s=>price(s)!=null).map(s=>`${s} ${fmt$(price(s))} today ${fmtP(r1d(s))}, 1Y ${fmtP(ret(s,"1y"))}`).join("\n")}\n\nSearch the web for the latest news. Who are the leaders and laggards and why, what are the catalysts and risks, and which names look most stretched?`)}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(THEMES[t].name)}</a>`;
 }
 function renderTrends(){
   const all=[...new Set(TREND_KEYS.flatMap(themeSyms))];
@@ -1606,7 +1617,7 @@ function renderTrends(){
   $("tab-trends").innerHTML=`<section class="thero" style="--tbg:radial-gradient(120% 90% at 0% 0%,rgba(255,92,114,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(255,181,71,.22),transparent 60%),#120A0C">
       <h2>Hot Trends</h2><p>The market's big themes ranked by performance. Tap a theme to dig in.</p>
       <div class="board" style="background:rgba(0,0,0,.25)">${cards.map(c=>{ const mx=Math.max(...cards.map(x=>Math.abs(x.avg||0)))||1, w=Math.abs(c.avg||0)/mx*50, st=(c.avg||0)>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row" style="grid-template-columns:110px 1fr 70px"><b style="font-size:12px">${THEMES[c.k].name}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(c.avg)}">${fmtP(c.avg)}</span></div>`; }).join("")}</div></section>
-    ${tfChips()}
+    ${tfChips()}${loadNote(tabSyms(S.tab).filter(x=>x!=="SPY"))}
     ${ideasHTML()}
     <div class="section-h"><h2>Today's biggest movers</h2><small>across all trends</small></div>
     <div class="list">${movers.slice(0,3).concat(movers.length>6?movers.slice(-3):[]).map(x=>trowHTML(x.s)).join("")||`<p class="hint" style="padding:14px">Loading…</p>`}</div>
@@ -1632,7 +1643,7 @@ function wireTabs(){
   $("tabbar").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(b) setTab(b.dataset.tab); });
   ["sectors","ai","space","trends"].forEach(k=>$("tab-"+k).addEventListener("click",e=>{
     const add=e.target.closest("[data-add]"); if(add){ e.stopPropagation(); const s=add.dataset.add; if(S.list.includes(s)) removeSym(s); else addSym(s); setTimeout(renderTab,50); return; }
-    const tf=e.target.closest("[data-ttf]"); if(tf){ S.ttf=tf.dataset.ttf; LS.set("ttf",S.ttf); renderTab(); return; }
+    const tf=e.target.closest("[data-ttf]"); if(tf){ S.ttf=tf.dataset.ttf; LS.set("ttf",S.ttf); renderTab(); loadRange(tabSyms(S.tab),S.ttf); return; }
     if(e.target.closest("#scanAll")){ scanAll(); return; }
     const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
@@ -1646,6 +1657,7 @@ async function start(){
   $("onb").hidden=true; $("app").hidden=false; $("tabbar").hidden=false; wireTabs(); setTab(S.tab);
   S.list.forEach(seedTicks); render(); connect();
   setTimeout(()=>loadMonthly(S.list.concat(["SPY"])),90000);
+  setTimeout(()=>loadRange(S.list,S.tf),70000);
   setTimeout(async()=>{ for(const x of S.list) await loadDivs(x); renderDividends(); },20000);
   setInterval(()=>{ if(S.tab==="home"&&!S.open) renderPortfolio(); },60000);
   (async()=>{ for(const x of IDX) await loadQuote(x[0]); renderIdx(); loadMarketNews(); await refreshAll(); await loadDaily(); await loadIntra(); })();
@@ -1653,6 +1665,8 @@ async function start(){
   setInterval(()=>{ if(!document.hidden) loadIntra(); },60000);
   setInterval(renderClock,1000); renderClock();
   setInterval(()=>{ if(!document.hidden) refreshQuotesOnly(); },120000); // keeps day high/low and prev close fresh
+  setInterval(async()=>{ if(document.hidden) return; const want=(S.tab==="home"?S.list:tabSyms(S.tab)).filter(x=>price(x)==null&&!(S.quotes[x]&&S.quotes[x].bad)).slice(0,8);
+    for(const x of want){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); } if(want.length){ if(S.tab==="home") render(); else scheduleTab(); } },30000);
   setInterval(renderFoot,5000);
 }
 $("keyForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$("keyIn").value.trim(); if(k.length<10){ $("keyErr").textContent="That key looks too short. Copy it from your Finnhub dashboard."; return; }
