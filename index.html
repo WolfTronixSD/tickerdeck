@@ -501,6 +501,8 @@ function ago(ms){ const s=Math.round((Date.now()-ms)/1000); if(s<5) return "just
 /* ---------- data ---------- */
 function price(s){ const l=S.live[s], q=S.quotes[s]; return l&&l.p?l.p:(q&&q.c?q.c:null); }
 function r1d(s){ const q=S.quotes[s], p=price(s); return q&&q.pc&&p?(p/q.pc-1)*100:null; }
+// a usable Twelve Data answer: OK status, has bars, and priced in US dollars
+const okTD=r=>!!(r&&r.status==="ok"&&r.values&&r.values.length&&(!r.meta||!r.meta.currency||r.meta.currency==="USD"));
 // price history from Twelve Data: daily closes for the past year, 5-minute bars for today
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const tdLog=[]; let tdQueue=Promise.resolve();
@@ -509,7 +511,7 @@ function td(syms,params){
   const run=async()=>{
     for(;;){ const now=Date.now(); while(tdLog.length&&now-tdLog[0]>61000) tdLog.shift(); if(tdLog.length+syms.length<=8) break; await sleep(61000-(now-tdLog[0])+250); }
     syms.forEach(()=>tdLog.push(Date.now()));
-    const r=await fetch(`${TD}/time_series?symbol=${syms.map(encodeURIComponent).join(",")}&${params}&apikey=${encodeURIComponent(S.tdKey)}`);
+    const r=await fetch(`${TD}/time_series?symbol=${syms.map(encodeURIComponent).join(",")}&${params}&country=United%20States&apikey=${encodeURIComponent(S.tdKey)}`);
     const j=await r.json();
     if(j&&j.status==="error"){ S.tdErr=j.code===401||j.code===403?"key":j.code===429?"rate":"other"; throw new Error(j.message); }
     S.tdErr=null; return syms.length===1?{[syms[0]]:j}:j; };
@@ -519,11 +521,11 @@ function parseET(str){ const [d,t="16:00:00"]=str.split(" "); const [y,mo,dd]=d.
 const chunks=(a,n)=>{ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; };
 async function loadDaily(force){
   if(!S.tdKey) return;
-  const need=[...new Set(["SPY"].concat(S.list,["QQQ"]))].filter(s=>force||!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v2);
+  const need=[...new Set(["SPY"].concat(S.list,["QQQ"]))].filter(s=>force||!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v3);
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,"interval=1day&outputsize=460");
-      grp.forEach(s=>{ const r=res[s]; if(!r||r.status!=="ok"||!r.values) return;
-        S.daily[s]={day:today(),v2:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
+      grp.forEach(s=>{ const r=res[s]; if(!okTD(r)) return;
+        S.daily[s]={day:today(),v3:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
       LS.set("daily",S.daily); render(); if(S.open&&S.daily[S.open]) redrawChart(true);
     }catch(e){ render(); if(S.tdErr==="key") return; }
   }
@@ -535,18 +537,22 @@ async function loadIntra(){
   intraAt=Date.now();
   for(const grp of chunks([...new Set(["SPY"].concat(S.list))],8)){
     try{ const res=await td(grp,"interval=5min&outputsize=96");
-      grp.forEach(s=>{ const r=res[s]; if(!r||r.status!=="ok"||!r.values) return;
+      grp.forEach(s=>{ const r=res[s]; if(!okTD(r)) return;
         const bars=r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse();
         const lastDay=r.values[0].datetime.slice(0,10); S.intra[s]=bars.filter((b,i)=>r.values[r.values.length-1-i].datetime.slice(0,10)===lastDay); });
       render(); if(S.open) redrawChart(true);
     }catch(e){ if(S.tdErr==="key") return; }
   }
 }
+// midnight (local) of the period's start date: same calendar date N weeks/months/years ago
 function rangeStart(range){
-  const n=new Date();
+  const n=new Date(), d=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   if(range==="ytd") return +new Date(n.getFullYear(),0,1);
   if(range==="mtd") return +new Date(n.getFullYear(),n.getMonth(),1);
-  const days={"1w":7,"2w":14,"1m":30,"3m":91,"6m":182,"1y":365}[range]; return days?Date.now()-days*864e5:null;
+  if(range==="1w") d.setDate(d.getDate()-7); else if(range==="2w") d.setDate(d.getDate()-14);
+  else if(range==="1m") d.setMonth(d.getMonth()-1); else if(range==="3m") d.setMonth(d.getMonth()-3); else if(range==="6m") d.setMonth(d.getMonth()-6);
+  else if(range==="1y") d.setFullYear(d.getFullYear()-1); else if(range==="5y") d.setFullYear(d.getFullYear()-5); else return null;
+  return +d;
 }
 // 1W: 30-minute bars, 2W: hourly bars. Points are spaced evenly so overnight and weekend gaps don't
 // stretch the line; the real time rides along as the 4th value for labels and scrubbing.
@@ -564,14 +570,15 @@ async function loadShort(list,range){
   const need=list.filter(x=>!(S.short[x]&&S.short[x][range]&&Date.now()-S.short[x][range].at<15*60000));
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,range==="1w"?"interval=30min&outputsize=70":"interval=1h&outputsize=75");
-      grp.forEach(x=>{ const r=res[x]; if(r&&r.status==="ok"&&r.values){ (S.short[x]=S.short[x]||{})[range]={at:Date.now(),bars:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; } });
+      grp.forEach(x=>{ const r=res[x]; if(okTD(r)){ (S.short[x]=S.short[x]||{})[range]={at:Date.now(),bars:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; } });
     }catch(e){ if(S.tdErr==="key") return; }
   }
 }
 // [[t, price, volume]] for a range, ending at the live price
 function longSeries(s,range){
   const src=range==="5y"?S.weekly[s]:S.monthly[s]; const bars=src&&src.bars; if(!bars||bars.length<3) return {pts:[],base:null,long:true};
-  const st=range==="5y"?Date.now()-5*365.25*864e5:-Infinity; let i=bars.findIndex(b=>b[0]>=st); if(i<0) return {pts:[],base:null,long:true};
+  const st=range==="5y"?rangeStart("5y"):-Infinity; let i=bars.findIndex(b=>b[0]>=st); if(i<0) return {pts:[],base:null,long:true};
+  if(range==="5y"&&i>0) i--;
   const pts=bars.slice(i).map(b=>[b[0],b[1],b[2]||0]), p=price(s);
   if(p) pts.push([Date.now(),p,0]);
   return {pts,base:pts[0][1],long:true};
@@ -588,8 +595,8 @@ function seriesFor(s,range){
     return {pts,base:q&&q.pc?q.pc:(pts[0]&&pts[0][1])};
   }
   const d=S.daily[s]; if(!d||!d.c||d.c.length<3) return checkpoints(s,range);
-  const st=rangeStart(range); const c=d.c;
-  let i=c.findIndex(b=>b[0]>=st); if(i<0) return {pts:[],base:null};
+  const st=rangeStart(range); const c=d.c; if(st==null) return {pts:[],base:null};
+  let i=c.findIndex(b=>b[0]>=st+864e5); if(i<0) return {pts:[],base:null};
   const baseBar=i>0?c[i-1]:c[i];
   let pts=c.slice(i);
   if(p){ const last=pts[pts.length-1]; if(last&&new Date(last[0]).toDateString()===new Date().toDateString()) pts[pts.length-1]=[last[0],p,last[2]]; else pts.push([Date.now(),p,0]); }
@@ -614,7 +621,7 @@ function ret(s,tf){
   const v=m[k]; if(typeof v!=="number") return null;
   // metric returns are as of last close; roll today's move in so it stays live
   const q=S.quotes[s], p=price(s);
-  return q&&q.pc&&p?((1+v/100)*(p/q.pc)-1)*100:v;
+  return q&&q.pc&&p&&marketState().phase==="open"?((1+v/100)*(p/q.pc)-1)*100:v;
 }
 let queue=Promise.resolve(), lastCall=0; const fhLog=[]; // free plan: 60 calls a minute
 function api(path,opt={}){
@@ -1220,7 +1227,7 @@ async function loadDivs(s){
   const from=new Date(Date.now()-760*864e5).toISOString().slice(0,10), to=new Date(Date.now()+150*864e5).toISOString().slice(0,10);
   let list=null, src="";
   try{ const r=await api(`/stock/dividend?symbol=${encodeURIComponent(s)}&from=${from}&to=${to}`,{soft:true}); if(Array.isArray(r)){ list=r.map(d=>({ex:d.date,pay:d.payDate||null,amt:+d.amount})).filter(d=>d.ex); src="Finnhub"; } }catch(e){}
-  if(!list&&S.tdKey){ try{ const r=await fetch(`${TD}/dividends?symbol=${encodeURIComponent(s)}&start_date=${from}&apikey=${encodeURIComponent(S.tdKey)}`).then(x=>x.json()); if(r&&Array.isArray(r.dividends)){ list=r.dividends.map(d=>({ex:d.ex_date||d.payment_date,pay:d.payment_date||null,amt:+d.amount})).filter(d=>d.ex); src="Twelve Data"; } }catch(e){} }
+  if(!list&&S.tdKey){ try{ const r=await fetch(`${TD}/dividends?symbol=${encodeURIComponent(s)}&start_date=${from}&country=United%20States&apikey=${encodeURIComponent(S.tdKey)}`).then(x=>x.json()); if(r&&Array.isArray(r.dividends)){ list=r.dividends.map(d=>({ex:d.ex_date||d.payment_date,pay:d.payment_date||null,amt:+d.amount})).filter(d=>d.ex); src="Twelve Data"; } }catch(e){} }
   S.divs[s]={at:Date.now(),list:list?list.sort((a,b)=>a.ex.localeCompare(b.ex)):null,src}; LS.set("divs",S.divs);
 }
 // next ex-dividend date: announced if available, else estimated from the usual spacing between past payments
@@ -1346,8 +1353,9 @@ function renderCompare(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="2.7";
+const APP_VERSION="2.8";
 const CHANGELOG=[
+  {v:"2.8",date:"2026-10-08",title:"Accurate long-range returns",items:["Price history now always comes from the US listing in US dollars; some tickers also trade abroad and could load the wrong market","1W to 5Y periods use the same calendar date (e.g. 6 months ago today) and compare to the close on that date, matching Yahoo Finance","5Y starts from the right week","Without the history key, returns no longer count the last day's move twice outside market hours","Cached history reloads once to pick up the fixes"]},
   {v:"2.7",date:"2026-10-08",title:"Pre-market and after hours",items:["Pre-market (4:00–9:30 AM ET) and after-hours (4:00–8:00 PM ET) prices shown separately under the regular close, like CNN","PRE / AH lines on every watchlist row and the index tiles","Pre-market and after-hours movers list on Home and in the daily briefing","Stock page shows the extended-hours price, change and time of the last trade","Turn it off in Settings"]},
   {v:"2.6",date:"2026-10-08",title:"More time frames everywhere",items:["AI, Space, Sectors and Trends pages now have 1D, 1W, 2W, 1M, 3M, 6M, YTD, 1Y, 5Y and All","Home watchlist adds 1W and 5Y","Shows how many stocks have loaded so far on each page","Missing prices retry automatically every 30 seconds","Solid bar behind the iPhone status bar when scrolling"]},
   {v:"2.5",date:"2026-10-08",title:"1-week and 2-week charts",items:["1W chart from 30-minute prices and 2W chart from hourly prices","Nights and weekends are squeezed out so the line only shows trading time, with thin lines between days","Scrubbing shows the day and time of each price"]},
@@ -1376,10 +1384,10 @@ const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 S.weekly=LS.get("weekly",{});
 async function loadWeekly(list){
   if(!S.tdKey) return;
-  const need=list.filter(x=>!S.weekly[x]||S.weekly[x].day!==today());
+  const need=list.filter(x=>!S.weekly[x]||S.weekly[x].day!==today()||!S.weekly[x].v3);
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,"interval=1week&outputsize=265");
-      grp.forEach(x=>{ const r=res[x]; if(r&&r.status==="ok"&&r.values) S.weekly[x]={day:today(),bars:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
+      grp.forEach(x=>{ const r=res[x]; if(okTD(r)) S.weekly[x]={day:today(),v3:1,bars:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
       try{ LS.set("weekly",S.weekly); }catch(e){}
       if(S.tab==="home"&&!S.open) render(); else scheduleTab();
     }catch(e){ if(S.tdErr==="key") return; }
@@ -1387,13 +1395,13 @@ async function loadWeekly(list){
 }
 async function loadMonthly(list){
   if(!S.tdKey) return;
-  const need=list.filter(x=>!S.monthly[x]||!S.monthly[x].bars||Date.now()-S.monthly[x].at>20*864e5);
+  const need=list.filter(x=>!S.monthly[x]||!S.monthly[x].bars||!S.monthly[x].v3||Date.now()-S.monthly[x].at>20*864e5);
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,"interval=1month&outputsize=5000");
-      grp.forEach(x=>{ const r=res[x]; if(!r||r.status!=="ok"||!r.values) return;
+      grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) return;
         const v=r.values.slice().reverse(), rets=[]; const nowKey=today().slice(0,7);
         for(let i=1;i<v.length;i++){ const ym=v[i].datetime.slice(0,7); if(ym===nowKey) continue; rets.push([+ym.slice(0,4),+ym.slice(5,7)-1,(+v[i].close/+v[i-1].close-1)*100]); }
-        S.monthly[x]={at:Date.now(),rets,bars:v.map(b=>[parseET(b.datetime),+(+b.close).toPrecision(6),Math.round(+b.volume||0)])}; });
+        S.monthly[x]={at:Date.now(),v3:1,rets,bars:v.map(b=>[parseET(b.datetime),+(+b.close).toPrecision(6),Math.round(+b.volume||0)])}; });
       try{ LS.set("monthly",S.monthly); }catch(e){}
       if(S.tab==="home"&&!S.open&&S.tf==="all") render(); else scheduleTab();
       renderSeasonHome(); if(S.open&&S.monthly[S.open]){ const el=$("dSea"); if(el) el.innerHTML=seasonHTML(S.open); }
@@ -1589,10 +1597,10 @@ async function ensureData(list,{daily=false,gen=null}={}){
   const need=list.filter(s=>{ const q=S.quotes[s]; return !q||!q.at||Date.now()-q.at>120000; });
   for(const s of need){ if(!live()) return; await loadQuote(s); if(S.quotes[s]) S.quotes[s].at=Date.now(); scheduleTab(); }
   for(const s of list){ if(!live()) return; if(!loading[s]){ loading[s]=1; await loadStatic(s,{metric:!S.tdKey}); loading[s]=0; scheduleTab(); } }
-  if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v2);
-    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(r&&r.status==="ok"&&r.values) S.daily[s]={day:today(),v2:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
+  if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v3);
+    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(okTD(r)) S.daily[s]={day:today(),v3:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
 }
-async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v2)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); done(); } }
+async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v3)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); done(); } }
 function setActiveSubs(){
   const want=new Set(tabSyms(S.tab));
   S.extra.forEach(s=>{ if(!want.has(s)&&!S.list.includes(s)&&!IDX.some(x=>x[0]===s)) subscribe(s,false); });
