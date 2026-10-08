@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TickerDeck">
+<meta name="apple-mobile-web-app-title" content="GoldRabbit">
 <meta name="theme-color" content="#070B10">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<title>TickerDeck Live</title>
+<title>GoldRabbit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -41,8 +41,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .wrap>*{position:relative;z-index:1}
 
 header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px}
-.brand h1{margin:0;font-size:27px;font-weight:800;letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
+.brand h1{margin:0;font-size:23px;font-weight:800;letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
 .brand h1 span{color:var(--accent)}
+.hver{font:600 10.5px var(--mono);color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 6px;letter-spacing:0;align-self:center}
 .live{font:700 10px var(--display);letter-spacing:.12em;padding:3px 7px;border-radius:6px;background:var(--panel2);color:var(--faint);border:1px solid var(--line);display:inline-flex;align-items:center;gap:5px}
 .live i{width:6px;height:6px;border-radius:50%;background:currentColor}
 .live.on{color:var(--gain);border-color:rgba(43,217,154,.35);background:var(--gain-bg)}
@@ -52,7 +53,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:3px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
 .dot.open{background:var(--gain)} .dot.ext{background:var(--accent)}
-.hdr-actions{display:flex;gap:6px}
+.hdr-actions{display:flex;gap:5px}
+.hdr-actions .iconbtn{width:36px;height:36px}
 .iconbtn{width:40px;height:40px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-size:18px;flex:none}
 .iconbtn svg{width:19px;height:19px}
 .iconbtn.on{background:var(--accent);color:#1b1204;border-color:var(--accent)}
@@ -356,7 +358,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 <!-- onboarding -->
 <div class="wrap" id="onb" hidden>
   <div class="onb">
-    <h2>Ticker<span>Deck</span> Live</h2>
+    <h2>Gold<span>Rabbit</span></h2>
     <p class="hint" style="font-size:15px">Real-time stock prices that stream in while the app is open. It runs on a free market-data key from Finnhub, and the key stays on this phone.</p>
     <ol class="steps">
       <li><span>Open <a href="https://finnhub.io/register" target="_blank" rel="noopener">finnhub.io/register</a> and create a free account.</span></li>
@@ -368,7 +370,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
       <button class="primary" type="submit">Start</button>
     </form>
     <p class="err" id="keyErr"></p>
-    <p class="hint">Tip: in Safari, tap Share, then <b>Add to Home Screen</b>, and TickerDeck opens full screen like an app.</p>
+    <p class="hint">Tip: in Safari, tap Share, then <b>Add to Home Screen</b>, and GoldRabbit opens full screen like an app.</p>
   </div>
 </div>
 
@@ -376,7 +378,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 <div class="wrap" id="app" hidden>
   <header class="top">
     <div class="brand">
-      <h1><span style="color:var(--text)">Ticker<span>Deck</span></span><em class="live" id="liveTag"><i></i><b id="liveTxt">OFF</b></em></h1>
+      <h1><span style="color:var(--text)">Gold<span>Rabbit</span></span><button class="hver" data-open-versions aria-label="Version and what's new" id="hVer">v</button><em class="live" id="liveTag"><i></i><b id="liveTxt">OFF</b></em></h1>
       <div class="status"><i class="dot" id="mktDot"></i><span id="mktText">Checking market…</span></div>
     </div>
     <div class="hdr-actions">
@@ -511,8 +513,11 @@ function td(syms,params){
   const run=async()=>{
     for(;;){ const now=Date.now(); while(tdLog.length&&now-tdLog[0]>61000) tdLog.shift(); if(tdLog.length+syms.length<=8) break; await sleep(61000-(now-tdLog[0])+250); }
     syms.forEach(()=>tdLog.push(Date.now()));
-    const r=await fetch(`${TD}/time_series?symbol=${syms.map(encodeURIComponent).join(",")}&${params}&country=United%20States&apikey=${encodeURIComponent(S.tdKey)}`);
-    const j=await r.json();
+    // adjust=splits: prices corrected for stock splits but not lowered for past dividends, matching
+    // Yahoo's price charts. If the API rejects an option, drop it and try again.
+    const url=()=>`${TD}/time_series?symbol=${syms.map(encodeURIComponent).join(",")}&${params}${S.noCountry?"":"&country=United%20States"}${S.noAdjust?"":"&adjust=splits"}&apikey=${encodeURIComponent(S.tdKey)}`;
+    let j=await (await fetch(url())).json();
+    for(let k=0;k<2&&j&&j.status==="error"&&/adjust|country/i.test(j.message||"");k++){ if(/adjust/i.test(j.message)) S.noAdjust=true; else S.noCountry=true; j=await (await fetch(url())).json(); }
     if(j&&j.status==="error"){ S.tdErr=j.code===401||j.code===403?"key":j.code===429?"rate":"other"; throw new Error(j.message); }
     S.tdErr=null; return syms.length===1?{[syms[0]]:j}:j; };
   const p=tdQueue.then(run,run); tdQueue=p.catch(()=>{}); return p;
@@ -521,11 +526,11 @@ function parseET(str){ const [d,t="16:00:00"]=str.split(" "); const [y,mo,dd]=d.
 const chunks=(a,n)=>{ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; };
 async function loadDaily(force){
   if(!S.tdKey) return;
-  const need=[...new Set(["SPY"].concat(S.list,["QQQ"]))].filter(s=>force||!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v3);
+  const need=[...new Set(["SPY"].concat(S.list,["QQQ"]))].filter(s=>force||!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4);
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,"interval=1day&outputsize=460");
       grp.forEach(s=>{ const r=res[s]; if(!okTD(r)) return;
-        S.daily[s]={day:today(),v3:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
+        S.daily[s]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
       LS.set("daily",S.daily); render(); if(S.open&&S.daily[S.open]) redrawChart(true);
     }catch(e){ render(); if(S.tdErr==="key") return; }
   }
@@ -563,7 +568,7 @@ function shortSeries(s,range){
   let last=bars[bars.length-1][0]; (S.ticks[s]&&S.ticks[s].pts||[]).forEach(t=>{ if(t[0]>=last+step){ bars.push([t[0],t[1],0]); last=t[0]; } });
   if(p) bars.push([Math.max(Date.now(),last+1),p,0]);
   const t0=bars[0][0];
-  return {pts:bars.map((b,i)=>[t0+i*step,b[1],b[2]||0,b[0]]),base:bars[0][1],short:true};
+  return {pts:bars.map((b,i)=>[t0+i*step,b[1],b[2]||0,b[0]]),base:bars[0][1],baseT:bars[0][0],short:true};
 }
 async function loadShort(list,range){
   if(!S.tdKey) return;
@@ -581,7 +586,7 @@ function longSeries(s,range){
   if(range==="5y"&&i>0) i--;
   const pts=bars.slice(i).map(b=>[b[0],b[1],b[2]||0]), p=price(s);
   if(p) pts.push([Date.now(),p,0]);
-  return {pts,base:pts[0][1],long:true};
+  return {pts,base:pts[0][1],baseT:pts[0][0],long:true};
 }
 function seriesFor(s,range){
   if(range==="5y"||range==="all") return longSeries(s,range);
@@ -600,7 +605,7 @@ function seriesFor(s,range){
   const baseBar=i>0?c[i-1]:c[i];
   let pts=c.slice(i);
   if(p){ const last=pts[pts.length-1]; if(last&&new Date(last[0]).toDateString()===new Date().toDateString()) pts[pts.length-1]=[last[0],p,last[2]]; else pts.push([Date.now(),p,0]); }
-  return {pts:[baseBar].concat(pts),base:baseBar[1]};
+  return {pts:[baseBar].concat(pts),base:baseBar[1],baseT:baseBar[0]};
 }
 // without price history, connect Finnhub's return figures (1Y, 6M, 3M, YTD, MTD ago) into a coarse line
 function checkpoints(s,range){
@@ -981,6 +986,7 @@ function render(){
   $("wakeBtn").classList.toggle("on",!!S.wake);
   $("privBtn").classList.toggle("on",S.priv); $("privBtn").setAttribute("aria-pressed",S.priv);
   $("soundBtn").classList.toggle("on",S.sound); $("soundBtn").setAttribute("aria-pressed",S.sound);
+  const hv=$("hVer"); if(hv) hv.textContent="v"+APP_VERSION;
   renderLive(); renderBanners(); hero(); tape(); renderList(); renderHeat(); renderBoard(); renderFoot();
   document.querySelectorAll("#seg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tf===S.tf));
   document.querySelectorAll(".viewtoggle button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===S.view));
@@ -989,17 +995,30 @@ function render(){
 }
 
 /* ---------- detail ---------- */
-function rangeBar(lo,hi,v,label,id){ if(!(lo&&hi&&v!=null)) return ""; const pct=Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100));
+function rangeBar(lo,hi,v,label,id){ if(!(lo&&hi&&v!=null)||hi<=lo) return ""; const pct=Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100));
   return `<div class="range"><div class="range-lab"><span>${label}</span><span class="num" id="${id}P">${pct.toFixed(0)}% of range</span></div><div class="range-bar"><i id="${id}" style="left:${pct}%"></i></div><div class="range-lab num"><span>${fmt$(lo)}</span><span>${fmt$(hi)}</span></div></div>`; }
-function perfTiles(s){ return [["1D","1d"],[S.daily[s]?"1M":"MTD",S.daily[s]?"1m":"mtd"],["3M","3m"],["6M","6m"],["1Y","1y"]].map(([l,k])=>{const v=ret(s,k);return `<div><b>${l}</b><span class="num ${tcls(v)}">${fmtP(v)}</span></div>`;}).join(""); }
+function perfTiles(s){ return [["1D","1d"],[S.daily[s]?"1M":"MTD",S.daily[s]?"1m":"mtd"],["3M","3m"],["6M","6m"],["1Y","1y"]].map(([l,k])=>{const v=ret(s,k), est=k!=="1d"&&!S.daily[s]&&v!=null;return `<div><b>${l}</b><span class="num ${tcls(v)}">${est?"≈":""}${fmtP(v)}</span></div>`;}).join(""); }
+// where each return comes from: start date, start price, now, and the data source
+function retAudit(s){
+  const p=price(s); if(p==null) return "";
+  const rows=[["1W","1w"],["1M","1m"],["3M","3m"],["6M","6m"],["YTD","ytd"],["1Y","1y"],["5Y","5y"]].map(([l,k])=>{
+    const ser=seriesFor(s,k), v=ret(s,k);
+    if(ser&&ser.base&&ser.baseT&&!ser.approx) return `<div class="kv"><span>${l} · from ${fmt$(ser.base)} on ${new Date(ser.baseT).toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"})}</span><b class="num ${tcls(v)}">${fmtP(v)}</b></div>`;
+    if(v!=null) return `<div class="kv"><span>${l} · ≈ Finnhub ${k==="6m"?"26-week":k==="1y"?"52-week":k==="3m"?"13-week":k==="ytd"?"year-to-date":""} figure</span><b class="num ${tcls(v)}">≈${fmtP(v)}</b></div>`;
+    return ""; }).join("");
+  return rows?`<div class="card"><h4>How these returns are calculated</h4>
+    <p class="hint">Current price ${fmt$(p)} compared with the closing price on the same calendar date in the past (the last close before it on weekends and holidays).</p>${rows}
+    <p class="hint" style="font-size:11.5px">Price change only, adjusted for stock splits, like Yahoo Finance charts. Yahoo's "Performance Overview" box adds dividends, so it reads slightly higher for dividend payers. ≈ means price history hasn't loaded yet and Finnhub's own figure is shown.</p></div>`:"";
+}
 function patchDetail(s){
   const p=price(s), q=S.quotes[s]; if(p==null) return;
   const big=$("dBig"); if(big){ const old=parseFloat(big.dataset.v); big.textContent=fmt$(p); big.dataset.v=p; if(old&&old!==p){ big.classList.remove("tu","td"); void big.offsetWidth; big.classList.add(p>old?"tu":"td"); setTimeout(()=>big.classList.remove("tu","td"),350);} }
   const r=r1d(s), pill=$("dPill"); if(pill){ pill.textContent=fmtP(r)+(marketState().phase==="open"?" today":" at close"); pill.className="pill "+cls(r); }
   const dx=$("dExt"); if(dx) dx.innerHTML=extDetail(s);
   const pf=$("dPerf"); if(pf) pf.innerHTML=perfTiles(s);
+  const au=$("dAudit"); if(au&&!S.scrubbing&&Date.now()-(au._t||0)>3000){ au._t=Date.now(); au.innerHTML=retAudit(s); }
   redrawChart(false);
-  const m=S.metric[s]&&S.metric[s].m||{}; const upd=(id,lo,hi)=>{ const el=$(id); if(el&&lo&&hi){ const pct=Math.max(0,Math.min(100,(p-lo)/(hi-lo)*100)); el.style.left=pct+"%"; $(id+"P").textContent=pct.toFixed(0)+"% of range"; } };
+  const m=S.metric[s]&&S.metric[s].m||{}; const upd=(id,lo,hi)=>{ const el=$(id); if(el&&lo&&hi&&hi>lo){ const pct=Math.max(0,Math.min(100,(p-lo)/(hi-lo)*100)); el.style.left=pct+"%"; $(id+"P").textContent=pct.toFixed(0)+"% of range"; } };
   upd("r52",m["52WeekLow"],m["52WeekHigh"]); if(q) upd("rDay",Math.min(q.l,p),Math.max(q.h,p));
   const pos=$("dPos"); if(pos) pos.innerHTML=posHTML(s);
 }
@@ -1019,6 +1038,7 @@ async function openDetail(s){
     <div class="perf" id="dPerf">${perfTiles(s)}</div>
     <div id="dAn" style="display:flex;flex-direction:column;gap:16px">${analyticsHTML(s)}</div>
     <div id="dSea">${seasonHTML(s)}</div>
+    <div id="dAudit">${retAudit(s)}</div>
     <div id="dDiv">${divHTML(s)}</div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><a class="claude" id="askOne" href="${claudeURL(stockPrompt(s))}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(s)}</a><button class="ghost" style="height:46px;border-radius:14px" data-compare="${esc(s)}">⇄ Compare</button></div>
     <div class="card">${rangeBar(q&&Math.min(q.l,p),q&&Math.max(q.h,p),p,"Day range","rDay")}${rangeBar(m["52WeekLow"],m["52WeekHigh"],p,"52-week range","r52")}
@@ -1177,13 +1197,13 @@ function summaryText(){
 }
 async function shareSummary(){
   const text=summaryText();
-  try{ if(navigator.share){ await navigator.share({title:"TickerDeck",text}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  try{ if(navigator.share){ await navigator.share({title:"GoldRabbit",text}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
   try{ await navigator.clipboard.writeText(text); toast("Summary copied"); }catch(e){ toast("Couldn't share on this device"); }
 }
 async function toggleWake(){
   if(S.wake){ S.wakeWant=false; try{ await S.wake.release(); }catch(e){} S.wake=null; toast("Screen can sleep again"); render(); return; }
   if(!("wakeLock" in navigator)){ toast("Keep-awake isn't supported on this device"); return; }
-  try{ S.wake=await navigator.wakeLock.request("screen"); S.wakeWant=true; S.wake.addEventListener("release",()=>{ S.wake=null; render(); }); toast("Screen stays on while TickerDeck is open"); }catch(e){ toast("Couldn't keep the screen on"); }
+  try{ S.wake=await navigator.wakeLock.request("screen"); S.wakeWant=true; S.wake.addEventListener("release",()=>{ S.wake=null; render(); }); toast("Screen stays on while GoldRabbit is open"); }catch(e){ toast("Couldn't keep the screen on"); }
   render();
 }
 function forget(){ $("tabbar").hidden=true; disconnect(); S.key=""; LS.set("key",""); showOnb(); }
@@ -1353,8 +1373,9 @@ function renderCompare(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="2.8";
+const APP_VERSION="2.9";
 const CHANGELOG=[
+  {v:"2.9",date:"2026-10-08",title:"GoldRabbit",items:["TickerDeck is now GoldRabbit, with a new icon","Version number shown next to the name; tap it for what's new","Price history requested split-adjusted only (no dividend adjustment) to match Yahoo Finance charts","New \"How these returns are calculated\" card on each stock shows the exact start date and price behind 1W to 5Y","≈ marks returns that are still Finnhub estimates while history loads"]},
   {v:"2.8",date:"2026-10-08",title:"Accurate long-range returns",items:["Price history now always comes from the US listing in US dollars; some tickers also trade abroad and could load the wrong market","1W to 5Y periods use the same calendar date (e.g. 6 months ago today) and compare to the close on that date, matching Yahoo Finance","5Y starts from the right week","Without the history key, returns no longer count the last day's move twice outside market hours","Cached history reloads once to pick up the fixes"]},
   {v:"2.7",date:"2026-10-08",title:"Pre-market and after hours",items:["Pre-market (4:00–9:30 AM ET) and after-hours (4:00–8:00 PM ET) prices shown separately under the regular close, like CNN","PRE / AH lines on every watchlist row and the index tiles","Pre-market and after-hours movers list on Home and in the daily briefing","Stock page shows the extended-hours price, change and time of the last trade","Turn it off in Settings"]},
   {v:"2.6",date:"2026-10-08",title:"More time frames everywhere",items:["AI, Space, Sectors and Trends pages now have 1D, 1W, 2W, 1M, 3M, 6M, YTD, 1Y, 5Y and All","Home watchlist adds 1W and 5Y","Shows how many stocks have loaded so far on each page","Missing prices retry automatically every 30 seconds","Solid bar behind the iPhone status bar when scrolling"]},
@@ -1367,12 +1388,12 @@ const CHANGELOG=[
   {v:"1.3",date:"2026-10-07",title:"Market context",items:["Live S&P 500, Nasdaq, Dow and Russell tiles","Big daily move alerts","Earnings calendar and market news","S&P 500 comparison line, insider trades, similar companies","Share summary, keep screen on, pull to refresh"]},
   {v:"1.2",date:"2026-10-07",title:"Trend line fix",items:["Mini charts draw a real trend that matches the return shown"]},
   {v:"1.1",date:"2026-10-07",title:"Price history",items:["1D to 1Y charts with touch scrubbing and volume (Twelve Data)","Exact 1M / 6M / 1Y / YTD returns from closing prices"]},
-  {v:"1.0",date:"2026-10-07",title:"TickerDeck Live",items:["Real-time prices streamed from Finnhub","Watchlist with add, remove, sort, heatmap and leaderboard","Price alerts, holdings and cost basis, market clock with holidays","Logos, analyst ratings, news and installable iPhone app"]}
+  {v:"1.0",date:"2026-10-07",title:"First release (as TickerDeck Live)",items:["Real-time prices streamed from Finnhub","Watchlist with add, remove, sort, heatmap and leaderboard","Price alerts, holdings and cost basis, market clock with holidays","Logos, analyst ratings, news and installable iPhone app"]}
 ];
 function openVersions(){
   S.open="__versions";
   $("sheetIn").innerHTML=`<div class="grab"></div>
-    <div class="d-head"><div><h3>What's new</h3><p>TickerDeck v${APP_VERSION}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="d-head"><div><h3>What's new</h3><p>GoldRabbit v${APP_VERSION}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
     <div class="card" style="gap:0">${CHANGELOG.map(c=>`<div class="ver"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="vtag">v${c.v}</span><b>${esc(c.title)}</b><span class="hint" style="margin-left:auto">${new Date(c.date+"T12:00:00").toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"})}</span></div><ul>${c.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>
     <a class="hint" href="https://github.com/WolfTronixSD/tickerdeck/commits/main" target="_blank" rel="noopener" style="color:var(--accent)">Full change history on GitHub ↗</a>`;
   LS.set("seenVer",APP_VERSION); renderBanners(); showSheet();
@@ -1384,10 +1405,10 @@ const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 S.weekly=LS.get("weekly",{});
 async function loadWeekly(list){
   if(!S.tdKey) return;
-  const need=list.filter(x=>!S.weekly[x]||S.weekly[x].day!==today()||!S.weekly[x].v3);
+  const need=list.filter(x=>!S.weekly[x]||S.weekly[x].day!==today()||!S.weekly[x].v4);
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,"interval=1week&outputsize=265");
-      grp.forEach(x=>{ const r=res[x]; if(okTD(r)) S.weekly[x]={day:today(),v3:1,bars:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
+      grp.forEach(x=>{ const r=res[x]; if(okTD(r)) S.weekly[x]={day:today(),v4:1,bars:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
       try{ LS.set("weekly",S.weekly); }catch(e){}
       if(S.tab==="home"&&!S.open) render(); else scheduleTab();
     }catch(e){ if(S.tdErr==="key") return; }
@@ -1395,13 +1416,13 @@ async function loadWeekly(list){
 }
 async function loadMonthly(list){
   if(!S.tdKey) return;
-  const need=list.filter(x=>!S.monthly[x]||!S.monthly[x].bars||!S.monthly[x].v3||Date.now()-S.monthly[x].at>20*864e5);
+  const need=list.filter(x=>!S.monthly[x]||!S.monthly[x].bars||!S.monthly[x].v4||Date.now()-S.monthly[x].at>20*864e5);
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,"interval=1month&outputsize=5000");
       grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) return;
         const v=r.values.slice().reverse(), rets=[]; const nowKey=today().slice(0,7);
         for(let i=1;i<v.length;i++){ const ym=v[i].datetime.slice(0,7); if(ym===nowKey) continue; rets.push([+ym.slice(0,4),+ym.slice(5,7)-1,(+v[i].close/+v[i-1].close-1)*100]); }
-        S.monthly[x]={at:Date.now(),v3:1,rets,bars:v.map(b=>[parseET(b.datetime),+(+b.close).toPrecision(6),Math.round(+b.volume||0)])}; });
+        S.monthly[x]={at:Date.now(),v4:1,rets,bars:v.map(b=>[parseET(b.datetime),+(+b.close).toPrecision(6),Math.round(+b.volume||0)])}; });
       try{ LS.set("monthly",S.monthly); }catch(e){}
       if(S.tab==="home"&&!S.open&&S.tf==="all") render(); else scheduleTab();
       renderSeasonHome(); if(S.open&&S.monthly[S.open]){ const el=$("dSea"); if(el) el.innerHTML=seasonHTML(S.open); }
@@ -1597,10 +1618,10 @@ async function ensureData(list,{daily=false,gen=null}={}){
   const need=list.filter(s=>{ const q=S.quotes[s]; return !q||!q.at||Date.now()-q.at>120000; });
   for(const s of need){ if(!live()) return; await loadQuote(s); if(S.quotes[s]) S.quotes[s].at=Date.now(); scheduleTab(); }
   for(const s of list){ if(!live()) return; if(!loading[s]){ loading[s]=1; await loadStatic(s,{metric:!S.tdKey}); loading[s]=0; scheduleTab(); } }
-  if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v3);
-    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(okTD(r)) S.daily[s]={day:today(),v3:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
+  if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4);
+    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(okTD(r)) S.daily[s]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
 }
-async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v3)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); done(); } }
+async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v4)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); const au=$("dAudit"); if(au) au.innerHTML=retAudit(s); const pf=$("dPerf"); if(pf) pf.innerHTML=perfTiles(s); done(); } }
 function setActiveSubs(){
   const want=new Set(tabSyms(S.tab));
   S.extra.forEach(s=>{ if(!want.has(s)&&!S.list.includes(s)&&!IDX.some(x=>x[0]===s)) subscribe(s,false); });

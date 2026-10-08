@@ -1,6 +1,6 @@
-# TickerDeck Live
+# GoldRabbit
 
-A real-time stock watchlist for iPhone. Prices stream from [Finnhub](https://finnhub.io) while the app is open.
+GoldRabbit (formerly TickerDeck) is a real-time stock watchlist for iPhone. Prices stream from [Finnhub](https://finnhub.io) while the app is open.
 
 **Open it:** https://wolftronixsd.github.io/tickerdeck/
 
