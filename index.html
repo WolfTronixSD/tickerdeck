@@ -246,6 +246,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .earn{font-size:10px;padding:1px 5px;border-radius:5px;background:var(--blue-bg);color:var(--blue);font-weight:700}
 .spark{width:84px;height:34px;display:block}
 .px{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.extl{font-family:var(--mono);font-size:10.5px;font-weight:600;white-space:nowrap;color:var(--muted)}
+.extl b{font-family:var(--display);font-size:9.5px;letter-spacing:.06em;color:var(--blue);font-weight:700;margin-right:3px}
+.d-ext{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:14px;margin-top:-8px}
+.d-ext b.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
 .px .num{font-size:15px;font-weight:600;border-radius:5px;padding:0 3px;transition:background .6s,color .6s}
 .px .num.tu{background:rgba(43,217,154,.35);transition:none}
 .px .num.td{background:rgba(255,92,114,.35);transition:none}
@@ -421,6 +425,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
       </div>
     </div>
   </div>
+  <div id="extWrap"></div>
   <div id="listWrap"><div class="list" id="list"></div></div>
   <div class="heat" id="heat" hidden></div>
 
@@ -671,8 +676,24 @@ function addTick(s,p,t){
   if(last&&t-last[0]<5000){ last[1]=p; } else { pts.push([t,p]); if(pts.length>1500) pts.splice(0,pts.length-1500); }
 }
 let saveT=null, frame=null; const dirty=new Set();
+// which session a trade at time t (ms) belongs to, in New York time
+function sessionAt(t){ const q=etParts(new Date(t)), inf=dayInfo(q.y,q.mo,q.d), m=q.h*60+q.mi; if(!inf.open) return "closed"; if(m>=240&&m<570) return "pre"; if(m>=570&&m<inf.close) return "reg"; if(m>=inf.close&&m<1200) return "post"; return "closed"; }
+S.ext={}; S.showExt=LS.get("showExt",true);
+// extended-hours quote to show now: pre-market trades during pre-market, after-hours trades until the next pre-market
+function extOf(s){
+  if(!S.showExt) return null; const e=S.ext[s]; if(!e) return null; const ph=marketState().phase;
+  if(e.sess==="pre"&&ph!=="pre") return null; if(e.sess==="post"&&(ph==="open"||ph==="pre"||Date.now()-e.t>16*3600e3)) return null;
+  const ref=e.sess==="post"?price(s):((S.quotes[s]&&S.quotes[s].c)||price(s)); if(!ref) return null;
+  return {...e,ref,chg:(e.p/ref-1)*100,label:e.sess==="pre"?"Pre-market":"After hours"};
+}
+function extDetail(s){ const e=extOf(s); if(!e) return ""; const ab=e.p-e.ref;
+  return `<b class="tag">${e.label}</b><b class="num" style="font-size:18px">${fmt$(e.p)}</b><span class="num ${tcls(ab)}">${ab>=0?"+":"−"}${fmt$(Math.abs(ab))} (${fmtP(e.chg)})</span><span class="hint">${new Date(e.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}</span>`; }
+function extLine(s){ const e=extOf(s); return e?`<small class="extl"><b>${e.sess==="pre"?"PRE":"AH"}</b>${fmt$(e.p)} <span class="${tcls(e.chg)}">${fmtP(e.chg)}</span></small>`:""; }
 function onTrade(s,p,t){
   if(!S.list.includes(s)&&!IDX.some(x=>x[0]===s)&&!S.extra.has(s)) return;
+  const sess=sessionAt(t);
+  if(sess==="pre"||sess==="post"){ const prevE=S.ext[s]; S.ext[s]={p,t,sess}; S.tickCount++; S.lastTick=Date.now(); dirty.add(s);
+    if(prevE&&prevE.p!==p) (S.edir||(S.edir={}))[s]=p>prevE.p?1:-1; if(!frame) frame=requestAnimationFrame(flush); return; }
   const prev=price(s); S.live[s]={p,t}; S.tickCount++; S.lastTick=Date.now();
   addTick(s,p,t); dirty.add(s); if(prev!=null&&p!==prev) (S.dir||(S.dir={}))[s]=p>prev?1:-1;
   checkAlerts(s); checkMove(s);
@@ -688,12 +709,13 @@ function flush(){
     if(el){ const n=el.querySelector(".px .num"), pill=el.querySelector(".pill"), r=ret(s,S.tf);
       if(n){ n.textContent=fmt$(price(s)); const d=S.dir&&S.dir[s]; if(d){ n.classList.remove("tu","td"); void n.offsetWidth; n.classList.add(d>0?"tu":"td"); setTimeout(()=>n.classList.remove("tu","td"),350); } }
       if(pill){ pill.textContent=fmtP(r); pill.className="pill "+cls(r); }
+      const xl=el.querySelector(".extl"), nx=extLine(s); if(xl) xl.outerHTML=nx||"<small class=\"extl\"></small>"; else if(nx) el.querySelector(".px").insertAdjacentHTML("beforeend",nx);
       const sp=el.querySelector(".spark"); if(sp) sp.outerHTML=spark(s); }
     if(S.open===s) patchDetail(s);
   });
   if(S.dir) S.dir={};
   dirty.clear();
-  if(Date.now()-lastFull>3000){ lastFull=Date.now(); hero(); tape(); renderIdx(); renderHeat(); renderBoard(); renderBanners(); if(S.tab!=="home"&&!S.open) renderTab(); }
+  if(Date.now()-lastFull>3000){ lastFull=Date.now(); hero(); tape(); renderIdx(); renderExtMovers(); renderHeat(); renderBoard(); renderBanners(); if(S.tab!=="home"&&!S.open) renderTab(); }
   renderLive();
 }
 
@@ -904,7 +926,7 @@ function rowHTML(s){
   const bell=a&&(a.above||a.below)?`<span class="bell ${hit?"hit":""}">🔔</span>`:"";
   if(p==null) return `<div class="row" data-sym="${esc(s)}"><span class="del" data-del="${esc(s)}" role="button" aria-label="Remove ${esc(s)}">−</span>${logo(s)}<div class="who"><b>${esc(s)}</b><span>${q&&q.bad?"Symbol not found":"Loading…"}</span></div><svg class="spark" viewBox="0 0 84 34"></svg><div class="px"></div></div>`;
   const r=ret(s,S.tf);
-  return `<button class="row" data-sym="${esc(s)}" aria-label="${esc(s)} details"><span class="del" data-del="${esc(s)}" role="button" aria-label="Remove ${esc(s)}">−</span>${logo(s)}<div class="who"><b>${esc(s)}${bell}${earnChip(s)}</b><span>${esc(name)}${S.holdings[s]?" · "+money(S.holdings[s]+" sh"):""}</span></div>${spark(s)}<div class="px"><span class="num">${fmt$(p)}</span><span class="pill ${cls(r)}">${fmtP(r)}</span></div></button>`;
+  return `<button class="row" data-sym="${esc(s)}" aria-label="${esc(s)} details"><span class="del" data-del="${esc(s)}" role="button" aria-label="Remove ${esc(s)}">−</span>${logo(s)}<div class="who"><b>${esc(s)}${bell}${earnChip(s)}</b><span>${esc(name)}${S.holdings[s]?" · "+money(S.holdings[s]+" sh"):""}</span></div>${spark(s)}<div class="px"><span class="num">${fmt$(p)}</span><span class="pill ${cls(r)}">${fmtP(r)}</span>${extLine(s)}</div></button>`;
 }
 function renderList(){ const L=$("list"), l=sorted(); L.className="list"+(S.editing?" editing":""); L.innerHTML=l.length?l.map(rowHTML).join(""):`<div class="row"><div></div><div class="who"><b>Your watchlist is empty</b><span>Tap ＋ to add a stock.</span></div></div>`; }
 function heatColor(r,tf){ if(r==null) return "background:#1A222D;color:#9AA8BA"; const k=Math.min(1,Math.abs(r)/({"1d":4,"1w":8,"2w":10,"1m":15,"3m":30,"5y":300,"all":1000}[tf||S.tf]||80)), a=.18+k*.72; return r>=0?`background:rgba(22,160,108,${a});color:#EFFFF8`:`background:rgba(214,52,76,${a});color:#FFF1F3`; }
@@ -918,8 +940,16 @@ function renderBoard(){
 function renderFoot(){
   $("foot").innerHTML=`<b>${S.wsState==="on"?"Streaming live trades":"Live stream paused"}</b>${S.lastTick?` · last trade ${ago(S.lastTick)} · ${S.tickCount.toLocaleString()} trades this session`:""}. Live prices from Finnhub${S.tdKey?", price history from Twelve Data":""}. Not investment advice. <button data-open-settings>Settings</button> · <button data-open-versions>v${APP_VERSION} · What's new</button>`;
 }
+function renderExtMovers(){
+  const el=$("extWrap"); if(!el) return; const ph=marketState().phase;
+  if(!S.showExt||(ph!=="pre"&&ph!=="after"&&ph!=="closed")){ el.innerHTML=""; return; }
+  const rows=S.list.concat(IDX.map(x=>x[0])).map(x=>({x,e:extOf(x)})).filter(o=>o.e).sort((a,b)=>Math.abs(b.e.chg)-Math.abs(a.e.chg));
+  const title=ph==="pre"?"Pre-market movers":"After-hours movers";
+  if(!rows.length){ el.innerHTML=ph==="pre"||ph==="after"?`<div class="section-h"><h2>${title}</h2><small>${ph==="pre"?"4:00–9:30 AM ET":"4:00–8:00 PM ET"}</small></div><div class="feed"><p class="hint" style="padding:10px 0">Waiting for ${ph==="pre"?"pre-market":"after-hours"} trades. They stream in while the app is open; thinly traded stocks may not trade until the bell.</p></div>`:""; return; }
+  el.innerHTML=`<div class="section-h"><h2>${title}</h2><small>vs ${ph==="pre"?"last close":"today's close"}</small></div><div class="feed">${rows.slice(0,8).map(({x,e})=>`<div class="er" data-sym="${esc(x)}" role="button" tabindex="0">${logo(x)}<div style="flex:1;min-width:0"><b>${esc(IDX.find(i=>i[0]===x)?IDX.find(i=>i[0]===x)[1]:x)}</b><br><span>${e.label} · ${new Date(e.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})} · close ${fmt$(e.ref)}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><b class="num">${fmt$(e.p)}</b><span class="pill ${cls(e.chg)}" style="min-width:0">${fmtP(e.chg)}</span></div></div>`).join("")}</div>`;
+}
 function renderIdx(){
-  $("idx").innerHTML=IDX.map(([sym,name])=>{ const p=price(sym), r=r1d(sym); return `<button data-idx="${sym}" aria-label="${name}"><small>${name}</small><span class="num ${tcls(r)}">${fmtP(r)}</span><small class="num" style="font-weight:400">${p?fmt$(p):"—"}</small></button>`; }).join("");
+  $("idx").innerHTML=IDX.map(([sym,name])=>{ const p=price(sym), r=r1d(sym); return `<button data-idx="${sym}" aria-label="${name}"><small>${name}</small><span class="num ${tcls(r)}">${fmtP(r)}</span><small class="num" style="font-weight:400">${p?fmt$(p):"—"}</small>${(e=>e?`<small class="num" style="color:var(--blue)">${e.sess==="pre"?"PRE":"AH"} <span class="${tcls(e.chg)}">${fmtP(e.chg)}</span></small>`:"")(extOf(sym))}</button>`; }).join("");
 }
 function renderEarnings(){
   const map=S.earnings.map||{}, now=today(), lim=new Date(Date.now()+30*864e5).toISOString().slice(0,10);
@@ -940,7 +970,7 @@ async function loadMarketNews(){
 }
 function render(){
   document.body.classList.toggle("priv",S.priv);
-  renderIdx(); renderEarnings(); renderNews(); if(S.tab==="home") renderTab();
+  renderIdx(); renderExtMovers(); renderEarnings(); renderNews(); if(S.tab==="home") renderTab();
   $("wakeBtn").classList.toggle("on",!!S.wake);
   $("privBtn").classList.toggle("on",S.priv); $("privBtn").setAttribute("aria-pressed",S.priv);
   $("soundBtn").classList.toggle("on",S.sound); $("soundBtn").setAttribute("aria-pressed",S.sound);
@@ -958,7 +988,8 @@ function perfTiles(s){ return [["1D","1d"],[S.daily[s]?"1M":"MTD",S.daily[s]?"1m
 function patchDetail(s){
   const p=price(s), q=S.quotes[s]; if(p==null) return;
   const big=$("dBig"); if(big){ const old=parseFloat(big.dataset.v); big.textContent=fmt$(p); big.dataset.v=p; if(old&&old!==p){ big.classList.remove("tu","td"); void big.offsetWidth; big.classList.add(p>old?"tu":"td"); setTimeout(()=>big.classList.remove("tu","td"),350);} }
-  const r=r1d(s), pill=$("dPill"); if(pill){ pill.textContent=fmtP(r)+" today"; pill.className="pill "+cls(r); }
+  const r=r1d(s), pill=$("dPill"); if(pill){ pill.textContent=fmtP(r)+(marketState().phase==="open"?" today":" at close"); pill.className="pill "+cls(r); }
+  const dx=$("dExt"); if(dx) dx.innerHTML=extDetail(s);
   const pf=$("dPerf"); if(pf) pf.innerHTML=perfTiles(s);
   redrawChart(false);
   const m=S.metric[s]&&S.metric[s].m||{}; const upd=(id,lo,hi)=>{ const el=$(id); if(el&&lo&&hi){ const pct=Math.max(0,Math.min(100,(p-lo)/(hi-lo)*100)); el.style.left=pct+"%"; $(id+"P").textContent=pct.toFixed(0)+"% of range"; } };
@@ -972,7 +1003,8 @@ async function openDetail(s){
   const kv=(k,v)=>`<div class="kv"><span>${k}</span><b class="num">${v}</b></div>`;
   $("sheetIn").innerHTML=`<div class="grab"></div>
     <div class="d-head">${logo(s)}<div><h3>${esc(s)}</h3><p>${esc(pr.name||"")}${pr.industry?" · "+esc(pr.industry):""}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
-    <div class="d-price"><span class="big num" id="dBig" data-v="${p}">${fmt$(p)}</span><span class="pill ${cls(r1d(s))}" id="dPill">${fmtP(r1d(s))} today</span></div>
+    <div class="d-price"><span class="big num" id="dBig" data-v="${p}">${fmt$(p)}</span><span class="pill ${cls(r1d(s))}" id="dPill">${fmtP(r1d(s))} ${marketState().phase==="open"?"today":"at close"}</span></div>
+    <div class="d-ext" id="dExt">${extDetail(s)}</div>
     <div class="rtabs" id="rangeTabs" role="group" aria-label="Chart range">${RANGES.map(([k,l])=>`<button data-range="${k}" aria-pressed="${k===S.crange}">${l}</button>`).join("")}</div>
     <div class="scrub" id="dScrub">${scrubText(s)}</div>
     <div class="tgtbar" id="tgtBar"></div>
@@ -1107,6 +1139,8 @@ function openSettings(){
   S.open="__settings";
   $("sheetIn").innerHTML=`<div class="grab"></div>
     <div class="d-head"><div><h3>Settings</h3><p>Everything is saved only on this device</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="card"><h4>Pre-market & after hours</h4><p class="hint">Show trades from 4:00–9:30 AM and 4:00–8:00 PM ET separately, under the regular close. They stream in only while the app is open.</p>
+      <button class="ghost" id="extTog" style="align-self:flex-start">${S.showExt?"On · tap to hide":"Off · tap to show"}</button></div>
     <div class="card"><h4>Big move alerts</h4><p class="hint">Get a heads-up when a stock on your list moves this much in a day. It fires again at each multiple (3%, 6%, 9%…).</p>
       <div class="chips" id="mvChips">${[0,2,3,5,10].map(v=>`<button class="chip" data-mv="${v}" style="${S.moveAlert===v?"background:var(--accent);color:#1b1204;border-color:var(--accent)":""}">${v?v+"%":"Off"}</button>`).join("")}</div></div>
     <div class="card"><h4>Price history · Twelve Data</h4>
@@ -1116,6 +1150,7 @@ function openSettings(){
     <div class="card"><h4>About</h4><div class="kv"><span>Version</span><b class="num">v${APP_VERSION}</b></div><button class="ghost" data-open-versions style="align-self:flex-start">What's new & version history</button></div>
     <div class="card"><h4>Live prices · Finnhub</h4><p class="hint">Connected. Change it if you made a new key.</p><button class="ghost" id="forget" style="align-self:flex-start">Change Finnhub key</button></div>`;
   $("forget").addEventListener("click",()=>{ closeSheet(); forget(); });
+  $("extTog").addEventListener("click",()=>{ S.showExt=!S.showExt; LS.set("showExt",S.showExt); render(); openSettings(); });
   $("mvChips").addEventListener("click",e=>{ const b=e.target.closest("[data-mv]"); if(!b) return; S.moveAlert=+b.dataset.mv; LS.set("moveAlert",S.moveAlert); toast(S.moveAlert?`Alerts at ${S.moveAlert}% daily moves`:"Big move alerts off"); openSettings(); });
   $("tdForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$("tdIn").value.trim();
     if(!k){ S.tdKey=""; LS.set("tdkey",""); S.daily={}; LS.set("daily",{}); $("tdErrTxt").textContent=""; toast("Chart key removed"); render(); return; }
@@ -1242,7 +1277,8 @@ function openBriefing(){
     <div class="brief-hero"><h3>☕ ${greet}</h3>
       <p class="hint" style="font-size:14px;color:#D5DEE9">${st.phase==="open"?"The market is open.":st.phase==="pre"?"Pre-market trading is under way.":st.phase==="after"?"The market has closed; after-hours trading is on.":"The market is closed."} ${target?`${st.phase==="open"?"Closing bell":"Opening bell"} in ${cd(target-now)}.`:""}${st.t.early?` Early close at 1:00 PM ET today.`:""}${!st.t.open&&st.t.why!=="Weekend"?` Closed today for ${esc(st.t.why)}.`:""}</p>
       ${held.length?`<div class="brief-li"><span>Your holdings</span><b class="num ${tcls(val-prev)}">${money(fmt$(val))} · ${fmtP(prev?(val/prev-1)*100:null)}</b></div>`:""}</div>
-    ${sec(pre?"Moves since last close":"Market today",idx.map(o=>li(o.n,fmtP(o.r),tcls(o.r))).join(""))}
+    ${sec(st.phase==="pre"?"Pre-market now":"After hours",S.list.concat(IDX.map(x=>x[0])).map(x=>({x,e:extOf(x)})).filter(o=>o.e).sort((a,b)=>Math.abs(b.e.chg)-Math.abs(a.e.chg)).slice(0,6).map(o=>li(`${o.e.chg>=0?"🟢":"🔴"} ${IDX.find(i=>i[0]===o.x)?IDX.find(i=>i[0]===o.x)[1]:o.x}`,`${fmt$(o.e.p)} · ${fmtP(o.e.chg)}`,tcls(o.e.chg))).join(""))}
+    ${sec(pre?"Last session":"Market today",idx.map(o=>li(o.n,fmtP(o.r),tcls(o.r))).join(""))}
     ${sec("Your biggest movers",L.length?L.slice(0,3).concat(L.length>3?L.slice(Math.max(3,L.length-2)).reverse():[]).map(o=>li(`${o.r>=0?"🟢":"🔴"} ${o.x}`,fmtP(o.r),tcls(o.r))).join(""):"")}
     ${sec("On the calendar this week",[...er.map(o=>li(`📣 ${o.x} earnings`,`${dShort(o.e.date)}${o.e.hour==="bmo"?" · pre-mkt":o.e.hour==="amc"?" · after close":""}`)),...dv.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}`,dShort(o.n.ex))),...Object.entries(HOLIDAYS).filter(([d])=>d>=t&&d<=week).map(([d,n])=>li(`🏖 Market closed: ${n}`,dShort(d))),...Object.entries(EARLY).filter(([d])=>d>=t&&d<=week).map(([d,n])=>li(`⏰ Early close (1 PM ET)`,dShort(d)))].join("")||`<p class="hint">No earnings, dividends or holidays for your stocks this week.</p>`)}
     ${sec("Close to your alerts and targets",near.map(o=>li(`🎯 ${o.x} at ${fmt$(price(o.x))}`,`${fmt$(o.v)} (${fmtP(o.d)})`)).join(""))}
@@ -1310,8 +1346,9 @@ function renderCompare(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="2.6";
+const APP_VERSION="2.7";
 const CHANGELOG=[
+  {v:"2.7",date:"2026-10-08",title:"Pre-market and after hours",items:["Pre-market (4:00–9:30 AM ET) and after-hours (4:00–8:00 PM ET) prices shown separately under the regular close, like CNN","PRE / AH lines on every watchlist row and the index tiles","Pre-market and after-hours movers list on Home and in the daily briefing","Stock page shows the extended-hours price, change and time of the last trade","Turn it off in Settings"]},
   {v:"2.6",date:"2026-10-08",title:"More time frames everywhere",items:["AI, Space, Sectors and Trends pages now have 1D, 1W, 2W, 1M, 3M, 6M, YTD, 1Y, 5Y and All","Home watchlist adds 1W and 5Y","Shows how many stocks have loaded so far on each page","Missing prices retry automatically every 30 seconds","Solid bar behind the iPhone status bar when scrolling"]},
   {v:"2.5",date:"2026-10-08",title:"1-week and 2-week charts",items:["1W chart from 30-minute prices and 2W chart from hourly prices","Nights and weekends are squeezed out so the line only shows trading time, with thin lines between days","Scrubbing shows the day and time of each price"]},
   {v:"2.4",date:"2026-10-07",title:"5-year and all-time charts",items:["5Y chart from weekly closes and All chart from monthly closes since the stock was listed","All uses a log scale when the price has grown a lot, so early years stay readable","S&P 500 comparison line, scrubbing and price targets work on the new ranges"]},
@@ -1647,6 +1684,7 @@ function wireTabs(){
     if(e.target.closest("#scanAll")){ scanAll(); return; }
     const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
+  $("extWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   $("divWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   ["sigFeed","seaFeed"].forEach(id=>$(id).addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
 }
