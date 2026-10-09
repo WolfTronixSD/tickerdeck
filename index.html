@@ -1373,8 +1373,9 @@ function renderCompare(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="2.9";
+const APP_VERSION="3.0";
 const CHANGELOG=[
+  {v:"3.0",date:"2026-10-09",title:"Defense stocks",items:["New Defense & Aerospace theme on the Trends tab: primes (LMT, RTX, NOC, GD, LHX, BA, HII), drones & defense tech (PLTR, KTOS, AVAV, RCAT, MRCY), aerospace parts, gov IT & cyber, and defense ETFs (ITA, XAR, SHLD)","Defense stocks are included in Stock ideas and Compare","Trends streams live prices for the selected theme to stay within the free plan's limit"]},
   {v:"2.9",date:"2026-10-08",title:"GoldRabbit",items:["TickerDeck is now GoldRabbit, with a new icon","Version number shown next to the name; tap it for what's new","Price history requested split-adjusted only (no dividend adjustment) to match Yahoo Finance charts","New \"How these returns are calculated\" card on each stock shows the exact start date and price behind 1W to 5Y","≈ marks returns that are still Finnhub estimates while history loads"]},
   {v:"2.8",date:"2026-10-08",title:"Accurate long-range returns",items:["Price history now always comes from the US listing in US dollars; some tickers also trade abroad and could load the wrong market","1W to 5Y periods use the same calendar date (e.g. 6 months ago today) and compare to the close on that date, matching Yahoo Finance","5Y starts from the right week","Without the history key, returns no longer count the last day's move twice outside market hours","Cached history reloads once to pick up the fixes"]},
   {v:"2.7",date:"2026-10-08",title:"Pre-market and after hours",items:["Pre-market (4:00–9:30 AM ET) and after-hours (4:00–8:00 PM ET) prices shown separately under the regular close, like CNN","PRE / AH lines on every watchlist row and the index tiles","Pre-market and after-hours movers list on Home and in the daily briefing","Stock page shows the extended-hours price, change and time of the last trade","Turn it off in Settings"]},
@@ -1486,7 +1487,7 @@ function renderPortfolio(){
 }
 
 /* ---------- stock ideas (screens) ---------- */
-function universe(){ const ex=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX"].concat(SECTORS.map(x=>x[0]))); return [...new Set(S.list.concat(Object.keys(THEMES).flatMap(themeSyms)))].filter(x=>!ex.has(x)); }
+function universe(){ const ex=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX","ITA","XAR","SHLD"].concat(SECTORS.map(x=>x[0]))); return [...new Set(S.list.concat(Object.keys(THEMES).flatMap(themeSyms)))].filter(x=>!ex.has(x)); }
 function ideas(){
   const rows=universe().map(x=>({x,A:analytics(x)})).filter(o=>o.A);
   const lead=rows.filter(o=>o.A.score>=.8&&o.A.R>=50&&o.A.R<=70).sort((a,b)=>b.A.trendY-a.A.trendY).slice(0,5);
@@ -1604,9 +1605,11 @@ const THEMES={
   quantum:{name:"Quantum",title:"Quantum Computing",desc:"Pure-play quantum names plus big-tech players.",bg:"radial-gradient(120% 90% at 100% 0%,rgba(16,185,129,.30),transparent 60%),#07120F",groups:{"":["IONQ","RGTI","QBTS","QUBT","IBM","HON"]}},
   crypto:{name:"Crypto",title:"Crypto Stocks",desc:"Exchanges, miners and bitcoin treasuries.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(247,147,26,.32),transparent 60%),#120D06",groups:{"":["COIN","MSTR","HOOD","MARA","RIOT","CLSK","IBIT"]}},
   robotics:{name:"Robotics",title:"Robotics & Automation",desc:"Humanoids, surgical robots and factory automation.",bg:"radial-gradient(120% 90% at 100% 0%,rgba(244,63,94,.28),transparent 60%),#12080B",groups:{"":["TSLA","ISRG","SYM","ROK","TER","PATH","SERV"]}},
-  semis:{name:"Semis",title:"Semiconductors",desc:"The chip supply chain from design to equipment.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(110,168,255,.30),transparent 60%),#080C14",groups:{"":["NVDA","AMD","AVGO","TSM","ASML","AMAT","LRCX","KLAC","MU","INTC"]}}
+  semis:{name:"Semis",title:"Semiconductors",desc:"The chip supply chain from design to equipment.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(110,168,255,.30),transparent 60%),#080C14",groups:{"":["NVDA","AMD","AVGO","TSM","ASML","AMAT","LRCX","KLAC","MU","INTC"]}},
+  defense:{name:"Defense",title:"Defense & Aerospace",desc:"Prime contractors, drones and new defense tech, government IT and cyber, and defense ETFs.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(132,204,22,.22),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(148,163,184,.18),transparent 60%),#0B0F0A",
+    groups:{"Primes":["LMT","RTX","NOC","GD","LHX","BA","HII"],"Drones & defense tech":["PLTR","KTOS","AVAV","RCAT","MRCY"],"Aerospace parts":["TDG","HEI","TXT","HWM"],"Gov IT & cyber":["LDOS","BAH","CACI","SAIC"],"ETFs":["ITA","XAR","SHLD"]}}
 };
-const TREND_KEYS=["power","quantum","crypto","robotics","semis"];
+const TREND_KEYS=["defense","power","quantum","crypto","robotics","semis"];
 const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communication"],["XLY","Consumer Disc."],["XLF","Financials"],["XLI","Industrials"],["XLV","Health Care"],["XLE","Energy"],["XLB","Materials"],["XLP","Consumer Staples"],["XLU","Utilities"],["XLRE","Real Estate"]];
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
 S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); S.trend=LS.get("trend","power"); S.extra=new Set();
@@ -1623,7 +1626,7 @@ async function ensureData(list,{daily=false,gen=null}={}){
 }
 async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v4)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); const au=$("dAudit"); if(au) au.innerHTML=retAudit(s); const pf=$("dPerf"); if(pf) pf.innerHTML=perfTiles(s); done(); } }
 function setActiveSubs(){
-  const want=new Set(tabSyms(S.tab));
+  const want=new Set((S.tab==="trends"?themeSyms(S.trend):tabSyms(S.tab)).filter(x=>!S.list.includes(x)).slice(0,34));
   S.extra.forEach(s=>{ if(!want.has(s)&&!S.list.includes(s)&&!IDX.some(x=>x[0]===s)) subscribe(s,false); });
   want.forEach(s=>{ if(!S.extra.has(s)&&!S.list.includes(s)) subscribe(s,true); });
   S.extra=want;
@@ -1711,7 +1714,7 @@ function wireTabs(){
     const add=e.target.closest("[data-add]"); if(add){ e.stopPropagation(); const s=add.dataset.add; if(S.list.includes(s)) removeSym(s); else addSym(s); setTimeout(renderTab,50); return; }
     const tf=e.target.closest("[data-ttf]"); if(tf){ S.ttf=tf.dataset.ttf; LS.set("ttf",S.ttf); renderTab(); loadRange(tabSyms(S.tab),S.ttf); return; }
     if(e.target.closest("#scanAll")){ scanAll(); return; }
-    const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
+    const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); setActiveSubs(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
   $("extWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   $("divWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
