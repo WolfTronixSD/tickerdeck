@@ -41,9 +41,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .wrap>*{position:relative;z-index:1}
 
 header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px}
-.brand h1{margin:0;font-size:23px;font-weight:800;letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
+.brand h1{margin:0;font-size:21px;font-weight:800;letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
 .brand h1 span{color:var(--accent)}
-.hver{font:600 10.5px var(--mono);color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 6px;letter-spacing:0;align-self:center}
+.hver{font:600 10px var(--mono);color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 5px;letter-spacing:0;align-self:center}
 .live{font:700 10px var(--display);letter-spacing:.12em;padding:3px 7px;border-radius:6px;background:var(--panel2);color:var(--faint);border:1px solid var(--line);display:inline-flex;align-items:center;gap:5px}
 .live i{width:6px;height:6px;border-radius:50%;background:currentColor}
 .live.on{color:var(--gain);border-color:rgba(43,217,154,.35);background:var(--gain-bg)}
@@ -100,7 +100,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .clock-meta div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:3px}
 .clock-meta b{font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
 
-.seg{display:grid;grid-template-columns:repeat(7,1fr);background:rgba(15,21,29,.92);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.seg{display:grid;grid-template-columns:repeat(8,1fr);background:rgba(15,21,29,.92);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .seg button{height:34px;border-radius:10px;font-size:13px;font-weight:600;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
 .idx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -126,7 +126,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .ptr{transition:transform .2s,opacity .2s}
 .ptr.show{transform:translate(-50%,0);opacity:1}
 /* tabs */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(5,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
 .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;color:var(--faint);font-size:10.5px;font-weight:600;letter-spacing:.02em;transition:color .2s}
 .tabbar svg{width:22px;height:22px}
 .tabbar button[aria-selected="true"]{color:var(--text)}
@@ -216,6 +216,20 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .brief-li span:first-child{color:#C9D3DF}
 .brief-hero{border-radius:20px;padding:18px;background:radial-gradient(120% 100% at 0% 0%,rgba(255,181,71,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(110,168,255,.18),transparent 60%),#0E131B;border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .brief-hero h3{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
+.hz{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:4px}
+.hz button{height:38px;border-radius:10px;font-weight:700;font-size:13.5px;color:#C9D3DF}
+.hz button[aria-pressed="true"]{background:linear-gradient(135deg,#FFE29A,#FFB547);color:#1b1204}
+.pick{display:flex;flex-direction:column;gap:10px;padding:14px;border-top:1px solid var(--line);text-align:left;width:100%}
+.pick:first-child{border-top:0}
+.pick-top{display:flex;align-items:center;gap:10px}
+.rank{font:800 13px var(--mono);color:var(--accent);width:24px;flex:none}
+.sbarw{height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.sbarw i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#C9781E,#FFB547,#FFE29A)}
+.why{display:flex;flex-wrap:wrap;gap:5px}
+.why span{font-size:11.5px;padding:3px 8px;border-radius:7px;background:var(--gain-bg);color:#9FF0CF}
+.why span.risk{background:var(--accent-bg);color:#FFD08A}
+.score{font:700 20px var(--mono);color:var(--accent);text-align:right;line-height:1}
+.score small{display:block;font:600 9.5px var(--display);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
 .rtabs{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:3px}
 .rtabs button{height:30px;border-radius:8px;font-size:11px;padding:0;letter-spacing:-.01em;font-weight:600;color:var(--muted)}
 .rtabs button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
@@ -407,6 +421,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="seg" role="group" aria-label="Time frame" id="seg">
     <button data-tf="1d" aria-pressed="true">1D</button>
     <button data-tf="1w" aria-pressed="false">1W</button>
+    <button data-tf="2w" aria-pressed="false">2W</button>
     <button data-tf="1m" aria-pressed="false">1M</button>
     <button data-tf="6m" aria-pressed="false">6M</button>
     <button data-tf="ytd" aria-pressed="false">YTD</button>
@@ -449,6 +464,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="tab" id="tab-ai" hidden></div>
   <div class="tab" id="tab-space" hidden></div>
   <div class="tab" id="tab-trends" hidden></div>
+  <div class="tab" id="tab-picks" hidden></div>
   <p class="foot" id="foot"></p>
 </div>
 
@@ -457,6 +473,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <button data-tab="sectors" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span>Sectors</span></button>
   <button data-tab="ai" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5z"/><path d="M9 2.5v3M15 2.5v3M9 18.5v3M15 18.5v3M2.5 9h3M2.5 15h3M18.5 9h3M18.5 15h3"/></svg><span>AI</span></button>
   <button data-tab="space" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 2.3 4.5 5.6 4.5 9.5v4.5h-9V12c0-3.9 1.5-7.2 4.5-9.5z"/><circle cx="12" cy="10" r="1.6"/><path d="M7.5 13.5 5 16v3l2.5-1.5M16.5 13.5 19 16v3l-2.5-1.5M10 19.5c.5 1.3 1.2 2 2 2s1.5-.7 2-2"/></svg><span>Space</span></button>
+  <button data-tab="picks" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span>Picks</span></button>
   <button data-tab="trends" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Trends</span></button>
 </nav>
 <div class="scrim" id="scrim" hidden></div>
@@ -1361,7 +1378,7 @@ function renderCompare(){
     <div class="cmp-pick">${sel("cmpA",a)}<span class="vs">VS</span>${sel("cmpB",b)}</div>
     <div class="chipbar" id="cmpBench"><span class="hint" style="align-self:center;flex:none">Index:</span>${[["auto",`Auto · ${BENCH[indexFor(a)]}`],["SPY","S&P 500"],["QQQ","Nasdaq 100"],["DIA","Dow 30"]].concat(sec?[["sector",`Sector · ${(SECTORS.find(x=>x[0]===sec)||[0,sec])[1]}`]]:[]).map(([v,l])=>`<button data-bench="${v}" aria-pressed="${S.cmp.bench===v}">${esc(l)}</button>`).join("")}</div>
     ${DOW.includes(a)?`<p class="hint" style="margin-top:-6px">${esc(a)} is also in the Dow 30.</p>`:""}
-    <div class="rtabs" id="cmpRange" style="grid-template-columns:repeat(5,1fr)">${[["1m","1M"],["3m","3M"],["6m","6M"],["1y","1Y"],["ytd","YTD"]].map(([k,l])=>`<button data-crange="${k}" aria-pressed="${k===range}">${l}</button>`).join("")}</div>
+    <div class="rtabs" id="cmpRange" style="grid-template-columns:repeat(9,1fr)">${[["1w","1W"],["2w","2W"],["1m","1M"],["3m","3M"],["6m","6M"],["ytd","YTD"],["1y","1Y"],["5y","5Y"],["all","All"]].map(([k,l])=>`<button data-crange="${k}" aria-pressed="${k===range}">${l}</button>`).join("")}</div>
     ${chart}
     ${corr!=null?`<p class="hint">Correlation over 6 months: <b style="color:var(--text)">${corr.toFixed(2)}</b>. ${corr>.7?"They move closely together, so owning both adds little diversification.":corr>.3?"They're moderately related.":corr>-.3?"They move fairly independently, which helps diversify.":"They tend to move in opposite directions."}</p>`:""}
     <div class="card"><table class="ctab"><thead><tr><th></th><th style="color:${CA}">${esc(a)}</th><th style="color:${CB}">${esc(b)}</th><th style="color:${CK}">${esc(k)}</th></tr></thead><tbody>${tbl}</tbody></table><p class="hint" style="font-size:11px">● marks the better number in each row (higher return, lower volatility, cheaper P/E…).</p></div>
@@ -1369,12 +1386,116 @@ function renderCompare(){
   $("cmpA").addEventListener("change",e=>{ S.cmp.a=e.target.value; renderCompare(); cmpLoad(); });
   $("cmpB").addEventListener("change",e=>{ S.cmp.b=e.target.value; renderCompare(); cmpLoad(); });
   $("cmpBench").addEventListener("click",e=>{ const x=e.target.closest("[data-bench]"); if(!x) return; S.cmp.bench=x.dataset.bench; renderCompare(); ensureData([benchOf()],{daily:true}).then(()=>{ if(S.open==="__cmp") renderCompare(); }); });
-  $("cmpRange").addEventListener("click",e=>{ const x=e.target.closest("[data-crange]"); if(x){ S.cmp.range=x.dataset.crange; renderCompare(); } });
+  $("cmpRange").addEventListener("click",e=>{ const x=e.target.closest("[data-crange]"); if(!x) return; S.cmp.range=x.dataset.crange; renderCompare();
+    const L=[S.cmp.a,S.cmp.b,benchOf()], done=()=>{ if(S.open==="__cmp") renderCompare(); };
+    if(S.cmp.range==="5y") loadWeekly(L).then(done); else if(S.cmp.range==="all") loadMonthly(L).then(done); else if(S.cmp.range==="1w"||S.cmp.range==="2w") loadShort(L,S.cmp.range).then(done); });
+}
+
+/* ---------- Gold Picks: rules-based rankings for three holding periods ---------- */
+S.hz=LS.get("hz","1y"); S.pscope=LS.get("pscope","all");
+const HZ={
+  "6m":{name:"6 months",blurb:"Momentum and trend: stocks already beating the market, in healthy uptrends, not overheated, with growing earnings and a good seasonal stretch ahead.",
+    f:[["rel6",.20],["rel3",.20],["trend",.20],["rsiFit",.10],["epsG",.10],["revG",.10],["seas",.10]]},
+  "1y":{name:"1 year",blurb:"Growth at a reasonable price: fast-growing, profitable companies whose valuation isn't stretched relative to growth and whose long-term trend is up.",
+    f:[["rel12",.15],["revG",.20],["epsG",.15],["netM",.10],["roe",.10],["value",.15],["above200",.15]]},
+  "forever":{name:"Forever",blurb:"Quality compounders to hold for years: high returns on capital, fat margins, steady multi-year growth, low debt and calmer price swings.",
+    f:[["roe",.20],["netM",.15],["grossM",.10],["revG5",.15],["lowDebt",.15],["cagr",.10],["lowVol",.10],["divG",.05]]}
+};
+const FNAME={rel6:"6-month strength vs S&P",rel3:"3-month strength vs S&P",rel12:"1-year strength vs S&P",trend:"Trend signals",rsiFit:"Not overheated (RSI)",epsG:"Earnings growth",revG:"Revenue growth",seas:"Seasonal tailwind",netM:"Net margin",grossM:"Gross margin",roe:"Return on equity",value:"Valuation vs growth",above200:"Above 200-day average",revG5:"5-year revenue growth",lowDebt:"Low debt",cagr:"5-year price growth",lowVol:"Calm price swings",divG:"Dividend growth"};
+const nn=v=>typeof v==="number"&&isFinite(v)?v:null;
+function pickScope(){ const ex=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX","ITA","XAR","SHLD"].concat(SECTORS.map(x=>x[0]))); return S.pscope==="mine"?S.list.filter(x=>!ex.has(x)):universe(); }
+function rawFactors(x){
+  const m=(S.metric[x]&&S.metric[x].m)||{}, A=analytics(x), r6=ret(x,"6m"), r3=ret(x,"3m"), r12=ret(x,"1y"), r5=ret(x,"5y");
+  const s6=ret("SPY","6m"), s3=ret("SPY","3m"), s12=ret("SPY","1y");
+  const pe=nn(m.peTTM??m.peBasicExclExtraTTM), epsG=nn(m.epsGrowthTTMYoy), revG=nn(m.revenueGrowthTTMYoy), de=nn(m["totalDebt/totalEquityQuarterly"]??m["totalDebt/totalEquityAnnual"]);
+  const se=season(x), cm=new Date().getMonth(), sv=se?[1,2,3,4,5,6].map(k=>se[(cm+k)%12]).filter(Boolean).map(o=>o.avg):[];
+  return { rel6:r6!=null&&s6!=null?r6-s6:null, rel3:r3!=null&&s3!=null?r3-s3:null, rel12:r12!=null&&s12!=null?r12-s12:null,
+    trend:A?A.score:null, rsiFit:A?1-Math.abs(A.R-55)/45:null, epsG, revG, seas:sv.length>=4?mean(sv):null,
+    netM:nn(m.netProfitMarginTTM), grossM:nn(m.grossMarginTTM), roe:nn(m.roeTTM),
+    value:pe&&pe>0?(epsG&&epsG>0?-pe/Math.max(epsG,5):-pe/5):null,
+    above200:A&&A.s200?(A.p/A.s200-1)*100:null, revG5:nn(m.revenueGrowth5Y), lowDebt:de!=null&&de>=0?-de:null,
+    cagr:r5!=null?(Math.pow(Math.max(.01,1+r5/100),1/5)-1)*100:null, lowVol:A?-A.vol*100:null, divG:(nn(m.currentDividendYieldTTM??m.dividendYieldIndicatedAnnual)||0)>0?nn(m.dividendGrowthRate5Y):null,
+    _:{A,pe,epsG,revG,de,r6,r3,r12,r5,s6,s3,s12,m} };
+}
+// human-readable reason or risk for one factor
+function factorText(k,F,good){
+  const o=F._, A=o.A, m=o.m, f1=v=>(v>0?"+":"")+v.toFixed(0);
+  switch(k){
+    case "rel6": return `6M ${fmtP(o.r6)} vs S&P ${fmtP(o.s6)}`;
+    case "rel3": return `3M ${f1(F.rel3)} pts vs S&P`;
+    case "rel12": return `1Y ${good?"beat":"trailed"} S&P by ${Math.abs(F.rel12).toFixed(0)} pts`;
+    case "trend": return good?`Uptrend: ${A.checks.filter(c=>c[1]).length}/${A.checks.length} signals`:`Weak trend: ${A.checks.filter(c=>c[1]).length}/${A.checks.length} signals`;
+    case "rsiFit": return good?`RSI ${A.R.toFixed(0)}, room to run`:A.R>55?`Overheated: RSI ${A.R.toFixed(0)}`:`Weak momentum: RSI ${A.R.toFixed(0)}`;
+    case "epsG": return `EPS ${f1(o.epsG)}% y/y`;
+    case "revG": return `Revenue ${f1(o.revG)}% y/y`;
+    case "seas": return `Next 6 months avg ${fmtP(F.seas)}/mo historically`;
+    case "netM": return good?`Net margin ${F.netM.toFixed(0)}%`:`Thin margin ${F.netM.toFixed(0)}%`;
+    case "grossM": return `Gross margin ${F.grossM.toFixed(0)}%`;
+    case "roe": return `ROE ${F.roe.toFixed(0)}%`;
+    case "value": return good?(o.epsG>0?`PEG ${(o.pe/o.epsG).toFixed(1)} (P/E ${o.pe.toFixed(0)}, EPS +${o.epsG.toFixed(0)}%)`:`Cheap: P/E ${o.pe.toFixed(0)}`):`Pricey: P/E ${o.pe.toFixed(0)}${o.epsG>0?` (PEG ${(o.pe/o.epsG).toFixed(1)})`:""}`;
+    case "above200": return `${f1(F.above200)}% vs 200-day avg`;
+    case "revG5": return `Revenue ${f1(F.revG5)}%/yr over 5 yrs`;
+    case "lowDebt": return good?`Low debt (D/E ${o.de.toFixed(1)})`:`High debt (D/E ${o.de.toFixed(1)})`;
+    case "cagr": return `${f1(F.cagr)}%/yr over 5 yrs`;
+    case "lowVol": return good?`Calm: ${(-F.lowVol).toFixed(0)}% volatility`:`Big swings: ${(-F.lowVol).toFixed(0)}% volatility`;
+    case "divG": return `Dividend +${F.divG.toFixed(0)}%/yr`;
+  } return FNAME[k];
+}
+function rankPicks(){
+  const hz=HZ[S.hz], list=pickScope().filter(x=>price(x)!=null), rows=list.map(x=>({x,F:rawFactors(x)}));
+  const pct={};
+  hz.f.forEach(([k])=>{ const vals=rows.map(r=>r.F[k]).filter(v=>v!=null).sort((a,b)=>a-b); pct[k]=v=>{ if(v==null||vals.length<3) return null; let lo=0,hi=0; vals.forEach(w=>{ if(w<v) lo++; if(w<=v) hi++; }); return ((lo+hi)/2)/vals.length; }; });
+  const W=hz.f.reduce((a,f)=>a+f[1],0);
+  rows.forEach(r=>{ let sc=0, cov=0; r.parts=hz.f.map(([k,w])=>{ const q=pct[k](r.F[k]); if(q!=null){ sc+=q*w; cov+=w; } return {k,w,q}; });
+    r.cov=cov/W; r.score=cov?sc/cov*100:0;
+    // a few hard guardrails
+    if(S.hz==="6m"&&r.F._.A&&r.F._.A.R>80) r.score-=8;
+    if(S.hz!=="6m"&&r.F.netM!=null&&r.F.netM<0) r.score=Math.min(r.score,45);
+    if(S.hz==="forever"&&r.F.lowDebt!=null&&r.F.lowDebt<-3) r.score-=8;
+    r.score=Math.max(0,Math.min(100,r.score));
+    const have=r.parts.filter(p=>p.q!=null).sort((a,b)=>b.q*b.w-a.q*a.w);
+    r.good=have.filter(p=>p.q>=.6).slice(0,3).map(p=>factorText(p.k,r.F,true));
+    const bad=have.filter(p=>p.q<=.3&&p.k!=="divG").sort((a,b)=>a.q*b.w-b.q*a.w)[0]; r.risk=bad?factorText(bad.k,r.F,false):null; });
+  const ok=rows.filter(r=>r.cov>=.5).sort((a,b)=>b.score-a.score);
+  return {ok,total:list.length,scope:pickScope().length};
+}
+function loadPicks(){
+  S.gen=(S.gen||0)+1; const g=S.gen, L=pickScope().concat(["SPY"]);
+  ensureData(L,{daily:true,gen:g,metric:true}).then(()=>{ if(S.gen!==g) return; if(S.hz==="forever") loadWeekly(L); else if(S.hz==="6m") loadMonthly(L); });
+}
+function renderPicks(){
+  const el=$("tab-picks"); if(!el) return; const hz=HZ[S.hz];
+  if(!S.tdKey){ el.innerHTML=`<section class="thero" style="--tbg:radial-gradient(120% 90% at 0% 0%,rgba(255,181,71,.30),transparent 60%),#120E06"><h2>🐇 Gold Picks</h2><p>Picks rank stocks using a year of price history plus company fundamentals. Add the free Twelve Data key in Settings to turn them on.</p><button class="primary" data-open-settings style="align-self:flex-start">Add key</button></section>`; return; }
+  const R=rankPicks(), top=R.ok.slice(0,10); S.pickTop=top.map(r=>r.x);
+  const analyzed=pickScope().filter(x=>analytics(x)&&S.metric[x]).length;
+  const retK=S.hz==="6m"?"6m":S.hz==="1y"?"1y":"5y";
+  const card=(r,i)=>`<div class="pick" data-sym="${esc(r.x)}" role="button" tabindex="0">
+      <div class="pick-top"><span class="rank">#${i+1}</span>${logo(r.x)}<div class="who" style="flex:1"><b>${esc(r.x)}</b><span>${esc((S.profile[r.x]||{}).name||"")}</span></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><span class="num" style="font-weight:600">${fmt$(price(r.x))}</span><span class="num ${tcls(ret(r.x,retK))}" style="font-size:11.5px">${retK.toUpperCase()} ${fmtP(ret(r.x,retK))}</span></div>
+        <div class="score">${r.score.toFixed(0)}<small>score</small></div>
+        <button class="addb ${S.list.includes(r.x)?"in":""}" data-add="${esc(r.x)}" aria-label="${S.list.includes(r.x)?"On watchlist":"Add to watchlist"}" style="width:30px;height:30px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);font-weight:700;color:var(--accent);flex:none">${S.list.includes(r.x)?"✓":"+"}</button></div>
+      <div class="sbarw"><i style="width:${r.score.toFixed(0)}%"></i></div>
+      <div class="why">${r.good.map(t=>`<span>✓ ${esc(t)}</span>`).join("")}${r.risk?`<span class="risk">⚠ ${esc(r.risk)}</span>`:""}${r.cov<.85?`<span class="risk" style="opacity:.8">partial data</span>`:""}</div></div>`;
+  const low=R.ok.slice(-3).reverse();
+  el.innerHTML=`<section class="thero" style="--tbg:radial-gradient(120% 90% at 0% 0%,rgba(255,181,71,.32),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(201,120,30,.22),transparent 60%),#120E06">
+      <h2>🐇 Gold Picks</h2><p>Stocks ranked for how long you plan to hold. Every score is built from the numbers shown, so you can see why.</p>
+      <div class="hz" role="group" aria-label="Holding period">${[["6m","6 months"],["1y","1 year"],["forever","Forever"]].map(([k,l])=>`<button data-hz="${k}" aria-pressed="${S.hz===k}">${l}</button>`).join("")}</div>
+      <p style="font-size:12.5px">${hz.blurb}</p></section>
+    <div class="chipbar"><button data-scope="all" aria-pressed="${S.pscope==="all"}">All themes + watchlist</button><button data-scope="mine" aria-pressed="${S.pscope==="mine"}">My watchlist</button></div>
+    <p class="hint" style="margin-top:-6px">Analyzed ${analyzed} of ${R.scope} stocks${analyzed<R.scope?" so far. History and fundamentals load over a few minutes the first time (free data limits), and the ranking sharpens as they arrive.":"."}</p>
+    <div class="list">${top.length?top.map(card).join(""):`<p class="hint" style="padding:14px">Gathering data… picks appear once a few stocks have both price history and fundamentals.</p>`}</div>
+    ${low.length>3?"":""}${R.ok.length>12?`<div class="section-h"><h2>Lowest scores</h2><small>for ${hz.name}</small></div><div class="list">${low.map((r,i)=>card(r,R.ok.length-1-i)).join("")}</div>`:""}
+    <div class="card"><h4>How ${hz.name} picks are scored</h4>
+      ${hz.f.map(([k,w])=>`<div class="kv"><span>${FNAME[k]}</span><b class="num">${Math.round(w*100)}%</b></div>`).join("")}
+      <p class="hint">Each stock is ranked against the others on every factor (0 = worst, 100 = best in the group), then the ranks are weighted as above. Stocks missing more than half the data are left out.</p></div>
+    ${top.length?`<a class="claude" href="${claudeURL(`I'm considering stocks to buy with a ${hz.name} holding period. My app's rules-based screen ranked these highest:\n${top.map((r,i)=>`${i+1}. ${r.x} score ${r.score.toFixed(0)} — ${r.good.join("; ")}${r.risk?`; risk: ${r.risk}`:""}`).join("\n")}\n\nSearch the web for the latest news and fundamentals. For a ${hz.name} horizon, which of these hold up best and why, what are the biggest risks, what would you swap out, and how would you size positions for diversification?`)}" target="_blank" rel="noopener">✨ Ask Claude to review these picks</a>`:""}
+    <p class="hint" style="font-size:11.5px">Gold Picks is a rules-based screen built from public price and financial data, not personal investment advice. Past performance and today's numbers don't guarantee future returns. Research before you buy and consider your own goals and risk.</p>`;
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="3.0";
+const APP_VERSION="3.1";
 const CHANGELOG=[
+  {v:"3.1",date:"2026-10-09",title:"Gold Picks",items:["New Picks tab ranks stocks for a 6-month, 1-year or Forever holding period","6 months: momentum vs the S&P, trend, RSI, earnings growth, seasonality","1 year: growth at a reasonable price, profitability and long-term trend","Forever: quality, margins, 5-year growth, low debt and calmer swings","Every pick shows its score, top reasons and main risk; Ask Claude can review the list","2W added to the Home time frames, and 1W, 2W, 5Y and All added to Compare"]},
   {v:"3.0",date:"2026-10-09",title:"Defense stocks",items:["New Defense & Aerospace theme on the Trends tab: primes (LMT, RTX, NOC, GD, LHX, BA, HII), drones & defense tech (PLTR, KTOS, AVAV, RCAT, MRCY), aerospace parts, gov IT & cyber, and defense ETFs (ITA, XAR, SHLD)","Defense stocks are included in Stock ideas and Compare","Trends streams live prices for the selected theme to stay within the free plan's limit"]},
   {v:"2.9",date:"2026-10-08",title:"GoldRabbit",items:["TickerDeck is now GoldRabbit, with a new icon","Version number shown next to the name; tap it for what's new","Price history requested split-adjusted only (no dividend adjustment) to match Yahoo Finance charts","New \"How these returns are calculated\" card on each stock shows the exact start date and price behind 1W to 5Y","≈ marks returns that are still Finnhub estimates while history loads"]},
   {v:"2.8",date:"2026-10-08",title:"Accurate long-range returns",items:["Price history now always comes from the US listing in US dollars; some tickers also trade abroad and could load the wrong market","1W to 5Y periods use the same calendar date (e.g. 6 months ago today) and compare to the close on that date, matching Yahoo Finance","5Y starts from the right week","Without the history key, returns no longer count the last day's move twice outside market hours","Cached history reloads once to pick up the fixes"]},
@@ -1614,19 +1735,19 @@ const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communicati
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
 S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); S.trend=LS.get("trend","power"); S.extra=new Set();
 const themeSyms=k=>[...new Set(Object.values(THEMES[k].groups).flat())];
-function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; return []; }
+function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); return []; }
 const loading={};
-async function ensureData(list,{daily=false,gen=null}={}){
+async function ensureData(list,{daily=false,gen=null,metric=null}={}){
   const live=()=>gen==null||gen===S.gen;
   const need=list.filter(s=>{ const q=S.quotes[s]; return !q||!q.at||Date.now()-q.at>120000; });
   for(const s of need){ if(!live()) return; await loadQuote(s); if(S.quotes[s]) S.quotes[s].at=Date.now(); scheduleTab(); }
-  for(const s of list){ if(!live()) return; if(!loading[s]){ loading[s]=1; await loadStatic(s,{metric:!S.tdKey}); loading[s]=0; scheduleTab(); } }
+  for(const s of list){ if(!live()) return; if(!loading[s]){ loading[s]=1; await loadStatic(s,{metric:metric??!S.tdKey}); loading[s]=0; scheduleTab(); } }
   if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4);
     for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(okTD(r)) S.daily[s]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
 }
 async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v4)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); const au=$("dAudit"); if(au) au.innerHTML=retAudit(s); const pf=$("dPerf"); if(pf) pf.innerHTML=perfTiles(s); done(); } }
 function setActiveSubs(){
-  const want=new Set((S.tab==="trends"?themeSyms(S.trend):tabSyms(S.tab)).filter(x=>!S.list.includes(x)).slice(0,34));
+  const want=new Set((S.tab==="trends"?themeSyms(S.trend):S.tab==="picks"?(S.pickTop||[]):tabSyms(S.tab)).filter(x=>!S.list.includes(x)).slice(0,34));
   S.extra.forEach(s=>{ if(!want.has(s)&&!S.list.includes(s)&&!IDX.some(x=>x[0]===s)) subscribe(s,false); });
   want.forEach(s=>{ if(!S.extra.has(s)&&!S.list.includes(s)) subscribe(s,true); });
   S.extra=want;
@@ -1697,19 +1818,24 @@ function renderTrends(){
 }
 function renderTab(){
   if(S.tab==="home"){ renderSignals(); renderSeasonHome(); renderPortfolio(); renderDividends(); const a=$("askList"); if(a) a.href=claudeURL(listPrompt()); return; }
-  if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else renderTheme(S.tab);
+  if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else if(S.tab==="picks") renderPicks(); else renderTheme(S.tab);
 }
 function setTab(t){
   S.tab=t; LS.set("tab",t);
-  ["home","sectors","ai","space","trends"].forEach(k=>{ const el=$("tab-"+k); if(el){ el.hidden=k!==t; if(k===t){ el.style.animation="none"; void el.offsetWidth; el.style.animation=""; } } });
+  ["home","sectors","ai","space","trends","picks"].forEach(k=>{ const el=$("tab-"+k); if(el){ el.hidden=k!==t; if(k===t){ el.style.animation="none"; void el.offsetWidth; el.style.animation=""; } } });
   document.querySelectorAll("#tabbar button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
   window.scrollTo({top:0,behavior:"instant"});
   setActiveSubs(); renderTab();
   S.gen=(S.gen||0)+1;
-  if(t!=="home") ensureData(tabSyms(t).concat(["SPY"]),{daily:true,gen:S.gen});
+  if(t==="picks") loadPicks(); else if(t!=="home") ensureData(tabSyms(t).concat(["SPY"]),{daily:true,gen:S.gen});
 }
 function wireTabs(){
   $("tabbar").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(b) setTab(b.dataset.tab); });
+  $("tab-picks").addEventListener("click",e=>{
+    const h=e.target.closest("[data-hz]"); if(h){ S.hz=h.dataset.hz; LS.set("hz",S.hz); renderPicks(); loadPicks(); return; }
+    const sc=e.target.closest("[data-scope]"); if(sc){ S.pscope=sc.dataset.scope; LS.set("pscope",S.pscope); renderPicks(); loadPicks(); return; }
+    const add=e.target.closest("[data-add]"); if(add){ e.stopPropagation(); const s=add.dataset.add; if(S.list.includes(s)) removeSym(s); else addSym(s); setTimeout(renderPicks,50); return; }
+    const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   ["sectors","ai","space","trends"].forEach(k=>$("tab-"+k).addEventListener("click",e=>{
     const add=e.target.closest("[data-add]"); if(add){ e.stopPropagation(); const s=add.dataset.add; if(S.list.includes(s)) removeSym(s); else addSym(s); setTimeout(renderTab,50); return; }
     const tf=e.target.closest("[data-ttf]"); if(tf){ S.ttf=tf.dataset.ttf; LS.set("ttf",S.ttf); renderTab(); loadRange(tabSyms(S.tab),S.ttf); return; }
