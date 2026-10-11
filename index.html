@@ -364,6 +364,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .steps a{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.row{grid-template-columns:auto 1fr auto}.spark{display:none}.hero-val{font-size:28px}.donut{width:70px;height:70px}.brand h1{font-size:23px}.perf{grid-template-columns:repeat(3,1fr)}}
+.media-a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:var(--text);text-decoration:none;min-height:48px}.media-a:active{transform:scale(.98)}.media-a .ic{font-size:22px;width:30px;text-align:center;flex:none}.media-a .tx{flex:1;min-width:0}.media-a .tx b{display:block;font-size:14px}.media-a .tx small{display:block;color:var(--muted);font-size:11.5px;line-height:1.3}.media-a .go{color:var(--accent);font-size:13px;flex:none}.media-row{display:flex;gap:6px}.media-row .media-a{flex:1}.media-alt{flex:none!important;padding:0 12px!important;font-size:12px;font-weight:600;color:var(--accent)!important;justify-content:center}.media-chips{display:flex;flex-wrap:wrap;gap:6px}.media-chips a{padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--text);font-size:12px;text-decoration:none;font-family:"JetBrains Mono",monospace}
 </style>
 </head>
 <body>
@@ -414,6 +415,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button id="briefBtn">☕ Briefing</button>
     <button id="aheadBtn">🔭 Look ahead</button>
     <button id="repBtn">📊 Reports</button>
+    <button id="mediaBtn">🎧 Listen & watch</button>
     <button id="cmpBtn">⇄ Compare</button>
     <button id="wakeBtn">🔆 Keep screen on</button>
     <a class="" id="askList" href="#" target="_blank" rel="noopener" style="flex:none;height:34px;padding:0 12px;border-radius:999px;background:linear-gradient(135deg,#F5C46B,#E8915B);color:#1A1206;font-size:12.5px;font-weight:700;display:flex;align-items:center;text-decoration:none">✨ Ask Claude</a>
@@ -1175,6 +1177,7 @@ function wire(){
   $("wakeBtn").addEventListener("click",toggleWake);
   $("briefBtn").addEventListener("click",openBriefing);
   $("aheadBtn").addEventListener("click",()=>openAhead(LS.get("aheadP","w")));
+  $("mediaBtn").addEventListener("click",openMedia);
   $("repBtn").addEventListener("click",()=>openReport(LS.get("repP","1w")));
   $("cmpBtn").addEventListener("click",()=>openCompare(S.list[0]||"AAPL",S.list[1]||"SPY"));
   $("erFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
@@ -1666,8 +1669,9 @@ function renderPicks(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="3.3";
+const APP_VERSION="3.4";
 const CHANGELOG=[
+  {v:"3.4",date:"2026-10-11",title:"Listen & watch",items:["New 🎧 Listen & watch button","Top 5 financial podcasts with Apple Podcasts links","Top 5 business radio and live audio streams","Top 5 YouTube channels, with one-tap live streams for CNBC, Bloomberg and Yahoo Finance","Latest YouTube videos for each stock on your watchlist"]},
   {v:"3.3",date:"2026-10-11",title:"Look ahead",items:["New 🔭 Look ahead for next week, next month and next quarter","Market calendar: Fed decisions and minutes, jobs, CPI, PCE and GDP releases, options expiration and quad witching, month/quarter end, earnings season, holidays","Your earnings and dividends, plus market-moving earnings (mega-caps and bellwethers)","Typical move ranges, alerts likely to be tested, seasonality and signals to watch","Ask Claude for a full outlook with scenarios"]},
   {v:"3.2.1",date:"2026-10-11",title:"Report fix",items:["Fixed the report screen freezing: it kept reloading and redrawing itself","Sector funds and other symbols the US-listing filter can't find are retried without it (still checked to be in US dollars)","Symbols that fail to load are skipped for 30 minutes instead of retried in a loop","Report shows sector loading progress and gets priority over background chart refreshes","Funds (sector, index, bond, gold…) are requested without the US filter from the start, so they load in one request"]},
   {v:"3.2",date:"2026-10-11",title:"More themes and reports",items:["New Trends themes: Cybersecurity, Magnificent 7, Banks & Payments, Energy & Oil, Healthcare & GLP-1, and Macro (bonds, gold, oil, dollar, volatility, bitcoin)","New 📊 Reports button: weekly, monthly and yearly reports covering market, watchlist, portfolio, sectors, themes, signals and what's coming up","Share or copy a report, or ask Claude to write the full narrative"]},
@@ -1688,6 +1692,42 @@ const CHANGELOG=[
   {v:"1.1",date:"2026-10-07",title:"Price history",items:["1D to 1Y charts with touch scrubbing and volume (Twelve Data)","Exact 1M / 6M / 1Y / YTD returns from closing prices"]},
   {v:"1.0",date:"2026-10-07",title:"First release (as TickerDeck Live)",items:["Real-time prices streamed from Finnhub","Watchlist with add, remove, sort, heatmap and leaderboard","Price alerts, holdings and cost basis, market clock with holidays","Logos, analyst ratings, news and installable iPhone app"]}
 ];
+// ---- Listen & watch ----
+const MEDIA={
+  pod:{t:"🎙 Podcasts",sub:"Top 5 for markets and money. Tap the name for the show, Apple for Apple Podcasts.",items:[
+    ["📰","The Journal (WSJ)","Daily deep dive on the biggest business story","https://www.wsj.com/podcasts/the-journal","The Journal WSJ"],
+    ["📊","Odd Lots (Bloomberg)","Markets, macro and how finance really works","https://www.bloomberg.com/oddlots","Odd Lots"],
+    ["💸","Planet Money (NPR)","The economy explained, in plain English","https://www.npr.org/podcasts/510289/planet-money","Planet Money"],
+    ["🃏","Motley Fool Money","Stocks, earnings and investing ideas","https://www.fool.com/podcasts/motley-fool-money/","Motley Fool Money"],
+    ["🐂","Animal Spirits","Markets, investing and life, twice a week","https://www.animalspiritspod.com/","Animal Spirits"]]},
+  radio:{t:"📻 Radio & live audio",sub:"Live business radio during market hours.",items:[
+    ["🔴","Bloomberg Radio","Live business news and interviews","https://www.bloomberg.com/audio"],
+    ["📺","CNBC live audio","CNBC's TV feed on TuneIn","https://tunein.com/search/?query=CNBC"],
+    ["🦊","Fox Business","Fox Business audio on TuneIn","https://tunein.com/search/?query=Fox%20Business"],
+    ["🏛","Marketplace (APM)","Daily economy and markets show","https://www.marketplace.org/"],
+    ["🟦","Schwab Network","Live trading and markets stream","https://schwabnetwork.com/"]]},
+  yt:{t:"▶️ YouTube",sub:"Tap the name for the channel, Live for the live stream.",items:[
+    ["📺","CNBC Television","Squawk Box, Halftime Report, Closing Bell","https://www.youtube.com/@CNBCtelevision","https://www.youtube.com/@CNBCtelevision/live"],
+    ["🟪","Bloomberg Television","Live global markets coverage","https://www.youtube.com/@markets","https://www.youtube.com/@markets/live"],
+    ["🟣","Yahoo Finance","Live market coverage and interviews","https://www.youtube.com/@YahooFinance","https://www.youtube.com/@YahooFinance/live"],
+    ["📰","The Wall Street Journal","Explainers and business news","https://www.youtube.com/@wsj"],
+    ["🎓","Patrick Boyle","Sharp, witty finance analysis","https://www.youtube.com/@PBoyle"]]}
+};
+function openMedia(){
+  S.open="__media";
+  const a=(ic,n,d,u,alt,altLbl)=>`<div class="media-row"><a class="media-a" href="${u}" target="_blank" rel="noopener"><span class="ic">${ic}</span><span class="tx"><b>${esc(n)}</b><small>${esc(d)}</small></span><span class="go">↗</span></a>${alt?`<a class="media-a media-alt" href="${alt}" target="_blank" rel="noopener">${altLbl}</a>`:""}</div>`;
+  const sec=(k,f)=>{ const m=MEDIA[k]; return `<div class="card brief-sec" style="gap:8px"><h4>${m.t}</h4><p class="hint" style="margin-top:-4px">${m.sub}</p>${m.items.map(f).join("")}</div>`; };
+  const pod=sec("pod",x=>a(x[0],x[1],x[2],x[3],"https://podcasts.apple.com/us/search?term="+encodeURIComponent(x[4]),"🎧 Apple"));
+  const radio=sec("radio",x=>a(x[0],x[1],x[2],x[3]));
+  const yt=sec("yt",x=>a(x[0],x[1],x[2],x[3],x[4],x[4]?"🔴 Live":""));
+  const syms=S.list.slice(0,12);
+  const news=syms.length?`<div class="card brief-sec" style="gap:8px"><h4>🔎 Latest videos on your stocks</h4><p class="hint" style="margin-top:-4px">Newest YouTube uploads for each ticker.</p><div class="media-chips">${syms.map(t=>`<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(t+" stock news")}&sp=CAI%253D" target="_blank" rel="noopener">${esc(t)}</a>`).join("")}</div></div>`:"";
+  $("sheetIn").innerHTML=`<div class="grab"></div>
+    <div class="d-head"><div><h3>Listen & watch</h3><p>Top financial podcasts, radio and YouTube</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    ${yt}${pod}${radio}${news}
+    <p class="hint">Links open in Safari or the app if installed. Some shows may need a subscription.</p>`;
+  showSheet();
+}
 function openVersions(){
   S.open="__versions";
   $("sheetIn").innerHTML=`<div class="grab"></div>

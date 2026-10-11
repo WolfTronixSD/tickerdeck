@@ -18,6 +18,7 @@ GoldRabbit (formerly TickerDeck) is a real-time stock watchlist for iPhone. Pric
 - **Trends:** Magnificent 7, macro (bonds, gold, oil, dollar, volatility), cybersecurity, defense & aerospace, banks & payments, energy & oil, healthcare & GLP-1, nuclear & power, quantum, crypto, robotics and semiconductors
 - **Dividends:** yield, yearly income from your shares, next ex-dividend and pay dates
 - **Look ahead:** next week, month and quarter: Fed, jobs, CPI/PCE, GDP, options expiration, holidays, earnings, dividends, typical move ranges
+- **Listen & watch:** top 5 financial podcasts, business radio streams and YouTube channels (with live streams), plus latest videos for your tickers
 - **Reports:** weekly, monthly and yearly reports to share or expand with Claude
 - **Daily briefing:** overnight moves, this week's earnings, dividends and holidays, alerts you're close to
 - **Compare:** two stocks on one chart plus a side-by-side scorecard
