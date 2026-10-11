@@ -214,6 +214,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .brief-sec h4{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .brief-li{display:flex;justify-content:space-between;gap:10px;font-size:14px;line-height:1.4}
 .brief-li span:first-child{color:#C9D3DF}
+.brief-li b{white-space:nowrap;text-align:right}
 .brief-hero{border-radius:20px;padding:18px;background:radial-gradient(120% 100% at 0% 0%,rgba(255,181,71,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(110,168,255,.18),transparent 60%),#0E131B;border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .brief-hero h3{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
 .hz{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:4px}
@@ -411,6 +412,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button id="refreshBtn">⟳ Refresh</button>
     <button id="shareBtn">⇪ Share summary</button>
     <button id="briefBtn">☕ Briefing</button>
+    <button id="aheadBtn">🔭 Look ahead</button>
     <button id="repBtn">📊 Reports</button>
     <button id="cmpBtn">⇄ Compare</button>
     <button id="wakeBtn">🔆 Keep screen on</button>
@@ -682,11 +684,11 @@ async function loadStatic(s,{metric=true}={}){
   if(metric&&!fresh(S.metric[s])){ try{ const m=await api(`/stock/metric?symbol=${encodeURIComponent(s)}&metric=all`); S.metric[s]={m:m.metric||{},at:Date.now()}; LS.set("metric",S.metric);}catch(e){} }
 }
 async function loadEarnings(){
-  if(S.earnings.at&&Date.now()-S.earnings.at<12*3600e3) return;
-  const from=today(), to=new Date(Date.now()+75*864e5).toISOString().slice(0,10);
+  if(S.earnings.at&&S.earnings.span===100&&Date.now()-S.earnings.at<12*3600e3) return;
+  const from=today(), to=new Date(Date.now()+100*864e5).toISOString().slice(0,10);
   try{ const r=await api(`/calendar/earnings?from=${from}&to=${to}`); const map={};
     (r.earningsCalendar||[]).forEach(e=>{ if(!map[e.symbol]||e.date<map[e.symbol].date) map[e.symbol]={date:e.date,hour:e.hour,eps:e.epsEstimate}; });
-    S.earnings={at:Date.now(),map}; LS.set("earn",S.earnings); }catch(e){}
+    S.earnings={at:Date.now(),span:100,map}; LS.set("earn",S.earnings); }catch(e){}
 }
 async function refreshAll(){
   for(const s of S.list) await loadQuote(s);
@@ -1167,11 +1169,12 @@ function wire(){
   $("privBtn").addEventListener("click",()=>{ S.priv=!S.priv; LS.set("priv",S.priv); render(); });
   $("soundBtn").addEventListener("click",()=>{ S.sound=!S.sound; LS.set("sound",S.sound); render(); if(S.sound){ beep(); toast("Alert chime on"); } else toast("Alert chime off"); });
   $("banners").addEventListener("click",e=>{ const b=e.target.closest("[data-dismiss]"); if(b){ S.dismissed[b.dataset.dismiss]=1; if(b.dataset.dismiss==="tdNag") LS.set("tdNag",true); renderBanners(); } if(e.target.id==="rekey") forget(); });
-  document.addEventListener("click",e=>{ const cb=e.target.closest("[data-compare]"); if(cb){ const a=cb.dataset.compare; openCompare(a,S.list.find(x=>x!==a)||"SPY"); return; } if(e.target.closest("[data-open-brief]")){ openBriefing(); return; } if(e.target.closest("[data-open-settings]")) openSettings(); if(e.target.closest("[data-open-versions]")) openVersions(); });
+  document.addEventListener("click",e=>{ const cb=e.target.closest("[data-compare]"); if(cb){ const a=cb.dataset.compare; openCompare(a,S.list.find(x=>x!==a)||"SPY"); return; } if(e.target.closest("[data-open-brief]")){ openBriefing(); return; } if(e.target.closest("[data-open-ahead]")){ openAhead(LS.get("aheadP","w")); return; } if(e.target.closest("[data-open-settings]")) openSettings(); if(e.target.closest("[data-open-versions]")) openVersions(); });
   $("refreshBtn").addEventListener("click",fullRefresh);
   $("shareBtn").addEventListener("click",shareSummary);
   $("wakeBtn").addEventListener("click",toggleWake);
   $("briefBtn").addEventListener("click",openBriefing);
+  $("aheadBtn").addEventListener("click",()=>openAhead(LS.get("aheadP","w")));
   $("repBtn").addEventListener("click",()=>openReport(LS.get("repP","1w")));
   $("cmpBtn").addEventListener("click",()=>openCompare(S.list[0]||"AAPL",S.list[1]||"SPY"));
   $("erFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
@@ -1232,6 +1235,90 @@ function summaryText(){
   S.list.slice().sort((a,b)=>(r1d(b)??-999)-(r1d(a)??-999)).forEach(s=>{ const p=price(s); if(p==null) return; const r=r1d(s); lines.push(`${r==null?"⚪":r>=0?"🟢":"🔴"} ${s} ${fmt$(p)} ${fmtP(r)}`); });
   return lines.join("\n");
 }
+/* ---------- look ahead: next week / month / quarter ---------- */
+const AHEAD={w:{name:"Next week",days:7,tdays:5,span:"week"},m:{name:"Next month",days:31,tdays:21,span:"month"},q:{name:"Next quarter",days:92,tdays:63,span:"quarter"}};
+// Fed decision days (2nd day of each 2026 meeting, 2:00 PM ET); "proj" = with economic projections / dot plot
+const FOMC={"2026-01-28":0,"2026-03-18":1,"2026-04-29":0,"2026-06-17":1,"2026-07-29":0,"2026-09-16":1,"2026-10-28":0,"2026-12-09":1};
+// release dates published by the BLS (others are estimated from the usual pattern)
+const KNOWN_MACRO={"2026-10-02":"Jobs report (Sep)","2026-12-04":"Jobs report (Nov)","2026-12-10":"CPI inflation (Nov)"};
+const MOVERS=["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","AVGO","JPM","BAC","GS","WFC","NFLX","LLY","UNH","XOM","WMT","COST","ORCL","TSM","V","MA"];
+function nthWeekday(y,m,wd,n){ const d=new Date(Date.UTC(y,m,1)); let c=0; for(let i=0;i<31;i++){ const x=new Date(Date.UTC(y,m,1+i)); if(x.getUTCMonth()!==m) break; if(x.getUTCDay()===wd&&++c===n) return x; } return null; }
+function lastWeekday(y,m,wd){ for(let i=31;i>=1;i--){ const x=new Date(Date.UTC(y,m,i)); if(x.getUTCMonth()===m&&x.getUTCDay()===wd) return x; } return null; }
+const isoD=d=>d.toISOString().slice(0,10);
+const tradingDay=iso=>{ const [y,m,d]=iso.split("-").map(Number); return dayInfo(y,m,d).open; };
+// move an estimated date off weekends and holidays: dir -1 = earlier trading day, +1 = later, +7 = a week later
+function onTrading(d,dir){ if(!d) return d; let x=new Date(d); if(dir===7){ if(!tradingDay(isoD(x))) x.setUTCDate(x.getUTCDate()+7); return x; } let k=0; while(!tradingDay(isoD(x))&&k++<7) x.setUTCDate(x.getUTCDate()+dir); return x; }
+function marketEvents(from,to){
+  const ev=[], add=(date,title,kind,est,note)=>{ if(date>=from&&date<=to) ev.push({date,title,kind,est,note}); };
+  Object.entries(FOMC).forEach(([d,proj])=>add(d,`Fed rate decision${proj?" + projections (dot plot)":""}`,"fed",false,"2:00 PM ET, press conference 2:30"));
+  Object.entries(FOMC).forEach(([d])=>{ const m=new Date(d+"T12:00:00Z"); m.setUTCDate(m.getUTCDate()+21); add(isoD(m),"Fed meeting minutes","fed",true,"2:00 PM ET"); });
+  Object.entries(KNOWN_MACRO).forEach(([d,t])=>add(d,t,"macro",false,"8:30 AM ET"));
+  const a=new Date(from+"T12:00:00Z"), b=new Date(to+"T12:00:00Z");
+  for(let y=a.getUTCFullYear(), m=a.getUTCMonth(); y<b.getUTCFullYear()||(y===b.getUTCFullYear()&&m<=b.getUTCMonth()); m===11?(y++,m=0):m++){
+    const jobs=onTrading(nthWeekday(y,m,5,1),7), opex=onTrading(nthWeekday(y,m,5,3),-1), cpi=onTrading(nthWeekday(y,m,3,2),1), pce=onTrading(lastWeekday(y,m,5),-1), gdp=[0,3,6,9].includes(m)?onTrading(lastWeekday(y,m,4),-1):null;
+    const lab=new Date(Date.UTC(y,m-1,1)).toLocaleDateString([], {month:"short",timeZone:"UTC"});
+    if(jobs&&!Object.keys(KNOWN_MACRO).some(k=>k.slice(0,7)===isoD(jobs).slice(0,7)&&KNOWN_MACRO[k].startsWith("Jobs"))) add(isoD(jobs),`Jobs report (${lab})`,"macro",true,"8:30 AM ET");
+    if(cpi&&!Object.keys(KNOWN_MACRO).some(k=>k.slice(0,7)===isoD(cpi).slice(0,7)&&KNOWN_MACRO[k].startsWith("CPI"))) add(isoD(cpi),`CPI inflation (${lab})`,"macro",true,"8:30 AM ET, around this date");
+    if(pce) add(isoD(pce),`PCE inflation, the Fed's favorite gauge`,"macro",true,"8:30 AM ET, around this date");
+    if(gdp) add(isoD(gdp),"GDP, first estimate for last quarter","macro",true,"8:30 AM ET, around this date");
+    if(opex) add(isoD(opex),[2,5,8,11].includes(m)?"Quad witching: quarterly options & futures expire":"Monthly options expiration","options",false,"can add volatility at the close");
+    const me=onTrading(new Date(Date.UTC(y,m+1,0)),-1); add(isoD(me),[2,5,8,11].includes(m)?"Quarter end: funds rebalance, window dressing":"Month end","calendar",false,"");
+    if([0,3,6,9].includes(m)){ const bk=nthWeekday(y,m,2,2); if(bk){ bk.setUTCDate(bk.getUTCDate()+1); add(isoD(bk),"Earnings season kicks off (big banks)","earn",true,"JPM, WFC, C usually report first"); } }
+  }
+  Object.entries(HOLIDAYS).forEach(([d,n])=>add(d,`Market closed: ${n}`,"holiday",false,""));
+  Object.entries(EARLY).forEach(([d,n])=>add(d,`Early close 1:00 PM ET (${n})`,"holiday",false,""));
+  return ev.sort((x,y)=>x.date.localeCompare(y.date));
+}
+function aheadData(P){
+  const A=AHEAD[P], from=new Date(Date.now()+864e5).toISOString().slice(0,10), to=new Date(Date.now()+A.days*864e5).toISOString().slice(0,10), map=S.earnings.map||{};
+  const mine=S.list.filter(x=>map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x]}));
+  const movers=MOVERS.filter(x=>!S.list.includes(x)&&map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x]}));
+  const divs=S.list.map(x=>({x,n:nextDiv(x)})).filter(o=>o.n&&o.n.ex>=from&&o.n.ex<=to);
+  const events=marketEvents(from,to);
+  // seasonality: average of the calendar months the period covers
+  const months=[...new Set(Array.from({length:Math.max(1,Math.round(A.days/30))},(_,i)=>(new Date().getMonth()+(P==="w"?0:1)+i)%12))];
+  const seas=x=>{ const se=season(x); if(!se) return null; const v=months.map(m=>se[m]).filter(Boolean); return v.length?{avg:v.reduce((a,o)=>a+o.avg,0),win:mean(v.map(o=>o.win/o.n))}:null; };
+  const seasRows=S.list.concat(["SPY"]).map(x=>({x,s:seas(x)})).filter(o=>o.s).sort((a,b)=>b.s.avg-a.s.avg);
+  // typical move range from recent volatility (68% of outcomes fall inside)
+  const range=x=>{ const An=analytics(x); return An?Math.min(60,An.sigD*Math.sqrt(A.tdays)*100):null; };
+  const spyR=range("SPY"), spyP=price("SPY");
+  const rangeRows=S.list.map(x=>({x,r:range(x)})).filter(o=>o.r!=null).sort((a,b)=>b.r-a.r);
+  // alerts and targets that sit inside the typical range: likely to be tested
+  const tested=[]; S.list.forEach(x=>{ const p=price(x), r=range(x); if(!p||r==null) return; const lv=[(S.alerts[x]||{}).above,(S.alerts[x]||{}).below].concat((S.targets[x]||[]).filter(t=>!t.fired).map(t=>t.p)).filter(Boolean);
+    lv.forEach(v=>{ const d=(v/p-1)*100; if(Math.abs(d)<=r) tested.push({x,v,d}); }); });
+  const cross=S.list.map(x=>({x,A:analytics(x)})).filter(o=>o.A&&o.A.s200&&Math.abs(o.A.s50/o.A.s200-1)<.015).map(o=>({x:o.x,up:o.A.s50<o.A.s200}));
+  const hot=S.list.filter(x=>{ const An=analytics(x); return An&&An.R>=70; }), cold=S.list.filter(x=>{ const An=analytics(x); return An&&An.R<=30; });
+  return {A,from,to,mine,movers,divs,events,months,seasRows,spyR,spyP,rangeRows,tested,cross,hot,cold};
+}
+function openAhead(P){
+  S.open="__ahead"; LS.set("aheadP",P);
+  const D=aheadData(P), A=D.A, li=(a,b,c="")=>`<div class="brief-li"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
+  const sec=(t,b,sub="")=>b?`<div class="card brief-sec"><h4>${t}</h4>${sub?`<p class="hint" style="margin-top:-4px">${sub}</p>`:""}${b}</div>`:"";
+  const dl=d=>new Date(d+"T12:00:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"});
+  const icon={fed:"🏦",macro:"📈",options:"🎲",calendar:"📅",earn:"📣",holiday:"🏖"};
+  const hr=e=>e.hour==="bmo"?" · before open":e.hour==="amc"?" · after close":"";
+  const big=D.events.filter(e=>e.kind==="fed"||e.kind==="macro");
+  const headline=[big.find(e=>e.kind==="fed")?"a Fed decision":"", big.some(e=>/CPI|PCE/.test(e.title))?"inflation data":"", big.some(e=>/Jobs/.test(e.title))?"a jobs report":"", D.mine.length?`${D.mine.length} of your stock${D.mine.length>1?"s":""} reporting earnings`:""].filter(Boolean);
+  $("sheetIn").innerHTML=`<div class="grab"></div>
+    <div class="d-head"><div><h3>Look ahead</h3><p>${dl(D.from)} – ${dl(D.to)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="hz" id="aheadTabs" style="background:var(--panel2);border-color:var(--line)">${Object.entries(AHEAD).map(([k,v])=>`<button data-ahead="${k}" aria-pressed="${k===P}">${v.name}</button>`).join("")}</div>
+    <div class="brief-hero"><h3>🔭 ${A.name}</h3>
+      <p class="hint" style="font-size:14px;color:#D5DEE9">${headline.length?`Key moments: ${headline.join(", ")}.`:"A quieter stretch on the calendar."}${D.spyR!=null&&D.spyP?` The S&P 500 typically moves within ±${D.spyR.toFixed(1)}% over a ${A.span} (about ${fmt$(D.spyP*(1-D.spyR/100),0)}–${fmt$(D.spyP*(1+D.spyR/100),0)} for SPY), based on recent swings.`:""}</p></div>
+    ${sec("Market calendar",D.events.map(e=>li(`${icon[e.kind]||"•"} ${esc(e.title)}${e.note?`<br><span class="hint">${esc(e.note)}</span>`:""}`,`${dl(e.date)}${e.est?" ~":""}`)).join("")||`<p class="hint">No major scheduled events.</p>`,"~ means estimated from the usual schedule; confirm at bls.gov or federalreserve.gov.")}
+    ${sec("Your earnings",D.mine.map(o=>li(`📣 ${o.x}${o.e.eps!=null?` · EPS est. ${fmt$(o.e.eps)}`:""}`,`${dl(o.e.date)}${hr(o.e)}`)).join(""),"Expect bigger moves around these dates.")}
+    ${sec("Market-moving earnings",D.movers.slice(0,12).map(o=>li(`📣 ${o.x}`,`${dl(o.e.date)}${hr(o.e)}`)).join(""),"Mega-caps and bellwethers that can move the whole market.")}
+    ${sec("Dividends",D.divs.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}${o.n.amt?` · ${fmt$(o.n.amt,3)}`:""}`,dl(o.n.ex))).join(""),"Own the stock before the ex-dividend date to get paid.")}
+    ${sec(`Typical ${A.span} range`,D.rangeRows.map(o=>li(o.x,`±${o.r.toFixed(1)}%`)).join(""),"68% of the time the move stays inside this range, based on the last 60 days of swings. Not a prediction of direction.")}
+    ${sec("Alerts & targets likely to be tested",D.tested.map(o=>li(`🎯 ${o.x} at ${fmt$(price(o.x))}`,`${fmt$(o.v)} (${fmtP(o.d)})`)).join(""),"These levels sit inside the typical range for the period.")}
+    ${sec("Seasonality",D.seasRows.map(o=>li(o.x==="SPY"?"S&P 500":o.x,`${fmtP(o.s.avg)} · up ${Math.round(o.s.win*100)}% of years`,tcls(o.s.avg))).join(""),`Average return in ${D.months.map(m=>MONTHS[m]).join(", ")} over the last 10 years.`)}
+    ${sec("Signals to watch",(D.cross.map(o=>li(`${o.up?"★":"⚠"} ${o.x}`,o.up?"Near a golden cross":"Near a death cross"))).concat(D.hot.length?[li("🔥 Overbought, could cool off",D.hot.join(", "))]:[]).concat(D.cold.length?[li("🧊 Oversold, could bounce",D.cold.join(", "))]:[]).join(""))}
+    <a class="claude" href="${claudeURL(`What should I expect in the stock market over the ${A.name.toLowerCase()} (${dl(D.from)} – ${dl(D.to)})? Search the web for the latest economic calendar, Fed expectations, earnings previews and analyst outlooks. My calendar so far:\n${D.events.map(e=>`${e.date}: ${e.title}${e.est?" (est.)":""}`).join("\n")}\nMy stocks: ${S.list.join(", ")}${D.mine.length?`\nMy earnings: ${D.mine.map(o=>`${o.x} ${o.e.date}`).join(", ")}`:""}\n\nGive me: the main catalysts and what the market expects, scenarios (bull/base/bear) for the period, what it means for my stocks, and what to watch day by day.`)}" target="_blank" rel="noopener">✨ Ask Claude for the ${A.name.toLowerCase()} outlook</a>
+    <p class="hint" style="font-size:11.5px">Fed dates are the Federal Reserve's 2026 schedule. Economic release dates marked ~ are estimated from their usual timing. Earnings dates come from Finnhub and can shift.</p>`;
+  $("aheadTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-ahead]"); if(b) openAhead(b.dataset.ahead); });
+  if(!$("sheet").classList.contains("show")) showSheet(); else $("sheet").scrollTop=0;
+  loadEarnings();
+}
+
 /* ---------- weekly / monthly / yearly reports ---------- */
 const REP={"1w":{name:"Weekly",span:"week",ahead:7},"1m":{name:"Monthly",span:"month",ahead:30},"1y":{name:"Yearly",span:"year",ahead:30}};
 function reportData(P){
@@ -1285,6 +1372,7 @@ function openReport(P,load=true){
     ${sec("Themes",D.th.length?bar(D.th,"n","avg")+`<p class="hint">Themes appear once their history has loaded (open them on the Trends tab).</p>`:`<p class="hint">Open the Trends tab to load theme history.</p>`)}
     ${sec("Signals now",D.sig.length?li("Stocks in an uptrend",`${up} of ${D.sig.length}`)+(hot.length?li("Overbought (RSI ≥ 70)",hot.join(", ")):"")+(cold.length?li("Oversold (RSI ≤ 30)",cold.join(", ")):""):"")}
     ${sec(`Coming up (next ${REP[P].ahead} days)`,[...D.er.map(o=>li(`📣 ${o.x} earnings`,`${dShort(o.e.date)}${o.e.hour==="bmo"?" · pre-mkt":o.e.hour==="amc"?" · after close":""}`)),...D.dv.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}`,dShort(o.n.ex))),...D.hol.map(([d,n])=>li(`🏖 Market closed: ${n}`,dShort(d)))].join("")||`<p class="hint">Nothing scheduled for your stocks.</p>`)}
+    <button class="ghost" data-open-ahead style="width:100%">🔭 Look ahead: next week, month and quarter</button>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="ghost" id="repShare">⇪ Share report</button><button class="ghost" id="repCopy">⧉ Copy text</button></div>
     <a class="claude" href="${claudeURL(`Write my ${R.name.toLowerCase()} investing report for ${f(D.from)} – ${f(D.to)}. Search the web for what drove markets over this period and what's ahead. My data:\n${reportText(D)}\n\nStructure: 1) what happened and why, 2) my winners and losers explained, 3) sector and theme rotation, 4) risks and what to watch next ${R.span}, 5) three action ideas to research (not advice).`)}" target="_blank" rel="noopener">✨ Ask Claude to write the full report</a>`;
   $("repTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-rep]"); if(b) openReport(b.dataset.rep,false); });
@@ -1578,8 +1666,9 @@ function renderPicks(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="3.2.1";
+const APP_VERSION="3.3";
 const CHANGELOG=[
+  {v:"3.3",date:"2026-10-11",title:"Look ahead",items:["New 🔭 Look ahead for next week, next month and next quarter","Market calendar: Fed decisions and minutes, jobs, CPI, PCE and GDP releases, options expiration and quad witching, month/quarter end, earnings season, holidays","Your earnings and dividends, plus market-moving earnings (mega-caps and bellwethers)","Typical move ranges, alerts likely to be tested, seasonality and signals to watch","Ask Claude for a full outlook with scenarios"]},
   {v:"3.2.1",date:"2026-10-11",title:"Report fix",items:["Fixed the report screen freezing: it kept reloading and redrawing itself","Sector funds and other symbols the US-listing filter can't find are retried without it (still checked to be in US dollars)","Symbols that fail to load are skipped for 30 minutes instead of retried in a loop","Report shows sector loading progress and gets priority over background chart refreshes","Funds (sector, index, bond, gold…) are requested without the US filter from the start, so they load in one request"]},
   {v:"3.2",date:"2026-10-11",title:"More themes and reports",items:["New Trends themes: Cybersecurity, Magnificent 7, Banks & Payments, Energy & Oil, Healthcare & GLP-1, and Macro (bonds, gold, oil, dollar, volatility, bitcoin)","New 📊 Reports button: weekly, monthly and yearly reports covering market, watchlist, portfolio, sectors, themes, signals and what's coming up","Share or copy a report, or ask Claude to write the full narrative"]},
   {v:"3.1",date:"2026-10-09",title:"Gold Picks",items:["New Picks tab ranks stocks for a 6-month, 1-year or Forever holding period","6 months: momentum vs the S&P, trend, RSI, earnings growth, seasonality","1 year: growth at a reasonable price, profitability and long-term trend","Forever: quality, margins, 5-year growth, low debt and calmer swings","Every pick shows its score, top reasons and main risk; Ask Claude can review the list","2W added to the Home time frames, and 1W, 2W, 5Y and All added to Compare"]},
