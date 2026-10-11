@@ -411,6 +411,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button id="refreshBtn">⟳ Refresh</button>
     <button id="shareBtn">⇪ Share summary</button>
     <button id="briefBtn">☕ Briefing</button>
+    <button id="repBtn">📊 Reports</button>
     <button id="cmpBtn">⇄ Compare</button>
     <button id="wakeBtn">🔆 Keep screen on</button>
     <a class="" id="askList" href="#" target="_blank" rel="noopener" style="flex:none;height:34px;padding:0 12px;border-radius:999px;background:linear-gradient(135deg,#F5C46B,#E8915B);color:#1A1206;font-size:12.5px;font-weight:700;display:flex;align-items:center;text-decoration:none">✨ Ask Claude</a>
@@ -1153,6 +1154,7 @@ function wire(){
   $("shareBtn").addEventListener("click",shareSummary);
   $("wakeBtn").addEventListener("click",toggleWake);
   $("briefBtn").addEventListener("click",openBriefing);
+  $("repBtn").addEventListener("click",()=>openReport(LS.get("repP","1w")));
   $("cmpBtn").addEventListener("click",()=>openCompare(S.list[0]||"AAPL",S.list[1]||"SPY"));
   $("erFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
   $("idx").addEventListener("click",e=>{ const b=e.target.closest("[data-idx]"); if(b&&price(b.dataset.idx)!=null) openDetail(b.dataset.idx); });
@@ -1211,6 +1213,69 @@ function summaryText(){
   lines.push("");
   S.list.slice().sort((a,b)=>(r1d(b)??-999)-(r1d(a)??-999)).forEach(s=>{ const p=price(s); if(p==null) return; const r=r1d(s); lines.push(`${r==null?"⚪":r>=0?"🟢":"🔴"} ${s} ${fmt$(p)} ${fmtP(r)}`); });
   return lines.join("\n");
+}
+/* ---------- weekly / monthly / yearly reports ---------- */
+const REP={"1w":{name:"Weekly",span:"week",ahead:7},"1m":{name:"Monthly",span:"month",ahead:30},"1y":{name:"Yearly",span:"year",ahead:30}};
+function reportData(P){
+  const t=today(), ahead=new Date(Date.now()+REP[P].ahead*864e5).toISOString().slice(0,10);
+  const st=rangeStart(P), from=new Date(st), to=new Date();
+  const L=S.list.map(x=>({x,r:ret(x,P)})).filter(o=>o.r!=null).sort((a,b)=>b.r-a.r);
+  const idx=IDX.map(([x,n])=>({x,n,r:ret(x,P)}));
+  const avg=L.length?mean(L.map(o=>o.r)):null, spy=ret("SPY",P);
+  const held=S.list.filter(x=>S.holdings[x]>0&&price(x)!=null), now=held.reduce((a,x)=>a+price(x)*S.holdings[x],0);
+  const then=held.reduce((a,x)=>{ const r=ret(x,P); return a+(r!=null?price(x)*S.holdings[x]/(1+r/100):price(x)*S.holdings[x]); },0);
+  const contrib=held.map(x=>{ const r=ret(x,P); return {x,d:r!=null?price(x)*S.holdings[x]*(1-1/(1+r/100)):0}; }).sort((a,b)=>b.d-a.d);
+  const sec=SECTORS.map(([x,n])=>({x,n,r:ret(x,P)})).filter(o=>o.r!=null).sort((a,b)=>b.r-a.r);
+  const cyc=sec.filter(o=>CYCLICAL.includes(o.x)), def=sec.filter(o=>DEFENSIVE.includes(o.x)), spread=cyc.length&&def.length?mean(cyc.map(o=>o.r))-mean(def.map(o=>o.r)):null;
+  const th=Object.keys(THEMES).map(k=>{ const st=themeStats(themeSyms(k),P); return {k,n:THEMES[k].name,avg:st.avg,cov:st.rs.length,tot:themeSyms(k).length}; }).filter(o=>o.avg!=null&&o.cov>=o.tot*.5).sort((a,b)=>b.avg-a.avg);
+  const sig=S.list.map(x=>({x,A:analytics(x)})).filter(o=>o.A);
+  const er=S.list.filter(x=>S.earnings.map&&S.earnings.map[x]&&S.earnings.map[x].date>=t&&S.earnings.map[x].date<=ahead).map(x=>({x,e:S.earnings.map[x]})).sort((a,b)=>a.e.date.localeCompare(b.e.date));
+  const dv=S.list.map(x=>({x,n:nextDiv(x)})).filter(o=>o.n&&o.n.ex>=t&&o.n.ex<=ahead);
+  const hol=Object.entries(HOLIDAYS).filter(([d])=>d>=t&&d<=ahead);
+  return {P,from,to,L,idx,avg,spy,held,now,then,contrib,sec,spread,th,sig,er,dv,hol};
+}
+function reportText(D){
+  const R=REP[D.P], f=d=>d.toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"}), out=[];
+  out.push(`🐇 GoldRabbit ${R.name} report · ${f(D.from)} – ${f(D.to)}`,"");
+  out.push("MARKET: "+D.idx.map(o=>`${o.n} ${fmtP(o.r)}`).join(" · "));
+  if(D.avg!=null) out.push(`WATCHLIST: ${fmtP(D.avg)} equal-weight${D.spy!=null?` (${D.avg>=D.spy?"beat":"trailed"} S&P by ${Math.abs(D.avg-D.spy).toFixed(1)} pts)`:""}`);
+  if(D.held.length) out.push(`PORTFOLIO: ${fmt$(D.now)} (${D.now-D.then>=0?"+":"−"}${fmt$(Math.abs(D.now-D.then))}, ${fmtP(D.then?(D.now/D.then-1)*100:null)})`);
+  if(D.L.length){ out.push("","Best: "+D.L.slice(0,3).map(o=>`${o.x} ${fmtP(o.r)}`).join(", ")); out.push("Worst: "+D.L.slice(-3).reverse().map(o=>`${o.x} ${fmtP(o.r)}`).join(", ")); }
+  if(D.sec.length) out.push("Sectors leading: "+D.sec.slice(0,3).map(o=>`${o.n} ${fmtP(o.r)}`).join(", ")+" · lagging: "+D.sec.slice(-2).map(o=>`${o.n} ${fmtP(o.r)}`).join(", "));
+  if(D.th.length) out.push("Themes: "+D.th.map(o=>`${o.n} ${fmtP(o.avg)}`).join(", "));
+  if(D.er.length||D.dv.length) out.push("","Coming up: "+D.er.map(o=>`${o.x} earnings ${dShort(o.e.date)}`).concat(D.dv.map(o=>`${o.x} ex-div ${dShort(o.n.ex)}`)).join(", "));
+  return out.join("\n");
+}
+function openReport(P){
+  S.open="__report"; S.repP=P; LS.set("repP",P);
+  const D=reportData(P), R=REP[P], f=d=>d.toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"});
+  const li=(a,b,c="")=>`<div class="brief-li"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
+  const sec=(t,b)=>b?`<div class="card brief-sec"><h4>${t}</h4>${b}</div>`:"";
+  const bar=(list,lab,key)=>{ const mx=Math.max(...list.map(o=>Math.abs(o[key]||0)))||1; return `<div class="board" style="padding:0;border:0;background:none">${list.map(o=>{ const w=Math.abs(o[key])/mx*50, stl=o[key]>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row" style="grid-template-columns:96px 1fr 66px"><b style="font-size:12px">${esc(o[lab])}</b><div class="bar-track"><i style="${stl}"></i></div><span class="num ${tcls(o[key])}">${fmtP(o[key])}</span></div>`; }).join("")}</div>`; };
+  const up=D.sig.filter(o=>o.A.score>=.6).length, hot=D.sig.filter(o=>o.A.R>=70).map(o=>o.x), cold=D.sig.filter(o=>o.A.R<=30).map(o=>o.x);
+  const missing=S.list.length-D.L.length;
+  $("sheetIn").innerHTML=`<div class="grab"></div>
+    <div class="d-head"><div><h3>${R.name} report</h3><p>${f(D.from)} – ${f(D.to)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="hz" id="repTabs" style="background:var(--panel2);border-color:var(--line)">${Object.entries(REP).map(([k,v])=>`<button data-rep="${k}" aria-pressed="${k===P}">${v.name}</button>`).join("")}</div>
+    <div class="brief-hero"><h3>${D.avg!=null?`<span class="${tcls(D.avg)}">${fmtP(D.avg)}</span> this ${R.span}`:`This ${R.span}`}</h3>
+      <p class="hint" style="font-size:14px;color:#D5DEE9">${D.avg!=null&&D.spy!=null?`Your watchlist ${D.avg>=D.spy?"beat":"trailed"} the S&P 500 (${fmtP(D.spy)}) by ${Math.abs(D.avg-D.spy).toFixed(1)} points.`:"Loading price history…"}${D.spread!=null?` Money rotated ${D.spread>0?"into growth sectors (risk-on)":"toward defensive sectors (risk-off)"}.`:""}</p>
+      ${D.held.length?li("Your holdings",`${money(fmt$(D.now))} · ${money((D.now-D.then>=0?"+":"−")+fmt$(Math.abs(D.now-D.then)))} (${fmtP(D.then?(D.now/D.then-1)*100:null)})`,tcls(D.now-D.then)):""}</div>
+    ${sec("Market",D.idx.map(o=>li(o.n,fmtP(o.r),tcls(o.r))).join(""))}
+    ${sec(`Your watchlist this ${R.span}`,D.L.length?bar(D.L,"x","r")+(missing?`<p class="hint">${missing} stock${missing>1?"s":""} still loading history.</p>`:""):"")}
+    ${D.held.length&&D.contrib.length?sec("What moved your portfolio",D.contrib.slice(0,3).concat(D.contrib.length>3?D.contrib.slice(-1):[]).map(o=>li(o.x,`${o.d>=0?"+":"−"}${money(fmt$(Math.abs(o.d)))}`,tcls(o.d))).join("")):""}
+    ${sec("Sectors",D.sec.length?bar(D.sec,"n","r"):`<p class="hint">Loading sector history… (free plan: about 8 a minute)</p>`)}
+    ${sec("Themes",D.th.length?bar(D.th,"n","avg")+`<p class="hint">Themes appear once their history has loaded (open them on the Trends tab).</p>`:`<p class="hint">Open the Trends tab to load theme history.</p>`)}
+    ${sec("Signals now",D.sig.length?li("Stocks in an uptrend",`${up} of ${D.sig.length}`)+(hot.length?li("Overbought (RSI ≥ 70)",hot.join(", ")):"")+(cold.length?li("Oversold (RSI ≤ 30)",cold.join(", ")):""):"")}
+    ${sec(`Coming up (next ${REP[P].ahead} days)`,[...D.er.map(o=>li(`📣 ${o.x} earnings`,`${dShort(o.e.date)}${o.e.hour==="bmo"?" · pre-mkt":o.e.hour==="amc"?" · after close":""}`)),...D.dv.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}`,dShort(o.n.ex))),...D.hol.map(([d,n])=>li(`🏖 Market closed: ${n}`,dShort(d)))].join("")||`<p class="hint">Nothing scheduled for your stocks.</p>`)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="ghost" id="repShare">⇪ Share report</button><button class="ghost" id="repCopy">⧉ Copy text</button></div>
+    <a class="claude" href="${claudeURL(`Write my ${R.name.toLowerCase()} investing report for ${f(D.from)} – ${f(D.to)}. Search the web for what drove markets over this period and what's ahead. My data:\n${reportText(D)}\n\nStructure: 1) what happened and why, 2) my winners and losers explained, 3) sector and theme rotation, 4) risks and what to watch next ${R.span}, 5) three action ideas to research (not advice).`)}" target="_blank" rel="noopener">✨ Ask Claude to write the full report</a>`;
+  $("repTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-rep]"); if(b) openReport(b.dataset.rep); });
+  const txt=reportText(D);
+  $("repShare").addEventListener("click",async()=>{ try{ if(navigator.share){ await navigator.share({title:`GoldRabbit ${R.name} report`,text:txt}); return; } }catch(e){ if(e&&e.name==="AbortError") return; } try{ await navigator.clipboard.writeText(txt); toast("Report copied"); }catch(e){ toast("Couldn't share on this device"); } });
+  $("repCopy").addEventListener("click",async()=>{ try{ await navigator.clipboard.writeText(txt); toast("Report copied"); }catch(e){ toast("Couldn't copy on this device"); } });
+  if(!$("sheet").classList.contains("show")) showSheet();
+  // make sure the report has what it needs: watchlist, indexes and sectors history
+  if(!S.repLoading){ S.repLoading=1; ensureData(S.list.concat(IDX.map(x=>x[0]),SECTORS.map(x=>x[0])),{daily:true}).then(()=>{ S.repLoading=0; if(S.open==="__report") openReport(S.repP); }); }
 }
 async function shareSummary(){
   const text=summaryText();
@@ -1403,7 +1468,7 @@ const HZ={
 };
 const FNAME={rel6:"6-month strength vs S&P",rel3:"3-month strength vs S&P",rel12:"1-year strength vs S&P",trend:"Trend signals",rsiFit:"Not overheated (RSI)",epsG:"Earnings growth",revG:"Revenue growth",seas:"Seasonal tailwind",netM:"Net margin",grossM:"Gross margin",roe:"Return on equity",value:"Valuation vs growth",above200:"Above 200-day average",revG5:"5-year revenue growth",lowDebt:"Low debt",cagr:"5-year price growth",lowVol:"Calm price swings",divG:"Dividend growth"};
 const nn=v=>typeof v==="number"&&isFinite(v)?v:null;
-function pickScope(){ const ex=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX","ITA","XAR","SHLD"].concat(SECTORS.map(x=>x[0]))); return S.pscope==="mine"?S.list.filter(x=>!ex.has(x)):universe(); }
+function pickScope(){ const ex=new Set([...FUNDS].concat(SECTORS.map(x=>x[0]))); return S.pscope==="mine"?S.list.filter(x=>!ex.has(x)):universe(); }
 function rawFactors(x){
   const m=(S.metric[x]&&S.metric[x].m)||{}, A=analytics(x), r6=ret(x,"6m"), r3=ret(x,"3m"), r12=ret(x,"1y"), r5=ret(x,"5y");
   const s6=ret("SPY","6m"), s3=ret("SPY","3m"), s12=ret("SPY","1y");
@@ -1493,8 +1558,9 @@ function renderPicks(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="3.1";
+const APP_VERSION="3.2";
 const CHANGELOG=[
+  {v:"3.2",date:"2026-10-11",title:"More themes and reports",items:["New Trends themes: Cybersecurity, Magnificent 7, Banks & Payments, Energy & Oil, Healthcare & GLP-1, and Macro (bonds, gold, oil, dollar, volatility, bitcoin)","New 📊 Reports button: weekly, monthly and yearly reports covering market, watchlist, portfolio, sectors, themes, signals and what's coming up","Share or copy a report, or ask Claude to write the full narrative"]},
   {v:"3.1",date:"2026-10-09",title:"Gold Picks",items:["New Picks tab ranks stocks for a 6-month, 1-year or Forever holding period","6 months: momentum vs the S&P, trend, RSI, earnings growth, seasonality","1 year: growth at a reasonable price, profitability and long-term trend","Forever: quality, margins, 5-year growth, low debt and calmer swings","Every pick shows its score, top reasons and main risk; Ask Claude can review the list","2W added to the Home time frames, and 1W, 2W, 5Y and All added to Compare"]},
   {v:"3.0",date:"2026-10-09",title:"Defense stocks",items:["New Defense & Aerospace theme on the Trends tab: primes (LMT, RTX, NOC, GD, LHX, BA, HII), drones & defense tech (PLTR, KTOS, AVAV, RCAT, MRCY), aerospace parts, gov IT & cyber, and defense ETFs (ITA, XAR, SHLD)","Defense stocks are included in Stock ideas and Compare","Trends streams live prices for the selected theme to stay within the free plan's limit"]},
   {v:"2.9",date:"2026-10-08",title:"GoldRabbit",items:["TickerDeck is now GoldRabbit, with a new icon","Version number shown next to the name; tap it for what's new","Price history requested split-adjusted only (no dividend adjustment) to match Yahoo Finance charts","New \"How these returns are calculated\" card on each stock shows the exact start date and price behind 1W to 5Y","≈ marks returns that are still Finnhub estimates while history loads"]},
@@ -1608,7 +1674,8 @@ function renderPortfolio(){
 }
 
 /* ---------- stock ideas (screens) ---------- */
-function universe(){ const ex=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX","ITA","XAR","SHLD"].concat(SECTORS.map(x=>x[0]))); return [...new Set(S.list.concat(Object.keys(THEMES).flatMap(themeSyms)))].filter(x=>!ex.has(x)); }
+const FUNDS=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX","ITA","XAR","SHLD","CIBR","HACK","BUG","TLT","IEF","SHY","GLD","SLV","USO","DBC","UUP","VIXY"]);
+function universe(){ const ex=new Set([...FUNDS].concat(SECTORS.map(x=>x[0]))); return [...new Set(S.list.concat(Object.keys(THEMES).filter(k=>!THEMES[k].noPicks).flatMap(themeSyms)))].filter(x=>!ex.has(x)); }
 function ideas(){
   const rows=universe().map(x=>({x,A:analytics(x)})).filter(o=>o.A);
   const lead=rows.filter(o=>o.A.score>=.8&&o.A.R>=50&&o.A.R<=70).sort((a,b)=>b.A.trendY-a.A.trendY).slice(0,5);
@@ -1728,9 +1795,21 @@ const THEMES={
   robotics:{name:"Robotics",title:"Robotics & Automation",desc:"Humanoids, surgical robots and factory automation.",bg:"radial-gradient(120% 90% at 100% 0%,rgba(244,63,94,.28),transparent 60%),#12080B",groups:{"":["TSLA","ISRG","SYM","ROK","TER","PATH","SERV"]}},
   semis:{name:"Semis",title:"Semiconductors",desc:"The chip supply chain from design to equipment.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(110,168,255,.30),transparent 60%),#080C14",groups:{"":["NVDA","AMD","AVGO","TSM","ASML","AMAT","LRCX","KLAC","MU","INTC"]}},
   defense:{name:"Defense",title:"Defense & Aerospace",desc:"Prime contractors, drones and new defense tech, government IT and cyber, and defense ETFs.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(132,204,22,.22),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(148,163,184,.18),transparent 60%),#0B0F0A",
-    groups:{"Primes":["LMT","RTX","NOC","GD","LHX","BA","HII"],"Drones & defense tech":["PLTR","KTOS","AVAV","RCAT","MRCY"],"Aerospace parts":["TDG","HEI","TXT","HWM"],"Gov IT & cyber":["LDOS","BAH","CACI","SAIC"],"ETFs":["ITA","XAR","SHLD"]}}
+    groups:{"Primes":["LMT","RTX","NOC","GD","LHX","BA","HII"],"Drones & defense tech":["PLTR","KTOS","AVAV","RCAT","MRCY"],"Aerospace parts":["TDG","HEI","TXT","HWM"],"Gov IT & cyber":["LDOS","BAH","CACI","SAIC"],"ETFs":["ITA","XAR","SHLD"]}},
+  cyber:{name:"Cybersecurity",title:"Cybersecurity",desc:"Endpoint, cloud, network and identity security, plus cyber ETFs.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(239,68,68,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(34,211,238,.18),transparent 60%),#0D0A10",
+    groups:{"Platforms":["PANW","CRWD","FTNT","ZS","NET"],"Identity & data":["OKTA","CYBR","S","VRNS","RBRK"],"Network & vuln mgmt":["CHKP","QLYS","TENB","RPD"],"ETFs":["CIBR","HACK","BUG"]}},
+  mag7:{name:"Magnificent 7",title:"Magnificent 7",desc:"The seven mega-caps that make up about a third of the S&P 500. When they move, the index moves.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(255,181,71,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(110,168,255,.2),transparent 60%),#0D0D10",
+    groups:{"":["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA"]}},
+  banks:{name:"Banks & Payments",title:"Banks & Payments",desc:"Big banks, brokers and card networks: a read on credit, rates and consumer spending.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(16,185,129,.22),transparent 60%),#08100D",
+    groups:{"Big banks":["JPM","BAC","WFC","C","GS","MS"],"Asset managers & brokers":["BLK","SCHW","KKR","BX"],"Payments":["V","MA","AXP","PYPL"]}},
+  energy:{name:"Energy & Oil",title:"Energy & Oil",desc:"Oil majors, drillers and services. Oil prices feed straight into inflation and rates.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(234,88,12,.28),transparent 60%),#120B06",
+    groups:{"Majors":["XOM","CVX","COP","OXY"],"Services & midstream":["SLB","HAL","KMI","WMB"],"Producers":["EOG","DVN","FANG"]}},
+  health:{name:"Health & GLP-1",title:"Healthcare & GLP-1",desc:"Weight-loss drug leaders, big pharma, managed care and med-tech.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(59,130,246,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(16,185,129,.18),transparent 60%),#070C14",
+    groups:{"GLP-1 & obesity":["LLY","NVO","VKTX","AMGN"],"Big pharma":["JNJ","MRK","ABBV","PFE"],"Managed care":["UNH","CVS","ELV"],"Med-tech":["ISRG","ABT","SYK","BSX"]}},
+  macro:{name:"Macro",title:"Macro: Rates, Gold, Oil & Dollar",desc:"The forces behind the whole market: long-term bonds (rates move the opposite way), gold, silver, oil, the US dollar and fear (volatility).",noPicks:true,bg:"radial-gradient(120% 90% at 0% 0%,rgba(250,204,21,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(148,163,184,.2),transparent 60%),#0E0D08",
+    groups:{"Bonds (rates ↓ = price ↑)":["TLT","IEF","SHY"],"Gold & silver":["GLD","SLV"],"Oil & commodities":["USO","DBC"],"Dollar & fear":["UUP","VIXY"],"Bitcoin":["IBIT"]}}
 };
-const TREND_KEYS=["defense","power","quantum","crypto","robotics","semis"];
+const TREND_KEYS=["mag7","macro","cyber","defense","banks","energy","health","power","quantum","crypto","robotics","semis"];
 const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communication"],["XLY","Consumer Disc."],["XLF","Financials"],["XLI","Industrials"],["XLV","Health Care"],["XLE","Energy"],["XLB","Materials"],["XLP","Consumer Staples"],["XLU","Utilities"],["XLRE","Real Estate"]];
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
 S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); S.trend=LS.get("trend","power"); S.extra=new Set();
