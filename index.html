@@ -526,28 +526,46 @@ const okTD=r=>!!(r&&r.status==="ok"&&r.values&&r.values.length&&(!r.meta||!r.met
 // price history from Twelve Data: daily closes for the past year, 5-minute bars for today
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const tdLog=[]; let tdQueue=Promise.resolve();
+// symbols that just failed aren't retried for 30 minutes, so nothing loops on them
+S.tdFail={}; S.noCtry=LS.get("noCtry",{}); const failedRecently=x=>S.tdFail[x]&&Date.now()-S.tdFail[x]<30*60000;
 function td(syms,params){
   // free plan: 8 credits a minute, 1 credit per symbol
   const run=async()=>{
     for(;;){ const now=Date.now(); while(tdLog.length&&now-tdLog[0]>61000) tdLog.shift(); if(tdLog.length+syms.length<=8) break; await sleep(61000-(now-tdLog[0])+250); }
     syms.forEach(()=>tdLog.push(Date.now()));
-    // adjust=splits: prices corrected for stock splits but not lowered for past dividends, matching
-    // Yahoo's price charts. If the API rejects an option, drop it and try again.
-    const url=()=>`${TD}/time_series?symbol=${syms.map(encodeURIComponent).join(",")}&${params}${S.noCountry?"":"&country=United%20States"}${S.noAdjust?"":"&adjust=splits"}&apikey=${encodeURIComponent(S.tdKey)}`;
-    let j=await (await fetch(url())).json();
-    for(let k=0;k<2&&j&&j.status==="error"&&/adjust|country/i.test(j.message||"");k++){ if(/adjust/i.test(j.message)) S.noAdjust=true; else S.noCountry=true; j=await (await fetch(url())).json(); }
-    if(j&&j.status==="error"){ S.tdErr=j.code===401||j.code===403?"key":j.code===429?"rate":"other"; throw new Error(j.message); }
-    S.tdErr=null; return syms.length===1?{[syms[0]]:j}:j; };
+    // Stocks are pinned to their US listing (some tickers also trade abroad). Funds, and anything the
+    // US filter couldn't find before, are asked for without it; every answer is still checked to be in USD.
+    // adjust=splits: prices corrected for stock splits but not lowered for past dividends, like Yahoo's charts.
+    const fund=x=>S.noCtry[x]||IDX.some(i=>i[0]===x)||SECTORS.some(i=>i[0]===x)||FUNDS.has(x);
+    const get=async(list,withCountry)=>{
+      const url=()=>`${TD}/time_series?symbol=${list.map(encodeURIComponent).join(",")}&${params}${withCountry&&!S.noCountry?"&country=United%20States":""}${S.noAdjust?"":"&adjust=splits"}&apikey=${encodeURIComponent(S.tdKey)}`;
+      let j=await (await fetch(url())).json();
+      for(let k=0;k<2&&j&&j.status==="error"&&/adjust|country/i.test(j.message||"");k++){ if(/adjust/i.test(j.message)) S.noAdjust=true; else S.noCountry=true; j=await (await fetch(url())).json(); }
+      if(j&&j.status==="error"&&(j.code===401||j.code===403||j.code===429)){ S.tdErr=j.code===429?"rate":"key"; throw new Error(j.message); }
+      return list.length===1?{[list[0]]:j}:(j&&j.status!=="error"?j:{});
+    };
+    const A=syms.filter(x=>!fund(x)), B=syms.filter(fund), out={};
+    if(A.length) Object.assign(out,await get(A,true));
+    if(B.length) Object.assign(out,await get(B,false));
+    const bad=x=>!out[x]||out[x].status==="error";
+    const miss=A.filter(bad);
+    if(miss.length&&!S.noCountry){
+      for(;;){ const now=Date.now(); while(tdLog.length&&now-tdLog[0]>61000) tdLog.shift(); if(tdLog.length+miss.length<=8) break; await sleep(61000-(now-tdLog[0])+250); }
+      miss.forEach(()=>tdLog.push(Date.now()));
+      try{ const o2=await get(miss,false); miss.forEach(x=>{ if(o2[x]&&o2[x].status!=="error"){ out[x]=o2[x]; S.noCtry[x]=1; } }); LS.set("noCtry",S.noCtry); }catch(e){ if(S.tdErr) throw e; }
+    }
+    if(syms.length===1&&bad(syms[0])){ S.tdErr="other"; throw new Error((out[syms[0]]||{}).message||"no data"); }
+    S.tdErr=null; return out; };
   const p=tdQueue.then(run,run); tdQueue=p.catch(()=>{}); return p;
 }
 function parseET(str){ const [d,t="16:00:00"]=str.split(" "); const [y,mo,dd]=d.split("-").map(Number); const [h,mi]=t.split(":").map(Number); return +etToDate(y,mo,dd,h,mi); }
 const chunks=(a,n)=>{ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; };
 async function loadDaily(force){
   if(!S.tdKey) return;
-  const need=[...new Set(["SPY"].concat(S.list,["QQQ"]))].filter(s=>force||!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4);
+  const need=[...new Set(["SPY"].concat(S.list,["QQQ"]))].filter(s=>force||(!failedRecently(s)&&(!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4)));
   for(const grp of chunks(need,8)){
     try{ const res=await td(grp,"interval=1day&outputsize=460");
-      grp.forEach(s=>{ const r=res[s]; if(!okTD(r)) return;
+      grp.forEach(s=>{ const r=res[s]; if(!okTD(r)){ S.tdFail[s]=Date.now(); return; }
         S.daily[s]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
       LS.set("daily",S.daily); render(); if(S.open&&S.daily[S.open]) redrawChart(true);
     }catch(e){ render(); if(S.tdErr==="key") return; }
@@ -555,12 +573,12 @@ async function loadDaily(force){
 }
 let intraAt=0;
 async function loadIntra(){
-  if(!S.tdKey) return;
+  if(!S.tdKey||S.repLoading) return; // a report on screen gets the free plan's 8 requests a minute first
   const ph=marketState().phase; if(intraAt&&(ph==="closed"||Date.now()-intraAt<10*60000)) return;
   intraAt=Date.now();
   for(const grp of chunks([...new Set(["SPY"].concat(S.list))],8)){
     try{ const res=await td(grp,"interval=5min&outputsize=96");
-      grp.forEach(s=>{ const r=res[s]; if(!okTD(r)) return;
+      grp.forEach(s=>{ const r=res[s]; if(!okTD(r)){ S.tdFail[s]=Date.now(); return; }
         const bars=r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse();
         const lastDay=r.values[0].datetime.slice(0,10); S.intra[s]=bars.filter((b,i)=>r.values[r.values.length-1-i].datetime.slice(0,10)===lastDay); });
       render(); if(S.open) redrawChart(true);
@@ -1246,7 +1264,7 @@ function reportText(D){
   if(D.er.length||D.dv.length) out.push("","Coming up: "+D.er.map(o=>`${o.x} earnings ${dShort(o.e.date)}`).concat(D.dv.map(o=>`${o.x} ex-div ${dShort(o.n.ex)}`)).join(", "));
   return out.join("\n");
 }
-function openReport(P){
+function openReport(P,load=true){
   S.open="__report"; S.repP=P; LS.set("repP",P);
   const D=reportData(P), R=REP[P], f=d=>d.toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"});
   const li=(a,b,c="")=>`<div class="brief-li"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
@@ -1263,19 +1281,21 @@ function openReport(P){
     ${sec("Market",D.idx.map(o=>li(o.n,fmtP(o.r),tcls(o.r))).join(""))}
     ${sec(`Your watchlist this ${R.span}`,D.L.length?bar(D.L,"x","r")+(missing?`<p class="hint">${missing} stock${missing>1?"s":""} still loading history.</p>`:""):"")}
     ${D.held.length&&D.contrib.length?sec("What moved your portfolio",D.contrib.slice(0,3).concat(D.contrib.length>3?D.contrib.slice(-1):[]).map(o=>li(o.x,`${o.d>=0?"+":"−"}${money(fmt$(Math.abs(o.d)))}`,tcls(o.d))).join("")):""}
-    ${sec("Sectors",D.sec.length?bar(D.sec,"n","r"):`<p class="hint">Loading sector history… (free plan: about 8 a minute)</p>`)}
+    ${sec("Sectors",D.sec.length?bar(D.sec,"n","r"):`<p class="hint">${S.repLoading?`Loading sector history… ${SECTORS.filter(x=>S.daily[x[0]]).length} of ${SECTORS.length} so far (free plan: about 8 a minute)`:"Sector history isn't available right now. Try again later."}</p>`)}
     ${sec("Themes",D.th.length?bar(D.th,"n","avg")+`<p class="hint">Themes appear once their history has loaded (open them on the Trends tab).</p>`:`<p class="hint">Open the Trends tab to load theme history.</p>`)}
     ${sec("Signals now",D.sig.length?li("Stocks in an uptrend",`${up} of ${D.sig.length}`)+(hot.length?li("Overbought (RSI ≥ 70)",hot.join(", ")):"")+(cold.length?li("Oversold (RSI ≤ 30)",cold.join(", ")):""):"")}
     ${sec(`Coming up (next ${REP[P].ahead} days)`,[...D.er.map(o=>li(`📣 ${o.x} earnings`,`${dShort(o.e.date)}${o.e.hour==="bmo"?" · pre-mkt":o.e.hour==="amc"?" · after close":""}`)),...D.dv.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}`,dShort(o.n.ex))),...D.hol.map(([d,n])=>li(`🏖 Market closed: ${n}`,dShort(d)))].join("")||`<p class="hint">Nothing scheduled for your stocks.</p>`)}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="ghost" id="repShare">⇪ Share report</button><button class="ghost" id="repCopy">⧉ Copy text</button></div>
     <a class="claude" href="${claudeURL(`Write my ${R.name.toLowerCase()} investing report for ${f(D.from)} – ${f(D.to)}. Search the web for what drove markets over this period and what's ahead. My data:\n${reportText(D)}\n\nStructure: 1) what happened and why, 2) my winners and losers explained, 3) sector and theme rotation, 4) risks and what to watch next ${R.span}, 5) three action ideas to research (not advice).`)}" target="_blank" rel="noopener">✨ Ask Claude to write the full report</a>`;
-  $("repTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-rep]"); if(b) openReport(b.dataset.rep); });
+  $("repTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-rep]"); if(b) openReport(b.dataset.rep,false); });
   const txt=reportText(D);
   $("repShare").addEventListener("click",async()=>{ try{ if(navigator.share){ await navigator.share({title:`GoldRabbit ${R.name} report`,text:txt}); return; } }catch(e){ if(e&&e.name==="AbortError") return; } try{ await navigator.clipboard.writeText(txt); toast("Report copied"); }catch(e){ toast("Couldn't share on this device"); } });
   $("repCopy").addEventListener("click",async()=>{ try{ await navigator.clipboard.writeText(txt); toast("Report copied"); }catch(e){ toast("Couldn't copy on this device"); } });
   if(!$("sheet").classList.contains("show")) showSheet();
   // make sure the report has what it needs: watchlist, indexes and sectors history
-  if(!S.repLoading){ S.repLoading=1; ensureData(S.list.concat(IDX.map(x=>x[0]),SECTORS.map(x=>x[0])),{daily:true}).then(()=>{ S.repLoading=0; if(S.open==="__report") openReport(S.repP); }); }
+  // while data arrives, redraw every 5 s (keeps scroll position; never starts another load)
+  clearInterval(S.repTimer); S.repTimer=setInterval(()=>{ if(S.open!=="__report"||!S.repLoading){ clearInterval(S.repTimer); return; } if(!document.activeElement||!document.activeElement.closest||!document.activeElement.closest("#sheet")) openReport(S.repP,false); },5000);
+  if(load&&!S.repLoading){ S.repLoading=1; ensureData(SECTORS.map(x=>x[0]).concat(IDX.map(x=>x[0]),S.list),{daily:true}).then(()=>{ S.repLoading=0; if(S.open==="__report") openReport(S.repP,false); },()=>{ S.repLoading=0; }); }
 }
 async function shareSummary(){
   const text=summaryText();
@@ -1558,8 +1578,9 @@ function renderPicks(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="3.2";
+const APP_VERSION="3.2.1";
 const CHANGELOG=[
+  {v:"3.2.1",date:"2026-10-11",title:"Report fix",items:["Fixed the report screen freezing: it kept reloading and redrawing itself","Sector funds and other symbols the US-listing filter can't find are retried without it (still checked to be in US dollars)","Symbols that fail to load are skipped for 30 minutes instead of retried in a loop","Report shows sector loading progress and gets priority over background chart refreshes","Funds (sector, index, bond, gold…) are requested without the US filter from the start, so they load in one request"]},
   {v:"3.2",date:"2026-10-11",title:"More themes and reports",items:["New Trends themes: Cybersecurity, Magnificent 7, Banks & Payments, Energy & Oil, Healthcare & GLP-1, and Macro (bonds, gold, oil, dollar, volatility, bitcoin)","New 📊 Reports button: weekly, monthly and yearly reports covering market, watchlist, portfolio, sectors, themes, signals and what's coming up","Share or copy a report, or ask Claude to write the full narrative"]},
   {v:"3.1",date:"2026-10-09",title:"Gold Picks",items:["New Picks tab ranks stocks for a 6-month, 1-year or Forever holding period","6 months: momentum vs the S&P, trend, RSI, earnings growth, seasonality","1 year: growth at a reasonable price, profitability and long-term trend","Forever: quality, margins, 5-year growth, low debt and calmer swings","Every pick shows its score, top reasons and main risk; Ask Claude can review the list","2W added to the Home time frames, and 1W, 2W, 5Y and All added to Compare"]},
   {v:"3.0",date:"2026-10-09",title:"Defense stocks",items:["New Defense & Aerospace theme on the Trends tab: primes (LMT, RTX, NOC, GD, LHX, BA, HII), drones & defense tech (PLTR, KTOS, AVAV, RCAT, MRCY), aerospace parts, gov IT & cyber, and defense ETFs (ITA, XAR, SHLD)","Defense stocks are included in Stock ideas and Compare","Trends streams live prices for the selected theme to stay within the free plan's limit"]},
@@ -1821,8 +1842,8 @@ async function ensureData(list,{daily=false,gen=null,metric=null}={}){
   const need=list.filter(s=>{ const q=S.quotes[s]; return !q||!q.at||Date.now()-q.at>120000; });
   for(const s of need){ if(!live()) return; await loadQuote(s); if(S.quotes[s]) S.quotes[s].at=Date.now(); scheduleTab(); }
   for(const s of list){ if(!live()) return; if(!loading[s]){ loading[s]=1; await loadStatic(s,{metric:metric??!S.tdKey}); loading[s]=0; scheduleTab(); } }
-  if(daily&&S.tdKey){ const nd=list.filter(s=>!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4);
-    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(okTD(r)) S.daily[s]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
+  if(daily&&S.tdKey){ const nd=list.filter(s=>!failedRecently(s)&&(!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4));
+    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(s=>{ const r=res[s]; if(!okTD(r)) S.tdFail[s]=Date.now(); else S.daily[s]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{LS.set("daily",S.daily);}catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
 }
 async function ensureDaily(s){ const done=()=>{ if(S.open===s) renderTargets(s); }; if(!S.tdKey||(S.daily[s]&&S.daily[s].day===today()&&S.daily[s].v4)) return; await ensureData([s],{daily:true}); if(S.open===s){ redrawChart(true); const an=$("dAn"); if(an) an.innerHTML=analyticsHTML(s); const au=$("dAudit"); if(au) au.innerHTML=retAudit(s); const pf=$("dPerf"); if(pf) pf.innerHTML=perfTiles(s); done(); } }
 function setActiveSubs(){
