@@ -242,6 +242,12 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .scrub b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14px}
 .scrub span{color:var(--muted)}
 .chart{touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.zoombar{display:flex;align-items:center;gap:8px}
+.zoombar[hidden]{display:none}
+.zoombar button{height:48px;min-width:56px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);font-size:20px;font-weight:700;color:var(--text)}
+.zoombar button:disabled{opacity:.35}
+.zoombar button.zr{font-size:14px;min-width:64px;background:var(--text);color:var(--ink)}
+.zoombar span{flex:1;text-align:center;font-size:12.5px;color:var(--muted)}
 .section-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
 .section-h h2{margin:0;font-size:17px;font-weight:700}
 .section-h small{color:var(--muted);font-size:12px}
@@ -852,18 +858,26 @@ function spark(s,tf){
   return `<svg class="spark" viewBox="0 0 84 34" aria-hidden="true">${base}<path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(L[0])}" cy="${Y(L[1])}" r="2.6" fill="${col}"/></svg>`;
 }
 const CW=340, CH=200, CPT=14, CPB=34; let CS={lo:0,hi:1,t0:0,te:1};
+// chart zoom: S.zoom=[from,to] as fractions of the selected range (null = full range)
+function zser(s){ const ser=seriesFor(s,S.crange); if(!S.zoom||ser.pts.length<3) return ser;
+  const n=ser.pts.length, a=Math.max(0,Math.floor(S.zoom[0]*(n-1))), b=Math.min(n-1,Math.ceil(S.zoom[1]*(n-1))); const pts=ser.pts.slice(a,Math.max(b,a+2)+1);
+  return {...ser,pts,base:pts[0][1],zoomed:true}; }
+function zoomMin(){ const n=seriesFor(S.open,S.crange).pts.length; return Math.min(1,8/Math.max(8,n-1)); }
+function setZoom(z0,c,f,shift){ // z0 start window, c anchor (0..1 of view), f span factor (<1 = in), shift in view fractions
+  const [a,b]=z0||[0,1], span=b-a, ns=Math.min(1,Math.max(zoomMin(),span*f)); let na=a+c*span-c*ns-(shift||0)*ns; na=Math.max(0,Math.min(1-ns,na));
+  S.zoom=ns>=.999?null:[na,na+ns]; S.scrubbing=false; redrawChart(true); }
 function bigChart(s){
-  const range=S.crange, ser=seriesFor(s,range), pts=ser.pts;
+  const range=S.crange, ser=zser(s), pts=ser.pts;
   if(pts.length<3){
     if(!S.tdKey&&range==="1d"&&(S.ticks[s]&&S.ticks[s].pts.length>1)) return sessionChart(s);
     if(!S.tdKey) return `<div class="card"><h4>Price history</h4><p class="hint">Add a free Twelve Data key to see full 1-day to 1-year charts with touch scrubbing, forecast ranges and signals.</p><button class="primary" data-open-settings style="align-self:flex-start">Add chart key</button></div>`;
     if(range==="1d") return sessionChart(s);
     return `<div class="card"><p class="hint">Loading ${range==="all"?"full":range.toUpperCase()} history…</p></div>`;
   }
-  const spy=s!=="SPY"?seriesFor("SPY",range):null, ov=spy&&!spy.approx&&spy.pts.length>=3&&spy.base?spy.pts.map(p=>[p[0],ser.base*p[1]/spy.base]):null;
+  const spy=s!=="SPY"&&!ser.zoomed?seriesFor("SPY",range):null, ov=spy&&!spy.approx&&spy.pts.length>=3&&spy.base?spy.pts.map(p=>[p[0],ser.base*p[1]/spy.base]):null;
   // statistical forecast cone (68% / 95%) to the right of today
   const SHORT=range==="1w"||range==="2w", LONG=range==="5y"||range==="all", LOG=range==="all"&&pts.length&&Math.max(...pts.map(q=>q[1]))/Math.max(1e-6,Math.min(...pts.map(q=>q[1])))>8;
-  const A=range!=="1d"&&!LONG&&!SHORT&&S.showCone!==false?analytics(s):null, hDays=range==="1m"||range==="3m"?21:63, L0=pts[pts.length-1];
+  const A=range!=="1d"&&!LONG&&!SHORT&&!ser.zoomed&&S.showCone!==false?analytics(s):null, hDays=range==="1m"||range==="3m"?21:63, L0=pts[pts.length-1];
   const cone=A?Array.from({length:9},(_,k)=>{ const f=k/8, d=hDays*f, sg=Math.min(.6,A.sigD*Math.sqrt(d)); return [L0[0]+d*1.45*864e5, L0[1]*Math.exp(-sg), L0[1]*Math.exp(sg), L0[1]*Math.exp(-2*sg), L0[1]*Math.exp(2*sg)]; }):null;
   const tg=(S.targets[s]||[]);
   const MA=range!=="1d"&&!LONG&&!SHORT?maSeries(s,pts[0][0]):null, maOn=k=>MA&&S.showMA[k]&&MA[k].length>1;
@@ -889,15 +903,15 @@ function bigChart(s){
   return `<svg class="chart" id="bc" viewBox="0 0 ${CW} ${CH}" role="img" aria-label="${esc(s)} price, ${range}"><defs><linearGradient id="bg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".30"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>${g}${typeof days==="string"?days:""}${vol}${coneSvg}<line x1="0" x2="${X(t1)}" y1="${Y(ser.base)}" y2="${Y(ser.base)}" stroke="#8392A6" stroke-dasharray="3 4" stroke-opacity=".7"/><path d="${d} L${X(t1)} ${CH-CPB} L${X(t0)} ${CH-CPB}Z" fill="url(#bg)"/>${ov?`<path d="${ov.filter(p=>p[0]>=t0).map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ")}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-opacity=".75" stroke-dasharray="4 3"/>`:""}<path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(L0[0])}" cy="${Y(L0[1])}" r="4.5" fill="${col}">${range==="1d"?`<animate attributeName="r" values="4.5;7;4.5" dur="1.6s" repeatCount="indefinite"/>`:""}</circle>${["m200","m50"].filter(maOn).map(k=>`<path d="${MA[k].map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="${MA_COL[k]}" stroke-width="1.5" stroke-opacity=".9"/>`).join("")}${tg.map(t=>{ const y=Y(t.p), pc=(t.p/L0[1]-1)*100; return `<line x1="0" x2="${CW}" y1="${y}" y2="${y}" stroke="#FFB547" stroke-width="1.3" stroke-dasharray="6 4" opacity="${t.fired?.45:1}"/><rect x="${CW-112}" y="${y-9}" width="108" height="16" rx="5" fill="#2A2112" stroke="#FFB547" stroke-opacity=".5"/><text x="${CW-58}" y="${y+3}" text-anchor="middle" font-size="9" fill="#FFB547" font-family="JetBrains Mono">${t.fired?"✓ ":"🎯 "}${S.priv?"target":fmt$(t.p,t.p>=1000?0:2)} ${fmtP(pc).replace(".00","")}</text>`; }).join("")}<g id="xh" visibility="hidden"><line id="xhl" y1="${CPT}" y2="${CH-CPB}" stroke="#EAF0F6" stroke-width="1"/><circle id="xhc" r="5" fill="#EAF0F6" stroke="${col}" stroke-width="2"/></g>${LOG?`<text x="${CW/2}" y="${CPT+10}" text-anchor="middle" font-size="8.5" fill="#566377" font-family="Sora">log scale</text>`:""}${S.tgtMode?`<rect x="0" y="0" width="${CW}" height="${CH}" fill="#FFB547" fill-opacity=".05"/><text x="${CW/2}" y="${CPT+4}" text-anchor="middle" font-size="10" fill="#FFB547" font-family="Sora" font-weight="700">Tap a price level to set a target</text>`:""}${ticks}</svg>`;
 }
 function scrubText(s,i){
-  const ser=seriesFor(s,S.crange), pts=ser.pts; if(pts.length<3) return "";
+  const ser=zser(s), pts=ser.pts; if(pts.length<3) return "";
   const pt=i==null?pts[pts.length-1]:pts[i], chg=(pt[1]/ser.base-1)*100, abs=pt[1]-ser.base;
-  const when=i==null?(RANGES.find(r=>r[0]===S.crange)||[0,""])[1]+" change":S.crange==="1d"?new Date(pt[0]).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}):pt[3]?new Date(pt[3]).toLocaleString([], {weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):new Date(pt[0]).toLocaleDateString([], S.crange==="all"?{month:"short",year:"numeric"}:S.crange==="5y"?{month:"short",day:"numeric",year:"numeric"}:{weekday:"short",month:"short",day:"numeric",year:"numeric"});
-  const sp=s!=="SPY"&&i==null?seriesFor("SPY",S.crange):null, spr=sp&&!sp.approx&&sp.base&&price("SPY")?(price("SPY")/sp.base-1)*100:null;
+  const when=i==null?(ser.zoomed?"Zoomed view":(RANGES.find(r=>r[0]===S.crange)||[0,""])[1])+" change":S.crange==="1d"?new Date(pt[0]).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}):pt[3]?new Date(pt[3]).toLocaleString([], {weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):new Date(pt[0]).toLocaleDateString([], S.crange==="all"?{month:"short",year:"numeric"}:S.crange==="5y"?{month:"short",day:"numeric",year:"numeric"}:{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+  const sp=s!=="SPY"&&i==null&&!ser.zoomed?seriesFor("SPY",S.crange):null, spr=sp&&!sp.approx&&sp.base&&price("SPY")?(price("SPY")/sp.base-1)*100:null;
   return `<span>${when}${spr!=null?` · <span style="color:#6EA8FF">S&amp;P ${fmtP(spr)}</span>`:""}</span><b class="${tcls(chg)}">${i==null?"":money(fmt$(pt[1]))+" · "}${money((abs>=0?"+":"−")+fmt$(Math.abs(abs)))} (${fmtP(chg)})</b>`;
 }
 function wireChart(s){
   const svg=$("bc"); if(!svg) return;
-  const at=e=>{ const ser=seriesFor(s,S.crange), pts=ser.pts; if(pts.length<3) return;
+  const at=e=>{ if(S.pinch) return; const ser=zser(s), pts=ser.pts; if(pts.length<3) return;
     const {lo,hi,t0,te}=CS, r=svg.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*CW, t=Math.min(pts[pts.length-1][0],t0+(x-6)/(CW-12)*(te-t0));
     let bi=0, bd=Infinity; pts.forEach((p,i)=>{ const dd=Math.abs(p[0]-t); if(dd<bd){bd=dd;bi=i;} });
     const px=6+(pts[bi][0]-t0)/(te-t0||1)*(CW-12), py=CPT+(1-((CS.log?Math.log(pts[bi][1]):pts[bi][1])-lo)/(hi-lo))*(CH-CPT-CPB);
@@ -909,7 +923,7 @@ function wireChart(s){
       if(!(v>0)||!p) return; v=v>=100?Math.round(v):Math.round(v*100)/100;
       const list=(S.targets[s]=S.targets[s]||[]); if(list.length>=4) list.shift(); list.push({p:v,dir:v>=p?1:-1,at:Date.now()}); LS.set("targets",S.targets);
       S.tgtMode=false; toast(`🎯 Target set at ${fmt$(v)} (${fmtP((v/p-1)*100)})`); redrawChart(true); renderTargets(s); return; }
-    S.scrubbing=true; try{svg.setPointerCapture(e.pointerId);}catch(_){} at(e); });
+    if(S.pinch) return; S.scrubbing=true; try{svg.setPointerCapture(e.pointerId);}catch(_){} at(e); });
   svg.addEventListener("pointermove",e=>{ if(S.scrubbing||e.pointerType==="mouse"){ S.scrubbing=S.scrubbing||e.pointerType==="mouse"; at(e); } });
   svg.addEventListener("pointerup",end); svg.addEventListener("pointercancel",end); svg.addEventListener("pointerleave",end);
 }
@@ -919,7 +933,24 @@ function redrawChart(force){
   if(!force&&Date.now()-chartAt<2000) return; chartAt=Date.now();
   ch.innerHTML=bigChart(s); wireChart(s); const sc=$("dScrub"); if(sc) sc.innerHTML=scrubText(s);
   document.querySelectorAll("#rangeTabs button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.range===S.crange));
+  zoomBar();
 }
+function zoomBar(){ const el=$("zoomBar"); if(!el) return; const z=S.zoom, on=!!z, ok=seriesFor(S.open,S.crange).pts.length>=3;
+  el.hidden=!ok; el.innerHTML=`<button data-zoom="out" ${on?"":"disabled"} aria-label="Zoom out">－</button><button data-zoom="left" ${on&&z[0]>0?"":"disabled"} aria-label="Earlier">◀</button><span>${on?`🔍 ${(1/(z[1]-z[0])).toFixed(1)}×`:"Pinch or ＋ to zoom"}</span><button data-zoom="right" ${on&&z[1]<1?"":"disabled"} aria-label="Later">▶</button><button data-zoom="in" aria-label="Zoom in">＋</button>${on?`<button data-zoom="reset" class="zr">Reset</button>`:""}`; }
+function wireZoom(){ const box=$("dChart"); if(!box) return; const P=new Map(); let st=null, raf=0;
+  const frac=x=>{ const r=box.getBoundingClientRect(); return Math.min(1,Math.max(0,(x-r.left)/r.width)); };
+  const two=()=>{ const [p,q]=[...P.values()]; return {d:Math.hypot(p.x-q.x,p.y-q.y)||1,c:frac((p.x+q.x)/2)}; };
+  box.addEventListener("pointerdown",e=>{ if(!e.target.closest(".chart")) return; P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(P.size===2){ S.scrubbing=false; S.pinch=true; const t=two(); st={z:S.zoom,d:t.d,c:t.c}; const xh=$("xh"); xh&&xh.setAttribute("visibility","hidden"); } },true);
+  box.addEventListener("pointermove",e=>{ if(!P.has(e.pointerId)) return; P.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(!S.pinch||P.size<2||!st) return;
+    e.preventDefault(); cancelAnimationFrame(raf); raf=requestAnimationFrame(()=>{ const t=two(); setZoom(st.z,st.c,st.d/t.d,t.c-st.c); }); },true);
+  const up=e=>{ P.delete(e.pointerId); if(P.size<2&&S.pinch){ S.pinch=false; st=null; } };
+  ["pointerup","pointercancel"].forEach(k=>box.addEventListener(k,up,true));
+  box.addEventListener("gesturestart",e=>e.preventDefault()); // stop iPhone Safari zooming the whole page
+  box.addEventListener("wheel",e=>{ if(!e.target.closest(".chart")||(!e.ctrlKey&&Math.abs(e.deltaX)>Math.abs(e.deltaY))) return; e.preventDefault(); setZoom(S.zoom,frac(e.clientX),Math.exp(e.deltaY*(e.ctrlKey?.01:.002))); },{passive:false});
+  box.addEventListener("dblclick",e=>{ if(S.zoom&&e.target.closest(".chart")){ S.zoom=null; redrawChart(true); } });
+  $("zoomBar").addEventListener("click",e=>{ const b=e.target.closest("[data-zoom]"); if(!b) return; const k=b.dataset.zoom;
+    if(k==="reset"){ S.zoom=null; redrawChart(true); } else if(k==="in") setZoom(S.zoom,1,.5); else if(k==="out") setZoom(S.zoom,.5,2); else setZoom(S.zoom,.5,1,k==="left"?.5:-.5); }); }
 function sessionChart(s){
   const tk=S.ticks[s], q=S.quotes[s]; const pts=tk?tk.pts.slice():[]; const W=340,H=180,pt=16,pb=26;
   if(pts.length<2) return `<div class="card"><h4>Today</h4><p class="hint">The intraday chart draws itself from live trades while the app is open. Leave it running during market hours and it fills in.</p></div>`;
@@ -1070,7 +1101,7 @@ function patchDetail(s){
 }
 function posHTML(s){ const sh=S.holdings[s], cb=S.cost[s], p=price(s); if(!sh) return ""; return `<div class="kv"><span>Position value</span><b class="num">${money(fmt$(p*sh))}</b></div>`+(cb?`<div class="kv"><span>Gain / loss</span><b class="num ${tcls(p-cb)}">${money(fmt$((p-cb)*sh))} (${fmtP((p/cb-1)*100)})</b></div>`:""); }
 async function openDetail(s){
-  const q=S.quotes[s], p=price(s); if(p==null) return; S.open=s;
+  const q=S.quotes[s], p=price(s); if(p==null) return; S.open=s; S.zoom=null; S.pinch=false;
   const pr=S.profile[s]||{}, m=(S.metric[s]&&S.metric[s].m)||{}, al=S.alerts[s]||{}, e=S.earnings.map&&S.earnings.map[s];
   const kv=(k,v)=>`<div class="kv"><span>${k}</span><b class="num">${v}</b></div>`;
   $("sheetIn").innerHTML=`<div class="grab"></div>
@@ -1081,6 +1112,7 @@ async function openDetail(s){
     <div class="scrub" id="dScrub">${scrubText(s)}</div>
     <div class="tgtbar" id="tgtBar"></div>
     <div id="dChart">${bigChart(s)}</div>
+    <div class="zoombar" id="zoomBar"></div>
     <div class="perf" id="dPerf">${perfTiles(s)}</div>
     <div id="dAn" style="display:flex;flex-direction:column;gap:16px">${analyticsHTML(s)}</div>
     <div id="dSea">${seasonHTML(s)}</div>
@@ -1107,8 +1139,8 @@ async function openDetail(s){
     <div class="card"><h4>What if I'd invested</h4><div class="calc"><label>Amount<input class="field" id="amt" inputmode="decimal" value="1000"></label></div><div class="calc-out" id="calcOut"></div></div>
     <div class="card"><h4>Latest news</h4><div class="news" id="news"><p class="hint">Loading…</p></div></div>
     ${pr.web?`<a class="hint" href="${esc(pr.web)}" target="_blank" rel="noopener">${esc(pr.web.replace(/^https?:\/\//,""))} ↗</a>`:""}`;
-  wireChart(s);
-  $("rangeTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-range]"); if(!b) return; S.crange=b.dataset.range; LS.set("crange",S.crange); redrawChart(true); renderTargets(s); loadLong(s); });
+  wireChart(s); wireZoom(); zoomBar();
+  $("rangeTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-range]"); if(!b) return; S.crange=b.dataset.range; S.zoom=null; LS.set("crange",S.crange); redrawChart(true); renderTargets(s); loadLong(s); });
   loadLong(s);
   const calc=()=>{ const a=parseFloat($("amt").value)||0; $("calcOut").innerHTML=[["3m","3 months"],["6m","6 months"],["1y","1 year"]].map(([k,l])=>{const v=ret(s,k);return `<div>${l} ago<span class="num ${tcls(v)}">${v==null?"—":money(fmt$(a*(1+v/100),0))}</span></div>`;}).join(""); };
   $("amt").addEventListener("input",calc); calc();
@@ -1706,8 +1738,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.6";
+const APP_VERSION="3.7";
 const CHANGELOG=[
+  {v:"3.7",date:"2026-10-13",title:"Zoom charts",items:["Pinch the stock chart with two fingers to zoom in or out, and move both fingers sideways to slide along","Big ＋ and － buttons under the chart zoom in and out, ◀ ▶ move earlier or later, and Reset shows the whole range again","On a computer, scroll the mouse wheel over the chart to zoom; double-click resets","While zoomed, the change shown is for the visible part of the chart; one finger still scrubs prices"]},
   {v:"3.6",date:"2026-10-13",title:"Energy & Oil",items:["New ⛽ Energy & Oil button on Home jumps straight to the Energy & Oil theme","Oil tankers & shipping group with Frontline (FRO), DHT, International Seaways (INSW), Scorpio Tankers (STNG) and Teekay Tankers (TNK)","Added Shell and BP to the majors, a Refiners group (MPC, VLO, PSX), and oil and energy funds (USO, XLE, XOP)","Energy & Oil moved to second place in the Trends theme list"]},
   {v:"3.5",date:"2026-10-13",title:"Bitcoin, Ethereum and Solana",items:["Live Bitcoin, Ethereum and Solana prices on Home, right under the market indexes, with the 24-hour change","Crypto prices stream around the clock, even on weekends, and need no extra key","Tap a coin for its full chart on Coinbase","Crypto trend now includes the Ethereum (ETHA) and Solana (BSOL) ETFs next to the Bitcoin ETF (IBIT)"]},
   {v:"3.4",date:"2026-10-11",title:"Listen & watch",items:["New 🎧 Listen & watch button","Top 5 financial podcasts with Apple Podcasts links","Top 5 business radio and live audio streams","Top 5 YouTube channels, with one-tap live streams for CNBC, Bloomberg and Yahoo Finance","Latest YouTube videos for each stock on your watchlist"]},
