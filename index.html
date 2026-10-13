@@ -107,6 +107,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .idx button{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 6px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;min-width:0;text-align:left}
 .idx small{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .idx .num{font-size:12px;font-weight:600}
+.idx.coins{grid-template-columns:repeat(3,1fr);margin-top:6px}
+.idx.coins a{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 8px;display:flex;flex-direction:column;gap:2px;min-width:0;color:inherit;text-decoration:none}
+.idx.coins b{font-size:15px}
+.idx.coins .num.big{font-size:14px}
 .actions{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
 .actions::-webkit-scrollbar{display:none}
 .actions button{flex:none;height:34px;padding:0 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px}
@@ -408,6 +412,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="ticker-tape" aria-hidden="true"><div class="tape-in" id="tape"></div></div>
   <div class="tab" id="tab-home">
   <div class="idx" id="idx" aria-label="Market indexes"></div>
+  <div class="idx coins" id="coins" aria-label="Crypto prices"></div>
   <section class="hero" id="hero"></section>
   <div class="actions" id="actions">
     <button id="refreshBtn">⟳ Refresh</button>
@@ -1669,8 +1674,39 @@ function renderPicks(){
 }
 
 /* ---------- version history ---------- */
-const APP_VERSION="3.4";
+/* ---------- crypto: Bitcoin, Ethereum, Solana, live around the clock ---------- */
+// Coinbase's public feed needs no key; CoinGecko is the fallback if Coinbase can't be reached.
+const COINS=[["BTC","Bitcoin","₿","bitcoin"],["ETH","Ethereum","Ξ","ethereum"],["SOL","Solana","◎","solana"]];
+const C={px:LS.get("coins",{}),ws:null,retry:0,t:null};
+function renderCoins(){
+  const el=$("coins"); if(!el) return;
+  el.innerHTML=COINS.map(([sym,name,ic,id])=>{ const q=C.px[sym]||{}, r=q.p&&q.o?(q.p/q.o-1)*100:null;
+    return `<a href="https://www.coinbase.com/price/${id}" target="_blank" rel="noopener" aria-label="${name} price"><small>${ic} ${name}</small><span class="num big">${q.p?fmt$(q.p,q.p<1000?2:0):"—"}</span><span class="num ${tcls(r)}" style="font-size:12px;font-weight:600">${fmtP(r)} <small style="font-weight:400">24h</small></span></a>`; }).join("");
+}
+let coinFrame=null;
+function coinTick(sym,p,o){ if(!(p>0)) return; C.px[sym]={p,o:o>0?o:(C.px[sym]||{}).o,t:Date.now()}; if(!coinFrame) coinFrame=setTimeout(()=>{ coinFrame=null; renderCoins(); LS.set("coins",C.px); },1000); }
+async function coinsRest(){
+  try{ await Promise.all(COINS.map(async([sym])=>{ const j=await (await fetch(`https://api.exchange.coinbase.com/products/${sym}-USD/stats`)).json(); coinTick(sym,+j.last,+j.open); })); }
+  catch(e){ try{ const j=await (await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true")).json();
+    COINS.forEach(([sym,,,id])=>{ const v=j[id]; if(v&&v.usd) coinTick(sym,v.usd,v.usd/(1+(v.usd_24h_change||0)/100)); }); }catch(_){} }
+}
+function coinsConnect(){
+  if(document.hidden||(C.ws&&C.ws.readyState<2)) return;
+  let ws; try{ ws=new WebSocket("wss://ws-feed.exchange.coinbase.com"); }catch(e){ return; }
+  C.ws=ws;
+  ws.onopen=()=>{ C.retry=0; ws.send(JSON.stringify({type:"subscribe",product_ids:COINS.map(c=>c[0]+"-USD"),channels:["ticker"]})); };
+  ws.onmessage=e=>{ let m; try{ m=JSON.parse(e.data); }catch(_){ return; } if(m.type==="ticker"&&m.product_id) coinTick(m.product_id.split("-")[0],+m.price,+m.open_24h); };
+  ws.onclose=()=>{ if(C.ws!==ws) return; C.ws=null; if(!document.hidden){ clearTimeout(C.t); C.t=setTimeout(coinsConnect,Math.min(60000,2000*2**C.retry++)); } };
+  ws.onerror=()=>{ try{ws.close();}catch(_){} };
+}
+function coinsStart(){ renderCoins(); coinsRest(); coinsConnect(); }
+document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTimeout(C.t); if(C.ws){ const w=C.ws; C.ws=null; try{w.close();}catch(_){} } } else { coinsRest(); coinsConnect(); } });
+setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
+coinsStart();
+
+const APP_VERSION="3.5";
 const CHANGELOG=[
+  {v:"3.5",date:"2026-10-13",title:"Bitcoin, Ethereum and Solana",items:["Live Bitcoin, Ethereum and Solana prices on Home, right under the market indexes, with the 24-hour change","Crypto prices stream around the clock, even on weekends, and need no extra key","Tap a coin for its full chart on Coinbase","Crypto trend now includes the Ethereum (ETHA) and Solana (BSOL) ETFs next to the Bitcoin ETF (IBIT)"]},
   {v:"3.4",date:"2026-10-11",title:"Listen & watch",items:["New 🎧 Listen & watch button","Top 5 financial podcasts with Apple Podcasts links","Top 5 business radio and live audio streams","Top 5 YouTube channels, with one-tap live streams for CNBC, Bloomberg and Yahoo Finance","Latest YouTube videos for each stock on your watchlist"]},
   {v:"3.3",date:"2026-10-11",title:"Look ahead",items:["New 🔭 Look ahead for next week, next month and next quarter","Market calendar: Fed decisions and minutes, jobs, CPI, PCE and GDP releases, options expiration and quad witching, month/quarter end, earnings season, holidays","Your earnings and dividends, plus market-moving earnings (mega-caps and bellwethers)","Typical move ranges, alerts likely to be tested, seasonality and signals to watch","Ask Claude for a full outlook with scenarios"]},
   {v:"3.2.1",date:"2026-10-11",title:"Report fix",items:["Fixed the report screen freezing: it kept reloading and redrawing itself","Sector funds and other symbols the US-listing filter can't find are retried without it (still checked to be in US dollars)","Symbols that fail to load are skipped for 30 minutes instead of retried in a loop","Report shows sector loading progress and gets priority over background chart refreshes","Funds (sector, index, bond, gold…) are requested without the US filter from the start, so they load in one request"]},
@@ -1824,7 +1860,7 @@ function renderPortfolio(){
 }
 
 /* ---------- stock ideas (screens) ---------- */
-const FUNDS=new Set(["SPY","QQQ","DIA","IWM","IBIT","UFO","ARKX","ITA","XAR","SHLD","CIBR","HACK","BUG","TLT","IEF","SHY","GLD","SLV","USO","DBC","UUP","VIXY"]);
+const FUNDS=new Set(["SPY","QQQ","DIA","IWM","IBIT","ETHA","BSOL","UFO","ARKX","ITA","XAR","SHLD","CIBR","HACK","BUG","TLT","IEF","SHY","GLD","SLV","USO","DBC","UUP","VIXY"]);
 function universe(){ const ex=new Set([...FUNDS].concat(SECTORS.map(x=>x[0]))); return [...new Set(S.list.concat(Object.keys(THEMES).filter(k=>!THEMES[k].noPicks).flatMap(themeSyms)))].filter(x=>!ex.has(x)); }
 function ideas(){
   const rows=universe().map(x=>({x,A:analytics(x)})).filter(o=>o.A);
@@ -1941,7 +1977,7 @@ const THEMES={
     groups:{"Launch":["RKLB","FLY"],"Satellites & comms":["ASTS","IRDM","SATS","VSAT","PL","GSAT"],"Lunar & infrastructure":["LUNR","RDW","KTOS"],"Primes":["LMT","NOC","BA","RTX"],"ETFs":["UFO","ARKX"]}},
   power:{name:"Nuclear & Power",title:"Nuclear & Power",desc:"Electricity demand from data centers is lifting power producers and nuclear.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(250,204,21,.30),transparent 60%),#11100A",groups:{"":["CEG","VST","TLN","NRG","GEV","OKLO","SMR","CCJ","BE","LEU"]}},
   quantum:{name:"Quantum",title:"Quantum Computing",desc:"Pure-play quantum names plus big-tech players.",bg:"radial-gradient(120% 90% at 100% 0%,rgba(16,185,129,.30),transparent 60%),#07120F",groups:{"":["IONQ","RGTI","QBTS","QUBT","IBM","HON"]}},
-  crypto:{name:"Crypto",title:"Crypto Stocks",desc:"Exchanges, miners and bitcoin treasuries.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(247,147,26,.32),transparent 60%),#120D06",groups:{"":["COIN","MSTR","HOOD","MARA","RIOT","CLSK","IBIT"]}},
+  crypto:{name:"Crypto",title:"Crypto Stocks",desc:"Exchanges, miners, bitcoin treasuries and coin ETFs.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(247,147,26,.32),transparent 60%),#120D06",groups:{"Companies":["COIN","MSTR","HOOD","MARA","RIOT","CLSK"],"Coin ETFs (Bitcoin, Ethereum, Solana)":["IBIT","ETHA","BSOL"]}},
   robotics:{name:"Robotics",title:"Robotics & Automation",desc:"Humanoids, surgical robots and factory automation.",bg:"radial-gradient(120% 90% at 100% 0%,rgba(244,63,94,.28),transparent 60%),#12080B",groups:{"":["TSLA","ISRG","SYM","ROK","TER","PATH","SERV"]}},
   semis:{name:"Semis",title:"Semiconductors",desc:"The chip supply chain from design to equipment.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(110,168,255,.30),transparent 60%),#080C14",groups:{"":["NVDA","AMD","AVGO","TSM","ASML","AMAT","LRCX","KLAC","MU","INTC"]}},
   defense:{name:"Defense",title:"Defense & Aerospace",desc:"Prime contractors, drones and new defense tech, government IT and cyber, and defense ETFs.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(132,204,22,.22),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(148,163,184,.18),transparent 60%),#0B0F0A",
