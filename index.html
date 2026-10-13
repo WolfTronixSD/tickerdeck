@@ -420,6 +420,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button id="briefBtn">☕ Briefing</button>
     <button id="aheadBtn">🔭 Look ahead</button>
     <button id="repBtn">📊 Reports</button>
+    <button id="energyBtn">⛽ Energy & Oil</button>
     <button id="mediaBtn">🎧 Listen & watch</button>
     <button id="cmpBtn">⇄ Compare</button>
     <button id="wakeBtn">🔆 Keep screen on</button>
@@ -1183,6 +1184,7 @@ function wire(){
   $("briefBtn").addEventListener("click",openBriefing);
   $("aheadBtn").addEventListener("click",()=>openAhead(LS.get("aheadP","w")));
   $("mediaBtn").addEventListener("click",openMedia);
+  $("energyBtn").addEventListener("click",()=>{ S.trend="energy"; LS.set("trend","energy"); setTab("trends"); requestAnimationFrame(()=>{ const c=document.querySelector("#tab-trends .chipbar"); if(c) window.scrollTo({top:c.getBoundingClientRect().top+scrollY-70,behavior:"instant"}); }); });
   $("repBtn").addEventListener("click",()=>openReport(LS.get("repP","1w")));
   $("cmpBtn").addEventListener("click",()=>openCompare(S.list[0]||"AAPL",S.list[1]||"SPY"));
   $("erFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
@@ -1704,8 +1706,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.5";
+const APP_VERSION="3.6";
 const CHANGELOG=[
+  {v:"3.6",date:"2026-10-13",title:"Energy & Oil",items:["New ⛽ Energy & Oil button on Home jumps straight to the Energy & Oil theme","Oil tankers & shipping group with Frontline (FRO), DHT, International Seaways (INSW), Scorpio Tankers (STNG) and Teekay Tankers (TNK)","Added Shell and BP to the majors, a Refiners group (MPC, VLO, PSX), and oil and energy funds (USO, XLE, XOP)","Energy & Oil moved to second place in the Trends theme list"]},
   {v:"3.5",date:"2026-10-13",title:"Bitcoin, Ethereum and Solana",items:["Live Bitcoin, Ethereum and Solana prices on Home, right under the market indexes, with the 24-hour change","Crypto prices stream around the clock, even on weekends, and need no extra key","Tap a coin for its full chart on Coinbase","Crypto trend now includes the Ethereum (ETHA) and Solana (BSOL) ETFs next to the Bitcoin ETF (IBIT)"]},
   {v:"3.4",date:"2026-10-11",title:"Listen & watch",items:["New 🎧 Listen & watch button","Top 5 financial podcasts with Apple Podcasts links","Top 5 business radio and live audio streams","Top 5 YouTube channels, with one-tap live streams for CNBC, Bloomberg and Yahoo Finance","Latest YouTube videos for each stock on your watchlist"]},
   {v:"3.3",date:"2026-10-11",title:"Look ahead",items:["New 🔭 Look ahead for next week, next month and next quarter","Market calendar: Fed decisions and minutes, jobs, CPI, PCE and GDP releases, options expiration and quad witching, month/quarter end, earnings season, holidays","Your earnings and dividends, plus market-moving earnings (mega-caps and bellwethers)","Typical move ranges, alerts likely to be tested, seasonality and signals to watch","Ask Claude for a full outlook with scenarios"]},
@@ -1860,7 +1863,7 @@ function renderPortfolio(){
 }
 
 /* ---------- stock ideas (screens) ---------- */
-const FUNDS=new Set(["SPY","QQQ","DIA","IWM","IBIT","ETHA","BSOL","UFO","ARKX","ITA","XAR","SHLD","CIBR","HACK","BUG","TLT","IEF","SHY","GLD","SLV","USO","DBC","UUP","VIXY"]);
+const FUNDS=new Set(["SPY","QQQ","DIA","IWM","IBIT","ETHA","BSOL","UFO","ARKX","ITA","XAR","SHLD","CIBR","HACK","BUG","TLT","IEF","SHY","GLD","SLV","USO","XOP","DBC","UUP","VIXY"]);
 function universe(){ const ex=new Set([...FUNDS].concat(SECTORS.map(x=>x[0]))); return [...new Set(S.list.concat(Object.keys(THEMES).filter(k=>!THEMES[k].noPicks).flatMap(themeSyms)))].filter(x=>!ex.has(x)); }
 function ideas(){
   const rows=universe().map(x=>({x,A:analytics(x)})).filter(o=>o.A);
@@ -1988,14 +1991,14 @@ const THEMES={
     groups:{"":["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA"]}},
   banks:{name:"Banks & Payments",title:"Banks & Payments",desc:"Big banks, brokers and card networks: a read on credit, rates and consumer spending.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(16,185,129,.22),transparent 60%),#08100D",
     groups:{"Big banks":["JPM","BAC","WFC","C","GS","MS"],"Asset managers & brokers":["BLK","SCHW","KKR","BX"],"Payments":["V","MA","AXP","PYPL"]}},
-  energy:{name:"Energy & Oil",title:"Energy & Oil",desc:"Oil majors, drillers and services. Oil prices feed straight into inflation and rates.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(234,88,12,.28),transparent 60%),#120B06",
-    groups:{"Majors":["XOM","CVX","COP","OXY"],"Services & midstream":["SLB","HAL","KMI","WMB"],"Producers":["EOG","DVN","FANG"]}},
+  energy:{name:"Energy & Oil",title:"Energy & Oil",desc:"Oil majors, producers, refiners, tankers and services, plus oil and energy funds. Oil prices feed straight into inflation and rates.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(234,88,12,.28),transparent 60%),#120B06",
+    groups:{"Majors":["XOM","CVX","COP","OXY","SHEL","BP"],"Oil tankers & shipping":["FRO","DHT","INSW","STNG","TNK"],"Producers":["EOG","DVN","FANG"],"Refiners":["MPC","VLO","PSX"],"Services & midstream":["SLB","HAL","KMI","WMB"],"Oil & energy funds":["USO","XLE","XOP"]}},
   health:{name:"Health & GLP-1",title:"Healthcare & GLP-1",desc:"Weight-loss drug leaders, big pharma, managed care and med-tech.",bg:"radial-gradient(120% 90% at 0% 0%,rgba(59,130,246,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(16,185,129,.18),transparent 60%),#070C14",
     groups:{"GLP-1 & obesity":["LLY","NVO","VKTX","AMGN"],"Big pharma":["JNJ","MRK","ABBV","PFE"],"Managed care":["UNH","CVS","ELV"],"Med-tech":["ISRG","ABT","SYK","BSX"]}},
   macro:{name:"Macro",title:"Macro: Rates, Gold, Oil & Dollar",desc:"The forces behind the whole market: long-term bonds (rates move the opposite way), gold, silver, oil, the US dollar and fear (volatility).",noPicks:true,bg:"radial-gradient(120% 90% at 0% 0%,rgba(250,204,21,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(148,163,184,.2),transparent 60%),#0E0D08",
     groups:{"Bonds (rates ↓ = price ↑)":["TLT","IEF","SHY"],"Gold & silver":["GLD","SLV"],"Oil & commodities":["USO","DBC"],"Dollar & fear":["UUP","VIXY"],"Bitcoin":["IBIT"]}}
 };
-const TREND_KEYS=["mag7","macro","cyber","defense","banks","energy","health","power","quantum","crypto","robotics","semis"];
+const TREND_KEYS=["mag7","energy","macro","cyber","defense","banks","health","power","quantum","crypto","robotics","semis"];
 const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communication"],["XLY","Consumer Disc."],["XLF","Financials"],["XLI","Industrials"],["XLV","Health Care"],["XLE","Energy"],["XLB","Materials"],["XLP","Consumer Staples"],["XLU","Utilities"],["XLRE","Real Estate"]];
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
 S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); S.trend=LS.get("trend","power"); S.extra=new Set();
