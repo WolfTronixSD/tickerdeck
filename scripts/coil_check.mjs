@@ -108,11 +108,17 @@ if (process.env.REAL) {
     if (!r.ok) throw new Error("stooq " + r.status); const txt = await r.text(); if (!txt.startsWith("Date")) throw new Error("stooq no data");
     return txt.trim().split("\n").slice(1).map(l => l.split(",")).map(f => [f[0], +f[4]]).filter(x => isFinite(x[1]));
   }
+  async function nasdaq(s) {
+    const to = new Date().toISOString().slice(0, 10), from = new Date(Date.now() - 400 * 864e5).toISOString().slice(0, 10);
+    const r = await fetch(`https://api.nasdaq.com/api/quote/${s.replace(".", "%25sl%25")}/historical?assetclass=stocks&fromdate=${from}&todate=${to}&limit=9999`, { headers: { ...UA, Accept: "application/json" } });
+    if (!r.ok) throw new Error("nasdaq " + r.status); const j = await r.json(); const rows = j && j.data && j.data.tradesTable && j.data.tradesTable.rows; if (!rows) throw new Error("nasdaq no data");
+    return rows.map(x => { const [m, d, y] = x.date.split("/"); return [`${y}-${m}-${d}`, +x.close.replace(/[$,]/g, "")]; }).filter(x => isFinite(x[1])).reverse();
+  }
   const out = []; let cross = 0, crossBad = 0, got = 0;
   for (const s of SYMS) {
     let y = null, z = null;
     try { y = await yahoo(s); } catch (e) { console.log(s, "Yahoo failed:", e.message); }
-    try { z = await stooq(s); } catch (e) { console.log(s, "Stooq failed:", e.message); }
+    try { z = await stooq(s); } catch (e) { try { z = await nasdaq(s); } catch (e2) { console.log(s, "second source failed:", e.message, "/", e2.message); } }
     const base = y || z; if (!base || base.length < 200) { console.log(s, "no usable history"); continue; }
     got++;
     const c = base.map(x => x[1]), st = C.coilStats(c, null);
@@ -120,13 +126,13 @@ if (process.env.REAL) {
     if (y && z) { // same trading days from two independent feeds should give the same averages
       const zm = new Map(z), days = y.filter(x => zm.has(x[0])).slice(-200);
       if (days.length === 200) { cross++; const a = refSma(days.map(x => x[1]), 200), b = refSma(days.map(x => zm.get(x[0])), 200), d = Math.abs(a / b - 1) * 100;
-        if (d > 1) { crossBad++; console.log(`  ${s}: Yahoo and Stooq 200-day differ by ${d.toFixed(2)}% (${a.toFixed(2)} vs ${b.toFixed(2)})`); } }
+        if (d > 1) { crossBad++; console.log(`  ${s}: Yahoo and the second source's 200-day differ by ${d.toFixed(2)}% (${a.toFixed(2)} vs ${b.toFixed(2)})`); } }
     }
     out.push({ s, last: base.at(-1)[0], ...st });
   }
   if (got < SYMS.length / 2) { fails++; console.log(`FAIL only ${got} of ${SYMS.length} tickers had real data`); }
-  if (crossBad) { fails++; console.log(`FAIL ${crossBad} of ${cross} tickers disagree between Yahoo and Stooq`); }
-  console.log(`\nReal data, ${got} tickers (${cross} cross-checked between Yahoo and Stooq):`);
+  if (crossBad) { fails++; console.log(`FAIL ${crossBad} of ${cross} tickers disagree between Yahoo and the second source`); }
+  console.log(`\nReal data, ${got} tickers (${cross} cross-checked against Stooq or Nasdaq):`);
   console.log("ticker  last close  price     50-day    200-day   vs50     vs200    RSI  coiled");
   for (const o of out.sort((a, b) => a.b200 - b.b200)) console.log(`${o.s.padEnd(7)} ${o.last}  ${o.p.toFixed(2).padStart(8)}  ${o.s50.toFixed(2).padStart(8)}  ${o.s200.toFixed(2).padStart(8)}  ${o.b50.toFixed(1).padStart(6)}%  ${o.b200.toFixed(1).padStart(6)}%  ${o.R.toFixed(0).padStart(3)}  ${o.coiled ? "YES" : ""}${o.jump ? " (jump flagged)" : ""}`);
 }
