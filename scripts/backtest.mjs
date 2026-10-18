@@ -185,6 +185,28 @@ for (const y of YEARS) {
   console.log(`  coiled, higher Coil Score half: ${pct(H.coil.best.avg)}  lower half: ${pct(H.coil.rest.avg)}  Spearman ${H.coil.rho}`);
   console.log(`  coiled: ${coiled.map(o => `${o.x} ${o.coil} (${pct(o.ex).trim()})`).join(", ")}`);
 }
+
+// Rolling panel for tuning: every 2 months from 4 years ago to 1 year ago, each stock's inputs and its next-12-month return vs SPY.
+// Many more data points than the three snapshots above, so a score change can be judged on more than one market moment.
+const panel = [];
+for (let T = NOW - 4 * 365.25 * DAY; T <= NOW - 365.25 * DAY; T += 61 * DAY) {
+  const si = at(spy, T), sj = at(spy, T + 365.25 * DAY); if (si < 0 || sj <= si) continue;
+  const spyFwd = (spy.rows[sj].ac / spy.rows[si].ac - 1) * 100, d = new Date(spy.rows[si].t).toISOString().slice(0, 10);
+  for (const [s, { cf, P }] of Object.entries(data)) {
+    const i = at(P, T), j = at(P, T + 365.25 * DAY); if (i < 200 || j <= i) continue;
+    const F = pointInTime(cf, T), M = metricsAt(F, P, T); if (!M) continue;
+    const st = A.coilStats(P.rows.slice(0, i + 1).map(r => r.c), M.m); if (!st || st.jump) continue;
+    const b = A.bgScore(M.m, M.px, s, null), v = b.v, cs = A.coilScore(st);
+    panel.push({ d, x: s, ex: r1((P.rows[j].ac / P.rows[i].ac - 1) * 100 - spyFwd), coiled: st.coiled, coil: cs.score, bg: b.score,
+      b200: r1(st.b200), b50: r1(st.b50), off: r1(st.off), R: r1(st.R), up10: st.p > st.s10, epsG: r1(st.epsG), revG: r1(st.revG), de: r2(st.de), peg: st.peg == null || isNaN(st.peg) ? null : r2(st.peg),
+      pe: r1(v.pe), pb: r2(v.pb), fcfY: r1(v.fcfY), ev: r1(v.ev), roic: r1(v.roic), margin: r1(v.margin) });
+  }
+}
+const pc = panel.filter(r => r.coiled);
+console.log(`\nRolling panel: ${panel.length} stock-dates (${pc.length} coiled), next-12-month return vs S&P`);
+console.log(`  Coil Score vs return among coiled: Spearman ${r2(spearman(pc.map(r => r.coil), pc.map(r => r.ex)))}; coiled avg ${pct(avg(pc.map(r => r.ex)))}, not coiled avg ${pct(avg(panel.filter(r => !r.coiled).map(r => r.ex)))}`);
+console.log(`  Bargain score vs return, all: Spearman ${r2(spearman(panel.filter(r => r.bg != null).map(r => r.bg), panel.filter(r => r.bg != null).map(r => r.ex)))}`);
+writeFileSync(new URL("../backtest_panel.json", import.meta.url), JSON.stringify(panel));
 // sanity sample: inputs for a few names at the 1-year date
 const s1 = out.horizons[0].rows.filter(r => ["AAPL", "MSFT", "NVDA", "JPM", "KO", "XOM", "INTC"].includes(r.x));
 console.log("\nSanity sample (1 year back): ticker, FY used, market cap $B, P/E, score");
