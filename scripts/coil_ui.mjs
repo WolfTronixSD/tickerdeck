@@ -110,7 +110,7 @@ ok((await pg.evaluate(() => __t.S.open)) === first, "tapping a row opens its cha
 ok(!errs.length, "no page errors: " + errs.join("; "));
 for (const w of [320, 375, 430]) { await pg.setViewportSize({ width: w, height: 800 }); await pg.evaluate(() => { __t.S.open = "__coil"; __t.renderCoil(); }); await pg.waitForTimeout(200);
   const over = await pg.evaluate(() => { const sh = document.getElementById("sheet"); return Math.max(document.documentElement.scrollWidth - innerWidth, sh.scrollWidth - sh.clientWidth); });
-  if (over > 0) console.log(await pg.evaluate(() => [...document.querySelectorAll("body *")].filter(e => e.getBoundingClientRect().right > innerWidth + 1 && !e.closest(".ticker-tape,.actions,.chipbar,.seg,.idx")).slice(0, 5).map(e => e.tagName + "." + e.className + " " + Math.round(e.getBoundingClientRect().right) + " " + (e.textContent || "").slice(0, 40))));
+  if (over > 0) console.log(await pg.evaluate(() => { const sh = document.getElementById("sheet"); return [document.documentElement.scrollWidth, innerWidth, sh.scrollWidth, sh.clientWidth]; }), await pg.evaluate(() => [...document.querySelectorAll("#sheet *, body > *, header *")].filter(e => e.getBoundingClientRect().right > Math.min(innerWidth, document.getElementById("sheet").getBoundingClientRect().right) + .5).slice(0, 8).map(e => e.tagName + "." + e.className + " " + Math.round(e.getBoundingClientRect().right) + " " + (e.textContent || "").slice(0, 40))));
   ok(over <= 0, `no sideways scroll at ${w}px (${over}px over)`); }
 await b.close(); srv.close();
 console.log(`UI tests: ${passes} passed, ${fails} failed`); process.exit(fails ? 1 : 0);
