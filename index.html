@@ -31,6 +31,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--ink);color:var(--text);margin:0}
+html{overflow-x:clip}
 body{font-family:var(--display);-webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top,0px) 16px calc(90px + env(safe-area-inset-bottom,0px));font-size:14px;overscroll-behavior-y:none;overflow-x:clip}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 a{color:inherit}
@@ -123,6 +124,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .feed span{font-size:11.5px;color:var(--muted)}
 .er{flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px}
 .coil-feed .coil-r{min-height:64px;padding:12px 0}.coil-feed .coil-r span.num{font-size:12.5px}.coil-big{height:48px;font-size:15px}.coil-peg{min-width:0;font-size:12px;font-weight:700;white-space:nowrap}.coil-f{display:block;margin-top:3px;font-size:12px;color:var(--muted);line-height:1.35}.coil-chips{flex-wrap:wrap;overflow:visible}.coil-chips button{min-height:40px}.coil-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}.coil-why{display:flex;flex-direction:column;gap:6px;padding:0 0 12px 56px;font-size:13px}.coil-why span{display:inline-block;width:20px;font-weight:700}.coil-why .ok{color:var(--gain)}.coil-why .no{color:var(--loss)}.coil-r .coil-peg[data-coilwhy]{cursor:pointer;min-height:30px;display:inline-flex;align-items:center}
+.coil-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}.coil-bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}.coil-prog{display:flex;flex-direction:column;gap:8px}
 .coil-help summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px;min-height:32px;display:flex;align-items:center}.coil-help p{margin-top:6px}
 .er .when{font-family:var(--mono);font-size:12px;color:var(--blue);text-align:right}
 .ins{display:flex;flex-direction:column;gap:6px;font-size:13px}
@@ -515,7 +517,7 @@ const HUES={AAPL:"#5B6573",MSFT:"#2F7BEA",NVDA:"#4A9B1C",MU:"#1B5BC4",BE:"#1FA3A
 const HOLIDAYS={"2026-01-01":"New Year's Day","2026-01-19":"MLK Day","2026-02-16":"Presidents Day","2026-04-03":"Good Friday","2026-05-25":"Memorial Day","2026-06-19":"Juneteenth","2026-07-03":"Independence Day","2026-09-07":"Labor Day","2026-11-26":"Thanksgiving","2026-12-25":"Christmas","2027-01-01":"New Year's Day","2027-01-18":"MLK Day","2027-02-15":"Presidents Day","2027-03-26":"Good Friday","2027-05-31":"Memorial Day","2027-06-18":"Juneteenth","2027-07-05":"Independence Day","2027-09-06":"Labor Day","2027-11-25":"Thanksgiving","2027-12-24":"Christmas"};
 const EARLY={"2026-11-27":"Day after Thanksgiving","2026-12-24":"Christmas Eve","2027-11-26":"Day after Thanksgiving"};
 
-const LS={get(k,d){try{const v=localStorage.getItem("tdl."+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem("tdl."+k,JSON.stringify(v));}catch(e){}}};
+const LS={get(k,d){try{const v=localStorage.getItem("tdl."+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){if(k==="daily"){ saveDaily(); return; }try{localStorage.setItem("tdl."+k,JSON.stringify(v));}catch(e){}}};
 const S={
   key:LS.get("key",""), list:LS.get("list",DEFAULT_LIST.slice()), holdings:LS.get("hold",{}), cost:LS.get("cost",{}), alerts:LS.get("alerts",{}),
   quotes:{}, live:{}, metric:LS.get("metric",{}), profile:LS.get("profile",{}), earnings:LS.get("earn",{}), ticks:{},
@@ -545,6 +547,14 @@ function r1d(s){ const q=S.quotes[s], p=price(s); return q&&q.pc&&p?(p/q.pc-1)*1
 const okTD=r=>!!(r&&r.status==="ok"&&r.values&&r.values.length&&(!r.meta||!r.meta.currency||r.meta.currency==="USD"));
 // price history from Twelve Data: daily closes for the past year, 5-minute bars for today
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// Daily price history is kept in IndexedDB: a full Spring Coil scan (about 190 stocks x 460 days) is more than
+// Safari lets localStorage hold, and a failed save there meant every scan started over.
+const IDB={open(){ return this.p||(this.p=new Promise(r=>{ try{ const q=indexedDB.open("goldrabbit",1); q.onupgradeneeded=()=>q.result.createObjectStore("kv"); q.onsuccess=()=>r(q.result); q.onerror=()=>r(null); }catch(e){ r(null); } })); },
+  async get(k){ const d=await this.open(); if(!d) return undefined; return new Promise(r=>{ try{ const q=d.transaction("kv").objectStore("kv").get(k); q.onsuccess=()=>r(q.result); q.onerror=()=>r(undefined); }catch(e){ r(undefined); } }); },
+  async set(k,v){ const d=await this.open(); if(!d) return false; return new Promise(r=>{ try{ const t=d.transaction("kv","readwrite"); t.objectStore("kv").put(v,k); t.oncomplete=()=>r(true); t.onerror=t.onabort=()=>r(false); }catch(e){ r(false); } }); } };
+let dailyT=null, dailyLoaded=null;
+function saveDaily(now){ clearTimeout(dailyT); const go=async()=>{ await loadSavedDaily(); if(await IDB.set("daily",S.daily)){ try{ localStorage.removeItem("tdl.daily"); }catch(e){} } else { try{ localStorage.setItem("tdl.daily",JSON.stringify(S.daily)); }catch(e){} } }; if(now) return go(); dailyT=setTimeout(go,800); }
+function loadSavedDaily(){ return dailyLoaded||(dailyLoaded=IDB.get("daily").then(d=>{ if(d&&typeof d==="object") for(const k in d){ const a=S.daily[k], b=d[k]; if(b&&b.c&&(!a||(b.day||"")>(a.day||""))) S.daily[k]=b; } },()=>{})); }
 const tdLog=[]; let tdQueue=Promise.resolve();
 // symbols that just failed aren't retried for 30 minutes, so nothing loops on them
 S.tdFail={}; S.noCtry=LS.get("noCtry",{}); const failedRecently=x=>S.tdFail[x]&&Date.now()-S.tdFail[x]<30*60000;
@@ -1233,7 +1243,7 @@ function wire(){
   document.addEventListener("touchend",()=>{ $("ptr").classList.remove("show"); if(pulling) fullRefresh(); pulling=false; py=null; },{passive:true});
   document.addEventListener("visibilitychange",async()=>{ if(!document.hidden&&S.wakeWant&&!S.wake){ try{ S.wake=await navigator.wakeLock.request("screen"); }catch(e){} render(); } });
   $("scrim").addEventListener("click",closeSheet);
-  $("sheet").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closeSheet(); if(S.open==="__coil"){ if(e.target.closest("#coilScan")){ coilScan(); return; } const cs=e.target.closest("[data-coilsort]"); if(cs){ S.coilSort=cs.dataset.coilsort; LS.set("coilSort",S.coilSort); renderCoil(); return; } const cf=e.target.closest("[data-coilfilter]"); if(cf){ S.coilFilter=cf.dataset.coilfilter; LS.set("coilFilter",S.coilFilter); renderCoil(); return; } if(e.target.closest(".coil-help summary")){ e.preventDefault(); S.coilHelp=!S.coilHelp; renderCoil(); return; } const cw=e.target.closest("[data-coilwhy]"); if(cw){ const k=cw.dataset.coilwhy; S.coilWhy[k]=!S.coilWhy[k]; renderCoil(); return; } const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null){ openDetail(r.dataset.sym); return; } } const c=e.target.closest("[data-quick]"); if(c&&!c.disabled) addSym(c.dataset.quick); });
+  $("sheet").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closeSheet(); if(S.open==="__coil"){ if(e.target.closest("#coilScan")){ coilScan(); renderCoil(); return; } if(e.target.closest("#coilWake")){ toggleWake().then(renderCoil); return; } const cs=e.target.closest("[data-coilsort]"); if(cs){ S.coilSort=cs.dataset.coilsort; LS.set("coilSort",S.coilSort); renderCoil(); return; } const cf=e.target.closest("[data-coilfilter]"); if(cf){ S.coilFilter=cf.dataset.coilfilter; LS.set("coilFilter",S.coilFilter); renderCoil(); return; } if(e.target.closest(".coil-help summary")){ e.preventDefault(); S.coilHelp=!S.coilHelp; renderCoil(); return; } const cw=e.target.closest("[data-coilwhy]"); if(cw){ const k=cw.dataset.coilwhy; S.coilWhy[k]=!S.coilWhy[k]; renderCoil(); return; } const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null){ openDetail(r.dataset.sym); return; } } const c=e.target.closest("[data-quick]"); if(c&&!c.disabled) addSym(c.dataset.quick); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.open) closeSheet(); });
   const pick=e=>{ const del=e.target.closest("[data-del]");
     if(del){ const row=del.closest(".row"), s=del.dataset.del; if(row.querySelector(".confirm")) return; const c=document.createElement("div"); c.className="confirm";
@@ -1743,8 +1753,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.10";
+const APP_VERSION="3.11";
 const CHANGELOG=[
+  {v:"3.11",date:"2026-10-18",title:"Faster Spring Coil scan",items:["Fixed: Scan all could sit for minutes showing only a few stocks. It now loads price history first, starting with your watchlist and the big names, and fetches live prices and fundamentals only for the stocks that turn out coiled","A progress bar shows how many stocks have loaded and about how many minutes are left (the free Twelve Data plan allows 8 stocks a minute), with a Keep screen on button","The scan keeps going if you close the Spring Coil sheet","Fixed: price history for big scans is now saved in the browser database instead of local storage, which Safari capped, so a finished scan is kept for the rest of the day instead of starting over","Says so plainly if Twelve Data's 800-a-day free limit runs out"]},
   {v:"3.10",date:"2026-10-18",title:"Spring Coil setup score",items:["Every Spring Coil stock now shows RSI, how far it is below its 1-year high, P/E, earnings and sales growth, and debt/equity","New Setup score counts six buy checks: PEG under 1.5, earnings growing, sales growing, debt/equity under 1, oversold RSI and a bounce back above the 10-day average. Tap the badge to see which pass","New sorts (Best setup, Most oversold) and filters (Earnings growing, PEG under 1.5, Oversold, Bouncing)","Stocks whose price history has a split-sized one-day jump are left out and named, so a bad data point can't fake a buy signal","Shows the date of the latest daily close, and PEG data now loads about twice as fast","Header no longer runs off the side on small iPhones","Automated checks: the math is tested against textbook RSI values and real Yahoo and Stooq prices, and the screen is tested number by number"]},
   {v:"3.9",date:"2026-10-18",title:"PEG ratio in Spring Coil",items:["Every Spring Coil stock now shows its PEG ratio (P/E divided by yearly earnings growth): green under 1, red over 2","New Lowest PEG sort puts the cheapest-for-its-growth coiled stocks first","PEG shows n/a when earnings are shrinking or the company has losses"]},
   {v:"3.8",date:"2026-10-18",title:"Spring Coil",items:["New 🌀 Spring Coil button on Home lists stocks whose price is below both the 50-day and 200-day moving averages","Each row shows the price, both averages and how far below each the stock is; sort by furthest below the 200-day or the 50-day","Scans your watchlist, every theme and about 65 popular large caps; tap a stock to open its chart"]},
@@ -1993,16 +2004,47 @@ function renderCoil(){
       <p class="hint"><b>PEG</b> is the P/E divided by yearly earnings growth. Under 1 (green) means cheap for its growth, 1 to 2 is fair, over 2 (red) is pricey. n/a means losses or shrinking earnings. A one-off jump in earnings can make PEG look cheaper than it is.</p>
       <p class="hint"><b>RSI</b> (14-day) under 30 is oversold 🧊. <b>Off 1-yr high</b> is how far below its highest close of the last 12 months. <b>📈 bouncing</b> means the price is back above its 10-day average, often the first sign a dip is ending.</p>
       <p class="hint">Averages use daily closes from Twelve Data, with today's live price as the latest close. P/E, earnings, sales and debt come from Finnhub and are about a day old.</p></details>
-    <p class="hint"><b>${coiled}</b> coiled out of ${n} scanned${n<total?` (${total} in the list; the free data plan loads about 8 a minute, so more fill in while this stays open)`:""}${fl!=="all"?`, <b>${rows.length}</b> match the filter`:""}.${asOf?` Daily prices through ${new Date(asOf).toLocaleDateString([], {month:"short",day:"numeric"})}.`:""}</p>
+    <p class="hint"><b>${coiled}</b> coiled out of ${n} scanned${n<total?` (${total} in the list)`:""}${fl!=="all"?`, <b>${rows.length}</b> match the filter`:""}.${asOf?` Daily prices through ${new Date(asOf).toLocaleDateString([], {month:"short",day:"numeric"})}.`:""}</p>
     ${odd.length?`<p class="hint">⚠️ Left out because the price history has a one-day jump that looks like a stock split or bad data: ${odd.map(esc).join(", ")}. Check their charts before trusting the averages.</p>`:""}
-    ${n<total?`<button class="primary coil-big" id="coilScan">⟳ Scan all ${total} stocks</button>`:""}
+    ${coilProgHTML(n,total)}
     <b class="coil-lbl">Sort</b>${chips(COIL_SORT_L,sc,"coilsort")}<b class="coil-lbl">Show</b>${chips(COIL_FILTER_L,fl,"coilfilter")}</div>
     <div class="feed coil-feed">${rows.length?rows.map(row).join(""):`<p class="hint" style="padding:14px 0">${!n?"Loading price history…":coiled?"Nothing matches this filter right now.":"Nothing is below both averages right now."}</p>`}</div>`;
 }
-function coilScan(){ S.gen=(S.gen||0)+1; const g=S.gen, u=coilUniverse(); if(coilRows().n<u.length) toast("Scanning… history loads about 8 stocks a minute"); ensureData(u,{daily:true,gen:g}).then(()=>{ if(S.open==="__coil") renderCoil(); coilMetrics(g); }); coilMetrics(g); }
+// Price history first (Twelve Data's free plan allows 8 stocks a minute, so a full first scan takes a while),
+// then live quotes and fundamentals for the stocks that turn out coiled. Keeps going while the app stays open.
+function coilProgHTML(n,total){
+  const P=S.coilProg;
+  if(P&&P.err==="daily") return `<p class="hint">⚠️ Twelve Data's free plan has used up today's 800 price requests, so ${total-n} stocks are still missing. The scan picks up again tomorrow.</p>`;
+  if(P&&P.err==="key") return `<p class="hint">⚠️ Twelve Data didn't accept the chart key. Check it in Settings.</p>`;
+  if(P&&P.running&&!P.total) return `<p class="hint">Loading saved prices…</p>`;
+  if(P&&P.running){ const left=P.total-P.done, mins=Math.ceil(left/8), pct=P.total?Math.round(P.done/P.total*100):100;
+    return `<div class="coil-prog"><div class="coil-bar"><i style="width:${pct}%"></i></div><p class="hint">Loading price history: ${P.done} of ${P.total} stocks, about ${mins} min left. The free data plan allows 8 stocks a minute. Keep GoldRabbit open with the screen on; it keeps going if you close this sheet.</p>${S.wake?"":`<button class="ghost coil-big" id="coilWake">🔆 Keep screen on</button>`}</div>`; }
+  return n<total?`<button class="primary coil-big" id="coilScan">⟳ Scan all ${total} stocks</button>`:"";
+}
+function coilScan(){
+  if(S.coilProg&&S.coilProg.running) return;
+  if(!dailyLoaded||!S.dailyReady){ S.coilProg={running:1,done:0,total:0,start:Date.now()}; loadSavedDaily().then(()=>{ S.dailyReady=1; S.coilProg=null; coilScan(); scheduleTab(); }); return; }
+  const fresh=x=>S.daily[x]&&S.daily[x].day===today()&&S.daily[x].v4;
+  const u=coilUniverse(), first=[...new Set(S.list.concat(COIL_EXTRA))], need=u.filter(x=>!fresh(x)&&!failedRecently(x)).sort((a,b)=>(first.includes(a)?0:1)-(first.includes(b)?0:1));
+  const P=S.coilProg={running:1,done:0,total:need.length,start:Date.now(),err:null};
+  (async()=>{
+    for(const grp of chunks(need,8)){
+      try{ const res=await td(grp,"interval=1day&outputsize=460");
+        grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) S.tdFail[x]=Date.now(); else S.daily[x]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; });
+        try{ LS.set("daily",S.daily); }catch(e){}
+      }catch(e){ if(S.tdErr==="key"){ P.err="key"; break; } if(S.tdErr==="rate"&&/day|daily/i.test(e.message||"")){ P.err="daily"; break; } }
+      P.done+=grp.length; scheduleTab();
+    }
+    P.running=0; scheduleTab();
+    // live prices for the coiled stocks, then their fundamentals
+    for(const x of coilRows().coiledRows.map(o=>o.x)){ const q=S.quotes[x]; if(!q||!q.at||Date.now()-q.at>120000){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } }
+    coilMetrics(S.gen);
+  })();
+  coilMetrics(S.gen);
+}
 // P/E, growth and debt (Finnhub, fresh for 12 hours) for the coiled stocks, top of the list first
 let coilMBusy=0;
-async function coilMetrics(g){ if(coilMBusy) return; coilMBusy=1; try{ for(;;){ if(S.open!=="__coil"||g!==S.gen) break; const x=coilRows().coiledRows.map(o=>o.x).find(x=>!(S.metric[x]&&S.metric[x].at&&Date.now()-S.metric[x].at<12*3600e3)&&!coilMTried[x]); if(!x) break; coilMTried[x]=1; await loadStatic(x,{metric:true,profile:false}); scheduleTab(); } } finally{ coilMBusy=0; } }
+async function coilMetrics(g){ if(coilMBusy) return; coilMBusy=1; try{ for(;;){  const x=coilRows().coiledRows.map(o=>o.x).find(x=>!(S.metric[x]&&S.metric[x].at&&Date.now()-S.metric[x].at<12*3600e3)&&!coilMTried[x]); if(!x) break; coilMTried[x]=1; await loadStatic(x,{metric:true,profile:false}); scheduleTab(); } } finally{ coilMBusy=0; } }
 const coilMTried={};
 function openCoil(){ S.open="__coil"; S.coilSort=LS.get("coilSort","200"); S.coilFilter=LS.get("coilFilter","all"); S.coilWhy=S.coilWhy||{}; renderCoil(); showSheet(); if(S.tdKey) coilScan(); }
 async function scanAll(){ toast("Scanning… history loads about 8 stocks a minute"); S.gen=(S.gen||0)+1; const g=S.gen; const u=universe(); await ensureData(u,{daily:true,gen:g}); loadMonthly(u); }
@@ -2235,6 +2277,7 @@ function wireTabs(){
 /* ---------- boot ---------- */
 function showOnb(){ $("app").hidden=true; $("onb").hidden=false; }
 async function start(){
+  loadSavedDaily().then(()=>{ render(); scheduleTab(); if(S.open==='__coil') renderCoil(); });
   $("onb").hidden=true; $("app").hidden=false; $("tabbar").hidden=false; wireTabs(); setTab(S.tab);
   S.list.forEach(seedTicks); render(); connect();
   setTimeout(()=>loadMonthly(S.list.concat(["SPY"])),90000);

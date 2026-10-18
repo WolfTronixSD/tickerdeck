@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 const req = createRequire(import.meta.url);
 let pw; try { pw = req("playwright"); } catch { pw = createRequire("/opt/node-tools/node_modules/")("playwright"); }
 const root = new URL("..", import.meta.url).pathname;
-const html = readFileSync(root + "index.html", "utf8").replace(/\n\}\)\(\);\n<\/script>/, "\nwindow.__t={S,today,parseET,renderCoil,coilUniverse};\n})();\n</script>");
+const html = readFileSync(root + "index.html", "utf8").replace(/\n\}\)\(\);\n<\/script>/, "\nwindow.__t={S,today,parseET,renderCoil,coilUniverse,saveDaily,COIL_EXTRA};\n})();\n</script>");
 if (!html.includes("window.__t")) throw new Error("test hook not injected");
 const srv = createServer((q, r) => { const p = q.url.split("?")[0]; if (p === "/" || p === "/index.html") { r.setHeader("content-type", "text/html"); return r.end(html); }
   try { r.end(readFileSync(root + p.slice(1))); } catch { r.statusCode = 404; r.end(); } }).listen(0);
@@ -40,13 +40,23 @@ async function page(w, keys = true) {
   await pg.route(/^https?:\/\/(?!localhost)/, r => { const u = new URL(r.request().url()), s = u.searchParams.get("symbol") || "SPY";
     if (u.host.includes("finnhub")) { if (u.pathname.endsWith("/quote")) { const c = live(s); return r.fulfill({ json: { c, pc: series(s).at(-1)[1], d: 0, dp: 0, h: c, l: c, o: c, t: Date.now() / 1000 | 0 } }); }
       if (u.pathname.includes("metric")) return r.fulfill({ json: { metric: metric(s) } }); if (u.pathname.includes("profile")) return r.fulfill({ json: { name: s } }); return r.fulfill({ json: [] }); }
-    if (u.host.includes("twelvedata")) return r.fulfill({ json: { status: "error", code: 400, message: "mocked" } });
+    if (u.host.includes("twelvedata")) { tdCalls.push(s); if (!TD_ON) return r.fulfill({ json: { status: "error", code: 400, message: "mocked" } });
+      const one = x => ({ meta: { currency: "USD" }, status: "ok", values: series(x).map(([t, c]) => ({ datetime: new Date(t).toISOString().slice(0, 10), close: String(c), volume: "1000" })).reverse() });
+      const syms = s.split(","); return r.fulfill({ json: syms.length === 1 ? one(syms[0]) : Object.fromEntries(syms.map(x => [x, one(x)])) }); }
     return r.abort(); });
   await pg.addInitScript(k => { localStorage.setItem("tdl.key", '"x"'); localStorage.setItem("tdl.tdkey", JSON.stringify(k ? "y" : "")); localStorage.setItem("tdl.seenVer", '"99"'); }, keys);
   await pg.goto(URL0); await pg.waitForTimeout(1200);
   return { pg, errs };
 }
 const SHOTS = process.env.SHOTS || "";
+let TD_ON = false; const tdCalls = [];
+
+// a fresh scan asks for price history right away, watchlist and big names first, and shows progress
+{ TD_ON = true; const { pg, errs } = await page(390); await pg.click("#coilBtn"); await pg.waitForTimeout(4000);
+  const first = (tdCalls.find(c => c.split(",").length === 8) || "").split(","), big = await pg.evaluate(() => __t.S.list.concat(__t.COIL_EXTRA));
+  ok(first.length === 8 && first.every(x => big.includes(x)), "first history request is 8 watchlist or large-cap stocks: " + first);
+  ok(/Loading price history: 8 of \d+ stocks/.test(await pg.textContent("#sheetIn")), "progress shows 8 loaded");
+  ok(await pg.$(".coil-bar"), "progress bar shown"); ok(!errs.length, "no errors during scan: " + errs.join("; ")); await pg.close(); TD_ON = false; }
 
 // no Twelve Data key: explains what's needed
 { const { pg, errs } = await page(390, false); await pg.click("#coilBtn"); await pg.waitForTimeout(500);
@@ -112,5 +122,12 @@ for (const w of [320, 375, 430]) { await pg.setViewportSize({ width: w, height: 
   const over = await pg.evaluate(() => { const sh = document.getElementById("sheet"); return Math.max(document.documentElement.scrollWidth - innerWidth, sh.scrollWidth - sh.clientWidth); });
   if (over > 0) console.log(await pg.evaluate(() => { const sh = document.getElementById("sheet"); return [document.documentElement.scrollWidth, innerWidth, sh.scrollWidth, sh.clientWidth]; }), await pg.evaluate(() => [...document.querySelectorAll("#sheet *, body > *, header *")].filter(e => e.getBoundingClientRect().right > Math.min(innerWidth, document.getElementById("sheet").getBoundingClientRect().right) + .5).slice(0, 8).map(e => e.tagName + "." + e.className + " " + Math.round(e.getBoundingClientRect().right) + " " + (e.textContent || "").slice(0, 40))));
   ok(over <= 0, `no sideways scroll at ${w}px (${over}px over)`); }
+// history survives a reload (kept in IndexedDB, not size-limited localStorage)
+{ const n0 = await pg.evaluate(async () => { await __t.saveDaily(true); return Object.keys(__t.S.daily).length; });
+  await pg.reload(); await pg.waitForTimeout(1500); await pg.click("#coilBtn"); await pg.waitForTimeout(1500);
+  const n1 = await pg.evaluate(() => Object.keys(__t.S.daily).length);
+  ok(n1 >= n0 && n0 > 150, `saved history restored after reload (${n1} of ${n0} stocks)`);
+  ok((await pg.evaluate(() => localStorage.getItem("tdl.daily"))) === null, "history no longer stored in localStorage");
+  ok(/coiled out of 18\d scanned/.test(await pg.textContent("#sheetIn")), "list rebuilt from saved history"); }
 await b.close(); srv.close();
 console.log(`UI tests: ${passes} passed, ${fails} failed`); process.exit(fails ? 1 : 0);
