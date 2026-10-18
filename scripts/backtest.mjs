@@ -21,9 +21,9 @@ const POOL = [...new Set(Object.values(A.BG_POOL).flat())];
 const SYMS = process.env.SYMS ? process.env.SYMS.split(",") : [...new Set(POOL.concat(A.COIL_EXTRA))];
 const YEARS = [1, 2, 3], DAY = 864e5, NOW = Date.now();
 // www.sec.gov answers 403 to GitHub's runners; data.sec.gov and efts.sec.gov work with this agent
-const SEC_UA = { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) GoldRabbit backtest (github.com/WolfTronixSD/tickerdeck)" };
+const SEC_UA = { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) GoldRabbit" };
 // SEC's firewall rejects Node's fetch headers from runners but accepts plain curl, so SEC calls go through curl
-const curlJson = (url, ua) => new Promise((ok, no) => execFile("curl", ["-s", "--compressed", "-f", "-A", ua, url], { maxBuffer: 256 << 20 }, (e, out) => { if (e) return no(new Error(`curl ${e.code} ${url}`)); try { ok(JSON.parse(out)); } catch (x) { no(new Error("bad JSON " + url)); } }));
+const curlJson = (url, ua) => new Promise((ok, no) => execFile("curl", ["-s", "-f", "-A", ua, url], { maxBuffer: 256 << 20 }, (e, out) => { if (e) return no(new Error(`curl ${e.code} ${url}`)); try { ok(JSON.parse(out)); } catch (x) { no(new Error("bad JSON " + url)); } }));
 async function sec(url) { for (let i = 0; ; i++) { try { return await curlJson(url, SEC_UA["User-Agent"]); } catch (e) { if (i >= 2 || /curl 22/.test(e.message) && i >= 1) throw e; await sleep(1500 * (i + 1)); } } }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function get(url, headers, tries = 3) {
