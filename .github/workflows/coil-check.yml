@@ -1,7 +1,7 @@
 name: coil-check
 on:
   push:
-    paths: ["index.html", "scripts/coil_check.mjs", ".github/workflows/coil-check.yml"]
+    paths: ["index.html", "sw.js", "scripts/**", ".github/workflows/coil-check.yml"]
   workflow_dispatch:
     inputs:
       syms:
