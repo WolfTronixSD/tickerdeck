@@ -5,6 +5,7 @@
 // Point-in-time fundamentals come from SEC EDGAR filings (only what was filed on or before each date),
 // prices from Yahoo. Runs in GitHub Actions (.github/workflows/backtest.yml); EDGAR is not reachable from every network.
 import { readFileSync, writeFileSync } from "node:fs";
+import { execFile } from "node:child_process";
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const grab = re => { const m = html.match(re); if (!m) throw new Error("not found in index.html: " + re); return m[0]; };
 // the app's own scoring code, so the backtest scores exactly like the app
@@ -21,6 +22,9 @@ const SYMS = process.env.SYMS ? process.env.SYMS.split(",") : [...new Set(POOL.c
 const YEARS = [1, 2, 3], DAY = 864e5, NOW = Date.now();
 // www.sec.gov answers 403 to GitHub's runners; data.sec.gov and efts.sec.gov work with this agent
 const SEC_UA = { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) GoldRabbit backtest (github.com/WolfTronixSD/tickerdeck)" };
+// SEC's firewall rejects Node's fetch headers from runners but accepts plain curl, so SEC calls go through curl
+const curlJson = (url, ua) => new Promise((ok, no) => execFile("curl", ["-s", "--compressed", "-f", "-A", ua, url], { maxBuffer: 256 << 20 }, (e, out) => { if (e) return no(new Error(`curl ${e.code} ${url}`)); try { ok(JSON.parse(out)); } catch (x) { no(new Error("bad JSON " + url)); } }));
+async function sec(url) { for (let i = 0; ; i++) { try { return await curlJson(url, SEC_UA["User-Agent"]); } catch (e) { if (i >= 2 || /curl 22/.test(e.message) && i >= 1) throw e; await sleep(1500 * (i + 1)); } } }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function get(url, headers, tries = 3) {
   for (let i = 0; ; i++) {
@@ -116,21 +120,22 @@ const pct = v => v == null ? "   —  " : (v >= 0 ? "+" : "") + v.toFixed(1) + "
 // ---------- run ----------
 // ticker to SEC company number, from EDGAR's own company search
 async function cikOf(s) {
-  const t = s.replace(".", "-"), j = await get(`https://efts.sec.gov/LATEST/search-index?keysTyped=${encodeURIComponent(t)}`, SEC_UA);
+  const t = s.replace(".", "-"), j = await sec(`https://efts.sec.gov/LATEST/search-index?keysTyped=${encodeURIComponent(t)}`);
   const hit = (j.hits?.hits || []).find(h => String(h._source?.tickers || "").split(/,\s*/).map(x => x.toUpperCase()).includes(t));
   return hit ? String(hit._id).padStart(10, "0") : null;
 }
 const spy = await yahoo("SPY"), spyNow = spy.rows.at(-1);
 const data = {}, skipped = [];
 for (const s of SYMS) {
-  let cik = null; try { cik = await cikOf(s); } catch (e) {}
+  let cik = null; try { cik = await cikOf(s); } catch (e) { skipped.push(`${s} (lookup failed: ${e.message})`); continue; }
   if (!cik) { skipped.push(`${s} (no SEC filer)`); continue; }
   try {
-    const [cf, P] = [await get(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, SEC_UA), await yahoo(s)];
+    const [cf, P] = [await sec(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`), await yahoo(s)];
     data[s] = { cf, P }; await sleep(150); // SEC asks for at most 10 requests a second
   } catch (e) { skipped.push(`${s} (${e.message.split(" ")[0]})`); }
 }
 console.log(`Loaded ${Object.keys(data).length} of ${SYMS.length} tickers. Skipped: ${skipped.join(", ") || "none"}`);
+if (!process.env.SYMS && Object.keys(data).length < SYMS.length / 2) { console.log("Too few tickers loaded, not writing results"); process.exit(1); }
 
 const out = { generated: new Date(NOW).toISOString(), priceAsOf: new Date(spyNow.t).toISOString().slice(0, 10), tickers: Object.keys(data).length, skipped, horizons: [] };
 for (const y of YEARS) {
