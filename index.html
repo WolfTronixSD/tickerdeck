@@ -121,7 +121,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .feed b{font-size:14px;font-weight:600;line-height:1.35}
 .feed span{font-size:11.5px;color:var(--muted)}
 .er{flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px}
-.coil-feed .coil-r{min-height:64px;padding:12px 0}.coil-feed .coil-r span.num{font-size:12.5px}.coil-big{height:48px;font-size:15px}
+.coil-feed .coil-r{min-height:64px;padding:12px 0}.coil-feed .coil-r span.num{font-size:12.5px}.coil-big{height:48px;font-size:15px}.coil-peg{min-width:0;font-size:12px;font-weight:700}
 .er .when{font-family:var(--mono);font-size:12px;color:var(--blue);text-align:right}
 .ins{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .ins div{display:flex;justify-content:space-between;gap:8px}
@@ -1741,8 +1741,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.8";
+const APP_VERSION="3.9";
 const CHANGELOG=[
+  {v:"3.9",date:"2026-10-18",title:"PEG ratio in Spring Coil",items:["Every Spring Coil stock now shows its PEG ratio (P/E divided by yearly earnings growth): green under 1, red over 2","New Lowest PEG sort puts the cheapest-for-its-growth coiled stocks first","PEG shows n/a when earnings are shrinking or the company has losses"]},
   {v:"3.8",date:"2026-10-18",title:"Spring Coil",items:["New 🌀 Spring Coil button on Home lists stocks whose price is below both the 50-day and 200-day moving averages","Each row shows the price, both averages and how far below each the stock is; sort by furthest below the 200-day or the 50-day","Scans your watchlist, every theme and about 65 popular large caps; tap a stock to open its chart"]},
   {v:"3.7",date:"2026-10-13",title:"Zoom charts",items:["Pinch the stock chart with two fingers to zoom in or out, and move both fingers sideways to slide along","Big ＋ and － buttons under the chart zoom in and out, ◀ ▶ move earlier or later, and Reset shows the whole range again","On a computer, scroll the mouse wheel over the chart to zoom; double-click resets","While zoomed, the change shown is for the visible part of the chart; one finger still scrubs prices"]},
   {v:"3.6",date:"2026-10-13",title:"Energy & Oil",items:["New ⛽ Energy & Oil button on Home jumps straight to the Energy & Oil theme","Oil tankers & shipping group with Frontline (FRO), DHT, International Seaways (INSW), Scorpio Tankers (STNG) and Teekay Tankers (TNK)","Added Shell and BP to the majors, a Refiners group (MPC, VLO, PSX), and oil and energy funds (USO, XLE, XOP)","Energy & Oil moved to second place in the Trends theme list"]},
@@ -1928,26 +1929,35 @@ function ideasHTML(){
 /* ---------- Spring Coil: price below both the 50-day and 200-day averages ---------- */
 // popular large caps scanned on top of the watchlist and every theme
 const COIL_EXTRA=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","BRK.B","JPM","V","MA","UNH","LLY","JNJ","PG","KO","PEP","WMT","COST","HD","MCD","NKE","SBUX","DIS","NFLX","ADBE","CRM","ORCL","INTC","AMD","QCOM","TXN","CSCO","IBM","PYPL","BA","CAT","DE","GE","MMM","UPS","FDX","PFE","MRK","ABBV","BMY","CVS","T","VZ","TGT","LOW","GS","MS","BAC","WFC","C","XOM","CVX","F","GM","UBER","ABNB","SHOP","PLTR"];
+// PEG = P/E divided by yearly earnings growth (%), same as the Gold Picks value score. null when not loaded, NaN when earnings aren't growing
+function pegOf(x){ const m=S.metric[x]&&S.metric[x].m; if(!m) return null; const pe=nn(m.peTTM??m.peBasicExclExtraTTM), g=nn(m.epsGrowthTTMYoy); return pe!=null&&pe>0&&g!=null&&g>0?pe/g:NaN; }
 function coilUniverse(){ return [...new Set(universe().concat(COIL_EXTRA))].filter(x=>!FUNDS.has(x)); }
 function coilRows(){
   const u=coilUniverse(), rows=[]; let n=0;
-  u.forEach(x=>{ const A=analytics(x); if(!A||A.s200==null) return; n++; if(A.p<A.s50&&A.p<A.s200) rows.push({x,A,b50:(A.p/A.s50-1)*100,b200:(A.p/A.s200-1)*100}); });
-  const k=S.coilSort==="50"?"b50":"b200"; rows.sort((a,b)=>a[k]-b[k]);
+  u.forEach(x=>{ const A=analytics(x); if(!A||A.s200==null) return; n++; if(A.p<A.s50&&A.p<A.s200) rows.push({x,A,b50:(A.p/A.s50-1)*100,b200:(A.p/A.s200-1)*100,peg:pegOf(x)}); });
+  if(S.coilSort==="peg"){ const v=o=>o.peg==null||isNaN(o.peg)?Infinity:o.peg; rows.sort((a,b)=>v(a)-v(b)||a.b200-b.b200); }
+  else { const k=S.coilSort==="50"?"b50":"b200"; rows.sort((a,b)=>a[k]-b[k]); }
   return {rows,n,total:u.length};
 }
 function renderCoil(){
   if(S.open!=="__coil") return;
   const head=`<div class="grab"></div><div class="d-head"><div><h3>🌀 Spring Coil</h3><p>Price below both the 50-day and 200-day averages</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>`;
   if(!S.tdKey){ $("sheetIn").innerHTML=head+`<div class="card"><p class="hint">Spring Coil needs a year of daily prices. Add the free Twelve Data key in Settings to turn it on.</p><button class="primary" data-open-settings style="align-self:flex-start">Add key</button></div>`; return; }
-  const {rows,n,total}=coilRows(), sort=S.coilSort==="50"?"50":"200";
-  const row=o=>`<div class="er coil-r" data-sym="${esc(o.x)}" role="button" tabindex="0">${logo(o.x)}<div style="flex:1;min-width:0"><b>${esc(o.x)}</b> <span class="num">${fmt$(o.A.p)}</span><br><span class="num">50-day ${fmt$(o.A.s50)} <b class="tdown">${fmtP(o.b50)}</b></span><br><span class="num">200-day ${fmt$(o.A.s200)} <b class="tdown">${fmtP(o.b200)}</b></span></div><span class="pill ${cls(r1d(o.x))}" style="min-width:0">${fmtP(r1d(o.x))}</span></div>`;
+  const {rows,n,total}=coilRows(), sort=["50","peg"].includes(S.coilSort)?S.coilSort:"200";
+  const peg=o=>o.peg==null?`<span class="pill na coil-peg">PEG …</span>`:isNaN(o.peg)?`<span class="pill na coil-peg" title="P/E or earnings growth is negative or missing">PEG n/a</span>`:`<span class="pill ${o.peg<1?"up":o.peg>2?"down":"na"} coil-peg">PEG ${o.peg.toFixed(2)}</span>`;
+  const row=o=>`<div class="er coil-r" data-sym="${esc(o.x)}" role="button" tabindex="0">${logo(o.x)}<div style="flex:1;min-width:0"><b>${esc(o.x)}</b> <span class="num">${fmt$(o.A.p)}</span><br><span class="num">50-day ${fmt$(o.A.s50)} <b class="tdown">${fmtP(o.b50)}</b></span><br><span class="num">200-day ${fmt$(o.A.s200)} <b class="tdown">${fmtP(o.b200)}</b></span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${peg(o)}<span class="pill ${cls(r1d(o.x))}" style="min-width:0">${fmtP(r1d(o.x))}</span></div></div>`;
   $("sheetIn").innerHTML=head+`<div class="card" style="gap:8px"><p class="hint">Stocks trading under both moving averages are wound down like a spring. Some bounce back hard, others keep falling, so check the trend and the news first. A starting point for research, not a buy signal on its own.</p>
+    <p class="hint"><b>PEG</b> is the P/E divided by yearly earnings growth. Under 1 (green) means cheap for its growth, 1 to 2 is fair, over 2 (red) is pricey. "n/a" means earnings are shrinking or there are losses.</p>
     <p class="hint"><b>${rows.length}</b> coiled out of ${n} scanned${n<total?` (${total} in the list; the free data plan loads about 8 a minute, so more fill in while this stays open)`:""}.</p>
     ${n<total?`<button class="primary coil-big" id="coilScan">⟳ Scan all ${total} stocks</button>`:""}
-    <div class="chipbar"><button data-coilsort="200" aria-pressed="${sort==="200"}">Furthest below 200-day</button><button data-coilsort="50" aria-pressed="${sort==="50"}">Furthest below 50-day</button></div></div>
+    <div class="chipbar" style="flex-wrap:wrap;overflow:visible"><button data-coilsort="200" aria-pressed="${sort==="200"}">Furthest below 200-day</button><button data-coilsort="50" aria-pressed="${sort==="50"}">Furthest below 50-day</button><button data-coilsort="peg" aria-pressed="${sort==="peg"}">Lowest PEG</button></div></div>
     <div class="feed coil-feed">${rows.length?rows.map(row).join(""):`<p class="hint" style="padding:14px 0">${n?"Nothing is below both averages right now.":"Loading price history…"}</p>`}</div>`;
 }
-function coilScan(){ S.gen=(S.gen||0)+1; const g=S.gen, u=coilUniverse(); if(coilRows().n<u.length) toast("Scanning… history loads about 8 stocks a minute"); ensureData(u,{daily:true,gen:g}).then(()=>{ if(S.open==="__coil") renderCoil(); }); }
+function coilScan(){ S.gen=(S.gen||0)+1; const g=S.gen, u=coilUniverse(); if(coilRows().n<u.length) toast("Scanning… history loads about 8 stocks a minute"); ensureData(u,{daily:true,gen:g}).then(()=>{ if(S.open==="__coil") renderCoil(); coilMetrics(g); }); coilMetrics(g); }
+// P/E and earnings growth (Finnhub, fresh for 12 hours) for the coiled stocks, top of the list first
+let coilMBusy=0;
+async function coilMetrics(g){ if(coilMBusy) return; coilMBusy=1; try{ for(;;){ if(S.open!=="__coil"||g!==S.gen) break; const x=coilRows().rows.map(o=>o.x).find(x=>!(S.metric[x]&&S.metric[x].at&&Date.now()-S.metric[x].at<12*3600e3)&&!coilMTried[x]); if(!x) break; coilMTried[x]=1; await loadStatic(x,{metric:true}); scheduleTab(); } } finally{ coilMBusy=0; } }
+const coilMTried={};
 function openCoil(){ S.open="__coil"; S.coilSort=LS.get("coilSort","200"); renderCoil(); showSheet(); if(S.tdKey) coilScan(); }
 async function scanAll(){ toast("Scanning… history loads about 8 stocks a minute"); S.gen=(S.gen||0)+1; const g=S.gen; const u=universe(); await ensureData(u,{daily:true,gen:g}); loadMonthly(u); }
 
