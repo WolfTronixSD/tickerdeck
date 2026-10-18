@@ -121,7 +121,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .feed b{font-size:14px;font-weight:600;line-height:1.35}
 .feed span{font-size:11.5px;color:var(--muted)}
 .er{flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px}
-.coil-feed .coil-r{min-height:64px;padding:12px 0}.coil-feed .coil-r span.num{font-size:12.5px}.coil-big{height:48px;font-size:15px}.coil-peg{min-width:0;font-size:12px;font-weight:700}
+.coil-feed .coil-r{min-height:64px;padding:12px 0}.coil-feed .coil-r span.num{font-size:12.5px}.coil-big{height:48px;font-size:15px}.coil-peg{min-width:0;font-size:12px;font-weight:700;white-space:nowrap}.coil-f{display:block;margin-top:3px;font-size:12px;color:var(--muted);line-height:1.35}.coil-chips{flex-wrap:wrap;overflow:visible}.coil-chips button{min-height:40px}.coil-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}.coil-why{display:flex;flex-direction:column;gap:6px;padding:0 0 12px 56px;font-size:13px}.coil-why span{display:inline-block;width:20px;font-weight:700}.coil-why .ok{color:var(--gain)}.coil-why .no{color:var(--loss)}.coil-r .coil-peg[data-coilwhy]{cursor:pointer;min-height:30px;display:inline-flex;align-items:center}
+.coil-help summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px;min-height:32px;display:flex;align-items:center}.coil-help p{margin-top:6px}
 .er .when{font-family:var(--mono);font-size:12px;color:var(--blue);text-align:right}
 .ins{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .ins div{display:flex;justify-content:space-between;gap:8px}
@@ -694,9 +695,9 @@ function api(path,opt={}){
   const p=queue.then(run,run); queue=p.catch(()=>{}); return p;
 }
 async function loadQuote(s){ try{ const q=await api(`/quote?symbol=${encodeURIComponent(s)}`); if(q&&q.c){ S.quotes[s]=q; seedTicks(s); } else if(q&&q.c===0&&q.pc===0) S.quotes[s]={bad:true}; }catch(e){} }
-async function loadStatic(s,{metric=true}={}){
+async function loadStatic(s,{metric=true,profile=true}={}){
   const fresh=o=>o&&o.at&&Date.now()-o.at<12*3600e3;
-  if(!fresh(S.profile[s])||S.profile[s].ex===undefined){ try{ const p=await api(`/stock/profile2?symbol=${encodeURIComponent(s)}`); S.profile[s]={name:p.name||"",logo:p.logo||"",industry:p.finnhubIndustry||"",cap:p.marketCapitalization||null,web:p.weburl||"",ex:p.exchange||"",at:Date.now()}; LS.set("profile",S.profile);}catch(e){} }
+  if(profile&&(!fresh(S.profile[s])||S.profile[s].ex===undefined)){ try{ const p=await api(`/stock/profile2?symbol=${encodeURIComponent(s)}`); S.profile[s]={name:p.name||"",logo:p.logo||"",industry:p.finnhubIndustry||"",cap:p.marketCapitalization||null,web:p.weburl||"",ex:p.exchange||"",at:Date.now()}; LS.set("profile",S.profile);}catch(e){} }
   if(metric&&!fresh(S.metric[s])){ try{ const m=await api(`/stock/metric?symbol=${encodeURIComponent(s)}&metric=all`); S.metric[s]={m:m.metric||{},at:Date.now()}; LS.set("metric",S.metric);}catch(e){} }
 }
 async function loadEarnings(){
@@ -1231,7 +1232,7 @@ function wire(){
   document.addEventListener("touchend",()=>{ $("ptr").classList.remove("show"); if(pulling) fullRefresh(); pulling=false; py=null; },{passive:true});
   document.addEventListener("visibilitychange",async()=>{ if(!document.hidden&&S.wakeWant&&!S.wake){ try{ S.wake=await navigator.wakeLock.request("screen"); }catch(e){} render(); } });
   $("scrim").addEventListener("click",closeSheet);
-  $("sheet").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closeSheet(); if(S.open==="__coil"){ if(e.target.closest("#coilScan")){ coilScan(); return; } const cs=e.target.closest("[data-coilsort]"); if(cs){ S.coilSort=cs.dataset.coilsort; LS.set("coilSort",S.coilSort); renderCoil(); return; } const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null){ openDetail(r.dataset.sym); return; } } const c=e.target.closest("[data-quick]"); if(c&&!c.disabled) addSym(c.dataset.quick); });
+  $("sheet").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closeSheet(); if(S.open==="__coil"){ if(e.target.closest("#coilScan")){ coilScan(); return; } const cs=e.target.closest("[data-coilsort]"); if(cs){ S.coilSort=cs.dataset.coilsort; LS.set("coilSort",S.coilSort); renderCoil(); return; } const cf=e.target.closest("[data-coilfilter]"); if(cf){ S.coilFilter=cf.dataset.coilfilter; LS.set("coilFilter",S.coilFilter); renderCoil(); return; } if(e.target.closest(".coil-help summary")){ e.preventDefault(); S.coilHelp=!S.coilHelp; renderCoil(); return; } const cw=e.target.closest("[data-coilwhy]"); if(cw){ const k=cw.dataset.coilwhy; S.coilWhy[k]=!S.coilWhy[k]; renderCoil(); return; } const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null){ openDetail(r.dataset.sym); return; } } const c=e.target.closest("[data-quick]"); if(c&&!c.disabled) addSym(c.dataset.quick); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.open) closeSheet(); });
   const pick=e=>{ const del=e.target.closest("[data-del]");
     if(del){ const row=del.closest(".row"), s=del.dataset.del; if(row.querySelector(".confirm")) return; const c=document.createElement("div"); c.className="confirm";
@@ -1741,8 +1742,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.9";
+const APP_VERSION="3.10";
 const CHANGELOG=[
+  {v:"3.10",date:"2026-10-18",title:"Spring Coil setup score",items:["Every Spring Coil stock now shows RSI, how far it is below its 1-year high, P/E, earnings and sales growth, and debt/equity","New Setup score counts six buy checks: PEG under 1.5, earnings growing, sales growing, debt/equity under 1, oversold RSI and a bounce back above the 10-day average. Tap the badge to see which pass","New sorts (Best setup, Most oversold) and filters (Earnings growing, PEG under 1.5, Oversold, Bouncing)","Stocks whose price history has a split-sized one-day jump are left out and named, so a bad data point can't fake a buy signal","Shows the date of the latest daily close, and PEG data now loads about twice as fast","Automated checks: the math is tested against textbook RSI values and real Yahoo and Stooq prices, and the screen is tested number by number"]},
   {v:"3.9",date:"2026-10-18",title:"PEG ratio in Spring Coil",items:["Every Spring Coil stock now shows its PEG ratio (P/E divided by yearly earnings growth): green under 1, red over 2","New Lowest PEG sort puts the cheapest-for-its-growth coiled stocks first","PEG shows n/a when earnings are shrinking or the company has losses"]},
   {v:"3.8",date:"2026-10-18",title:"Spring Coil",items:["New 🌀 Spring Coil button on Home lists stocks whose price is below both the 50-day and 200-day moving averages","Each row shows the price, both averages and how far below each the stock is; sort by furthest below the 200-day or the 50-day","Scans your watchlist, every theme and about 65 popular large caps; tap a stock to open its chart"]},
   {v:"3.7",date:"2026-10-13",title:"Zoom charts",items:["Pinch the stock chart with two fingers to zoom in or out, and move both fingers sideways to slide along","Big ＋ and － buttons under the chart zoom in and out, ◀ ▶ move earlier or later, and Reset shows the whole range again","On a computer, scroll the mouse wheel over the chart to zoom; double-click resets","While zoomed, the change shown is for the visible part of the chart; one finger still scrubs prices"]},
@@ -1929,36 +1931,79 @@ function ideasHTML(){
 /* ---------- Spring Coil: price below both the 50-day and 200-day averages ---------- */
 // popular large caps scanned on top of the watchlist and every theme
 const COIL_EXTRA=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","BRK.B","JPM","V","MA","UNH","LLY","JNJ","PG","KO","PEP","WMT","COST","HD","MCD","NKE","SBUX","DIS","NFLX","ADBE","CRM","ORCL","INTC","AMD","QCOM","TXN","CSCO","IBM","PYPL","BA","CAT","DE","GE","MMM","UPS","FDX","PFE","MRK","ABBV","BMY","CVS","T","VZ","TGT","LOW","GS","MS","BAC","WFC","C","XOM","CVX","F","GM","UBER","ABNB","SHOP","PLTR"];
-// PEG = P/E divided by yearly earnings growth (%), same as the Gold Picks value score. null when not loaded, NaN when earnings aren't growing
-function pegOf(x){ const m=S.metric[x]&&S.metric[x].m; if(!m) return null; const pe=nn(m.peTTM??m.peBasicExclExtraTTM), g=nn(m.epsGrowthTTMYoy); return pe!=null&&pe>0&&g!=null&&g>0?pe/g:NaN; }
+/* coil-math:start (pure functions, also run by scripts/coil_check.mjs) */
+// PEG = P/E divided by yearly earnings growth (%), same as the Gold Picks value score.
+// null when fundamentals aren't loaded, NaN when there are losses or earnings are shrinking.
+function pegCalc(m){ if(!m) return null; const f=v=>typeof v==="number"&&isFinite(v)?v:null; const pe=f(m.peTTM??m.peBasicExclExtraTTM), g=f(m.epsGrowthTTMYoy); return pe!=null&&pe>0&&g!=null&&g>0?pe/g:NaN; }
+// c: daily closes, oldest first, last one = today's live price. m: Finnhub metrics or null.
+function coilStats(c,m){
+  if(!c||c.length<200) return null;
+  const f=v=>typeof v==="number"&&isFinite(v)?v:null;
+  const p=c[c.length-1], s10=sma(c,10), s50=sma(c,50), s200=sma(c,200), R=rsi(c);
+  const yr=c.slice(-252), hi=Math.max(...yr), lo=Math.min(...yr);
+  // a one-day move this big in the last 200 days is almost always a split or bad tick, not a real price
+  let jump=false; for(let i=Math.max(1,c.length-200);i<c.length;i++){ const r=c[i]/c[i-1]; if(r<.55||r>1.8) jump=true; }
+  const pe=m?f(m.peTTM??m.peBasicExclExtraTTM):null, epsG=m?f(m.epsGrowthTTMYoy):null, revG=m?f(m.revenueGrowthTTMYoy):null;
+  const de=m?f(m["totalDebt/totalEquityQuarterly"]??m["totalDebt/totalEquityAnnual"]):null, peg=pegCalc(m);
+  const checks=[
+    ["peg","Cheap for its growth (PEG under 1.5)",peg==null?null:!isNaN(peg)&&peg<1.5],
+    ["eps","Earnings growing",epsG==null?null:epsG>0],
+    ["rev","Sales growing",revG==null?null:revG>0],
+    ["debt","Manageable debt (debt/equity under 1)",de==null||de<0?null:de<1],
+    ["rsi","Oversold (RSI under 35)",R==null?null:R<35],
+    ["bounce","Bounce starting (back above the 10-day average)",p>s10]];
+  const known=checks.filter(x=>x[2]!=null), good=known.filter(x=>x[2]).length;
+  return {p,s10,s50,s200,R,hi,lo,off:(p/hi-1)*100,b50:(p/s50-1)*100,b200:(p/s200-1)*100,coiled:p<s50&&p<s200,jump,pe,epsG,revG,de,peg,checks,good,known:known.length};
+}
+const COIL_FILTERS={all:o=>true,eps:o=>o.epsG!=null&&o.epsG>0,rsi:o=>o.R!=null&&o.R<35,bounce:o=>o.p>o.s10,peg:o=>o.peg!=null&&!isNaN(o.peg)&&o.peg<1.5};
+const COIL_SORTS={
+  "200":(a,b)=>a.b200-b.b200, "50":(a,b)=>a.b50-b.b50,
+  peg:(a,b)=>{ const v=o=>o.peg==null||isNaN(o.peg)?Infinity:o.peg; return v(a)-v(b)||a.b200-b.b200; },
+  score:(a,b)=>b.good-a.good||a.known-b.known||a.b200-b.b200,
+  rsi:(a,b)=>(a.R??99)-(b.R??99) };
+function coilPick(stats,sort,filter){ return stats.filter(o=>o&&o.coiled&&!o.jump&&(COIL_FILTERS[filter]||COIL_FILTERS.all)(o)).sort(COIL_SORTS[sort]||COIL_SORTS["200"]); }
+/* coil-math:end */
 function coilUniverse(){ return [...new Set(universe().concat(COIL_EXTRA))].filter(x=>!FUNDS.has(x)); }
 function coilRows(){
-  const u=coilUniverse(), rows=[]; let n=0;
-  u.forEach(x=>{ const A=analytics(x); if(!A||A.s200==null) return; n++; if(A.p<A.s50&&A.p<A.s200) rows.push({x,A,b50:(A.p/A.s50-1)*100,b200:(A.p/A.s200-1)*100,peg:pegOf(x)}); });
-  if(S.coilSort==="peg"){ const v=o=>o.peg==null||isNaN(o.peg)?Infinity:o.peg; rows.sort((a,b)=>v(a)-v(b)||a.b200-b.b200); }
-  else { const k=S.coilSort==="50"?"b50":"b200"; rows.sort((a,b)=>a[k]-b[k]); }
-  return {rows,n,total:u.length};
+  const u=coilUniverse(), all=[]; let n=0, odd=[], asOf=0;
+  u.forEach(x=>{ const c=closes(x); if(!c||c.length<200) return; const st=coilStats(c,S.metric[x]&&S.metric[x].m); if(!st) return; n++; st.x=x; all.push(st);
+    if(st.jump&&st.coiled) odd.push(x); const d=S.daily[x].c; asOf=Math.max(asOf,d[d.length-1][0]); });
+  const rows=coilPick(all,S.coilSort,S.coilFilter), coiled=coilPick(all,S.coilSort,"all");
+  return {rows,n,total:u.length,coiled:coiled.length,coiledRows:coiled,odd,asOf};
 }
+const COIL_SORT_L=[["200","Furthest below 200-day"],["50","Furthest below 50-day"],["score","Best setup"],["peg","Lowest PEG"],["rsi","Most oversold"]];
+const COIL_FILTER_L=[["all","All"],["eps","Earnings growing"],["peg","PEG under 1.5"],["rsi","Oversold"],["bounce","Bouncing"]];
 function renderCoil(){
   if(S.open!=="__coil") return;
   const head=`<div class="grab"></div><div class="d-head"><div><h3>🌀 Spring Coil</h3><p>Price below both the 50-day and 200-day averages</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>`;
   if(!S.tdKey){ $("sheetIn").innerHTML=head+`<div class="card"><p class="hint">Spring Coil needs a year of daily prices. Add the free Twelve Data key in Settings to turn it on.</p><button class="primary" data-open-settings style="align-self:flex-start">Add key</button></div>`; return; }
-  const {rows,n,total}=coilRows(), sort=["50","peg"].includes(S.coilSort)?S.coilSort:"200";
-  const peg=o=>o.peg==null?`<span class="pill na coil-peg">PEG …</span>`:isNaN(o.peg)?`<span class="pill na coil-peg" title="P/E or earnings growth is negative or missing">PEG n/a</span>`:`<span class="pill ${o.peg<1?"up":o.peg>2?"down":"na"} coil-peg">PEG ${o.peg.toFixed(2)}</span>`;
-  const row=o=>`<div class="er coil-r" data-sym="${esc(o.x)}" role="button" tabindex="0">${logo(o.x)}<div style="flex:1;min-width:0"><b>${esc(o.x)}</b> <span class="num">${fmt$(o.A.p)}</span><br><span class="num">50-day ${fmt$(o.A.s50)} <b class="tdown">${fmtP(o.b50)}</b></span><br><span class="num">200-day ${fmt$(o.A.s200)} <b class="tdown">${fmtP(o.b200)}</b></span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${peg(o)}<span class="pill ${cls(r1d(o.x))}" style="min-width:0">${fmtP(r1d(o.x))}</span></div></div>`;
+  const sc=S.coilSort in COIL_SORTS?S.coilSort:"200", fl=S.coilFilter in COIL_FILTERS?S.coilFilter:"all";
+  const {rows,n,total,coiled,odd,asOf}=coilRows();
+  const f1=v=>v==null?"—":v.toFixed(Math.abs(v)>=100?0:1);
+  const peg=o=>o.peg==null?`<span class="pill na coil-peg">PEG …</span>`:isNaN(o.peg)?`<span class="pill na coil-peg" title="Losses or shrinking earnings">PEG n/a</span>`:`<span class="pill ${o.peg<1?"up":o.peg>2?"down":"na"} coil-peg">PEG ${o.peg.toFixed(2)}</span>`;
+  const score=o=>o.known?`<span class="pill ${o.good/o.known>=.6?"up":o.good/o.known<.35?"down":"na"} coil-peg" data-coilwhy="${esc(o.x)}" role="button" aria-expanded="${!!S.coilWhy[o.x]}">Setup ${o.good}/${o.known} ▾</span>`:"";
+  const why=o=>S.coilWhy[o.x]&&o.known?`<div class="coil-why">${o.checks.filter(x=>x[2]!=null).map(x=>`<div><span class="${x[2]?"ok":"no"}">${x[2]?"✓":"✗"}</span>${esc(x[1])}</div>`).join("")}</div>`:"";
+  const fund=o=>[o.R!=null?`RSI ${o.R.toFixed(0)}${o.R<30?" 🧊":""}`:"",`${f1(Math.abs(o.off))}% off 1-yr high`,o.pe!=null?`P/E ${f1(o.pe)}`:(S.metric[o.x]?"P/E n/a":""),o.epsG!=null?`EPS ${fmtP(o.epsG).replace(/\.\d+%/,"%")}`:"",o.revG!=null?`Sales ${fmtP(o.revG).replace(/\.\d+%/,"%")}`:"",o.de!=null&&o.de>=0?`D/E ${o.de.toFixed(1)}`:"",o.p>o.s10?"📈 bouncing":""].filter(Boolean).join(" · ");
+  const row=o=>`<div class="er coil-r" data-sym="${esc(o.x)}" role="button" tabindex="0">${logo(o.x)}<div style="flex:1;min-width:0"><b>${esc(o.x)}</b> <span class="num">${fmt$(o.p)}</span> <span class="pill ${cls(r1d(o.x))}" style="min-width:0;font-size:11px">${fmtP(r1d(o.x))}</span><br><span class="num">50-day ${fmt$(o.s50)} <b class="tdown">${fmtP(o.b50)}</b></span><br><span class="num">200-day ${fmt$(o.s200)} <b class="tdown">${fmtP(o.b200)}</b></span><br><span class="coil-f">${fund(o)}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${score(o)}${peg(o)}</div></div>${why(o)}`;
+  const chips=(L,cur,attr)=>`<div class="chipbar coil-chips">${L.map(([k,l])=>`<button data-${attr}="${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`;
   $("sheetIn").innerHTML=head+`<div class="card" style="gap:8px"><p class="hint">Stocks trading under both moving averages are wound down like a spring. Some bounce back hard, others keep falling, so check the trend and the news first. A starting point for research, not a buy signal on its own.</p>
-    <p class="hint"><b>PEG</b> is the P/E divided by yearly earnings growth. Under 1 (green) means cheap for its growth, 1 to 2 is fair, over 2 (red) is pricey. "n/a" means earnings are shrinking or there are losses.</p>
-    <p class="hint"><b>${rows.length}</b> coiled out of ${n} scanned${n<total?` (${total} in the list; the free data plan loads about 8 a minute, so more fill in while this stays open)`:""}.</p>
+    <details class="coil-help"${S.coilHelp?" open":""}><summary>What the numbers mean</summary>
+      <p class="hint"><b>Setup</b> counts how many of six checks pass: PEG under 1.5, earnings growing, sales growing, debt/equity under 1, RSI under 35 and price back above its 10-day average. Tap the badge to see which. Checks without data are left out.</p>
+      <p class="hint"><b>PEG</b> is the P/E divided by yearly earnings growth. Under 1 (green) means cheap for its growth, 1 to 2 is fair, over 2 (red) is pricey. n/a means losses or shrinking earnings. A one-off jump in earnings can make PEG look cheaper than it is.</p>
+      <p class="hint"><b>RSI</b> (14-day) under 30 is oversold 🧊. <b>Off 1-yr high</b> is how far below its highest close of the last 12 months. <b>📈 bouncing</b> means the price is back above its 10-day average, often the first sign a dip is ending.</p>
+      <p class="hint">Averages use daily closes from Twelve Data, with today's live price as the latest close. P/E, earnings, sales and debt come from Finnhub and are about a day old.</p></details>
+    <p class="hint"><b>${coiled}</b> coiled out of ${n} scanned${n<total?` (${total} in the list; the free data plan loads about 8 a minute, so more fill in while this stays open)`:""}${fl!=="all"?`, <b>${rows.length}</b> match the filter`:""}.${asOf?` Daily prices through ${new Date(asOf).toLocaleDateString([], {month:"short",day:"numeric"})}.`:""}</p>
+    ${odd.length?`<p class="hint">⚠️ Left out because the price history has a one-day jump that looks like a stock split or bad data: ${odd.map(esc).join(", ")}. Check their charts before trusting the averages.</p>`:""}
     ${n<total?`<button class="primary coil-big" id="coilScan">⟳ Scan all ${total} stocks</button>`:""}
-    <div class="chipbar" style="flex-wrap:wrap;overflow:visible"><button data-coilsort="200" aria-pressed="${sort==="200"}">Furthest below 200-day</button><button data-coilsort="50" aria-pressed="${sort==="50"}">Furthest below 50-day</button><button data-coilsort="peg" aria-pressed="${sort==="peg"}">Lowest PEG</button></div></div>
-    <div class="feed coil-feed">${rows.length?rows.map(row).join(""):`<p class="hint" style="padding:14px 0">${n?"Nothing is below both averages right now.":"Loading price history…"}</p>`}</div>`;
+    <b class="coil-lbl">Sort</b>${chips(COIL_SORT_L,sc,"coilsort")}<b class="coil-lbl">Show</b>${chips(COIL_FILTER_L,fl,"coilfilter")}</div>
+    <div class="feed coil-feed">${rows.length?rows.map(row).join(""):`<p class="hint" style="padding:14px 0">${!n?"Loading price history…":coiled?"Nothing matches this filter right now.":"Nothing is below both averages right now."}</p>`}</div>`;
 }
 function coilScan(){ S.gen=(S.gen||0)+1; const g=S.gen, u=coilUniverse(); if(coilRows().n<u.length) toast("Scanning… history loads about 8 stocks a minute"); ensureData(u,{daily:true,gen:g}).then(()=>{ if(S.open==="__coil") renderCoil(); coilMetrics(g); }); coilMetrics(g); }
-// P/E and earnings growth (Finnhub, fresh for 12 hours) for the coiled stocks, top of the list first
+// P/E, growth and debt (Finnhub, fresh for 12 hours) for the coiled stocks, top of the list first
 let coilMBusy=0;
-async function coilMetrics(g){ if(coilMBusy) return; coilMBusy=1; try{ for(;;){ if(S.open!=="__coil"||g!==S.gen) break; const x=coilRows().rows.map(o=>o.x).find(x=>!(S.metric[x]&&S.metric[x].at&&Date.now()-S.metric[x].at<12*3600e3)&&!coilMTried[x]); if(!x) break; coilMTried[x]=1; await loadStatic(x,{metric:true}); scheduleTab(); } } finally{ coilMBusy=0; } }
+async function coilMetrics(g){ if(coilMBusy) return; coilMBusy=1; try{ for(;;){ if(S.open!=="__coil"||g!==S.gen) break; const x=coilRows().coiledRows.map(o=>o.x).find(x=>!(S.metric[x]&&S.metric[x].at&&Date.now()-S.metric[x].at<12*3600e3)&&!coilMTried[x]); if(!x) break; coilMTried[x]=1; await loadStatic(x,{metric:true,profile:false}); scheduleTab(); } } finally{ coilMBusy=0; } }
 const coilMTried={};
-function openCoil(){ S.open="__coil"; S.coilSort=LS.get("coilSort","200"); renderCoil(); showSheet(); if(S.tdKey) coilScan(); }
+function openCoil(){ S.open="__coil"; S.coilSort=LS.get("coilSort","200"); S.coilFilter=LS.get("coilFilter","all"); S.coilWhy=S.coilWhy||{}; renderCoil(); showSheet(); if(S.tdKey) coilScan(); }
 async function scanAll(){ toast("Scanning… history loads about 8 stocks a minute"); S.gen=(S.gen||0)+1; const g=S.gen; const u=universe(); await ensureData(u,{daily:true,gen:g}); loadMonthly(u); }
 
 /* ---------- analytics ---------- */

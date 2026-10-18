@@ -1,0 +1,36 @@
+name: coil-check
+on:
+  push:
+    paths: ["index.html", "scripts/coil_check.mjs", ".github/workflows/coil-check.yml"]
+  workflow_dispatch:
+    inputs:
+      syms:
+        description: "Comma-separated tickers for the real-data check (blank = default 20)"
+        required: false
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/coil_check.mjs
+  real-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/coil_check.mjs
+        env:
+          REAL: "1"
+          SYMS: ${{ github.event.inputs.syms }}
+  screen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - run: node scripts/coil_ui.mjs
+        timeout-minutes: 15
