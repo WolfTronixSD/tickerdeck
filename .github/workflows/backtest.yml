@@ -1,0 +1,34 @@
+name: backtest
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays
+  workflow_dispatch:
+    inputs:
+      syms:
+        description: "Comma-separated tickers (blank = all Bargain and Spring Coil stocks)"
+        required: false
+  push:
+    paths: ["scripts/backtest.mjs", ".github/workflows/backtest.yml"]
+permissions:
+  contents: write
+concurrency: { group: backtest, cancel-in-progress: false }
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/backtest.mjs
+        timeout-minutes: 20
+        env:
+          SYMS: ${{ github.event.inputs.syms }}
+      - name: Save backtest.json
+        if: ${{ github.event.inputs.syms == '' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backtest.json
+          git diff --cached --quiet && exit 0
+          git commit -m "backtest: refresh results"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
