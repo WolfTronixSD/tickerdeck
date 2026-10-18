@@ -206,6 +206,15 @@ const pc = panel.filter(r => r.coiled);
 console.log(`\nRolling panel: ${panel.length} stock-dates (${pc.length} coiled), next-12-month return vs S&P`);
 console.log(`  Coil Score vs return among coiled: Spearman ${r2(spearman(pc.map(r => r.coil), pc.map(r => r.ex)))}; coiled avg ${pct(avg(pc.map(r => r.ex)))}, not coiled avg ${pct(avg(panel.filter(r => !r.coiled).map(r => r.ex)))}`);
 console.log(`  Bargain score vs return, all: Spearman ${r2(spearman(panel.filter(r => r.bg != null).map(r => r.bg), panel.filter(r => r.bg != null).map(r => r.ex)))}`);
+// per date: did the top half by score beat the bottom half over the next 12 months?
+function halves(rows, key) {
+  let wins = 0, n = 0; const top = [], bot = [];
+  for (const d of [...new Set(rows.map(r => r.d))]) { const w = rows.filter(r => r.d === d && r[key] != null).sort((a, b) => b[key] - a[key]); if (w.length < 6) continue; const h = Math.floor(w.length / 2), t = avg(w.slice(0, h).map(r => r.ex)), b = avg(w.slice(-h).map(r => r.ex)); n++; if (t > b) wins++; top.push(t); bot.push(b); }
+  return { dates: n, wins, top: r1(avg(top)), bottom: r1(avg(bot)) };
+}
+out.panel = { from: panel.length ? panel.reduce((a, r) => (r.d < a ? r.d : a), panel[0].d) : null, to: panel.length ? panel.reduce((a, r) => (r.d > a ? r.d : a), panel[0].d) : null,
+  coil: halves(pc, "coil"), bargain: halves(panel, "bg"), coiled: r1(avg(pc.map(r => r.ex))), notCoiled: r1(avg(panel.filter(r => !r.coiled).map(r => r.ex))) };
+console.log("  halves:", JSON.stringify(out.panel));
 writeFileSync(new URL("../backtest_panel.json", import.meta.url), JSON.stringify(panel));
 // sanity sample: inputs for a few names at the 1-year date
 const s1 = out.horizons[0].rows.filter(r => ["AAPL", "MSFT", "NVDA", "JPM", "KO", "XOM", "INTC"].includes(r.x));
