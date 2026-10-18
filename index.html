@@ -121,6 +121,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .feed b{font-size:14px;font-weight:600;line-height:1.35}
 .feed span{font-size:11.5px;color:var(--muted)}
 .er{flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px}
+.coil-feed .coil-r{min-height:64px;padding:12px 0}.coil-feed .coil-r span.num{font-size:12.5px}.coil-big{height:48px;font-size:15px}
 .er .when{font-family:var(--mono);font-size:12px;color:var(--blue);text-align:right}
 .ins{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .ins div{display:flex;justify-content:space-between;gap:8px}
@@ -427,6 +428,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button id="aheadBtn">🔭 Look ahead</button>
     <button id="repBtn">📊 Reports</button>
     <button id="energyBtn">⛽ Energy & Oil</button>
+    <button id="coilBtn">🌀 Spring Coil</button>
     <button id="mediaBtn">🎧 Listen & watch</button>
     <button id="cmpBtn">⇄ Compare</button>
     <button id="wakeBtn">🔆 Keep screen on</button>
@@ -1218,6 +1220,7 @@ function wire(){
   $("mediaBtn").addEventListener("click",openMedia);
   $("energyBtn").addEventListener("click",()=>{ S.trend="energy"; LS.set("trend","energy"); setTab("trends"); requestAnimationFrame(()=>{ const c=document.querySelector("#tab-trends .chipbar"); if(c) window.scrollTo({top:c.getBoundingClientRect().top+scrollY-70,behavior:"instant"}); }); });
   $("repBtn").addEventListener("click",()=>openReport(LS.get("repP","1w")));
+  $("coilBtn").addEventListener("click",()=>openCoil());
   $("cmpBtn").addEventListener("click",()=>openCompare(S.list[0]||"AAPL",S.list[1]||"SPY"));
   $("erFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
   $("idx").addEventListener("click",e=>{ const b=e.target.closest("[data-idx]"); if(b&&price(b.dataset.idx)!=null) openDetail(b.dataset.idx); });
@@ -1228,7 +1231,7 @@ function wire(){
   document.addEventListener("touchend",()=>{ $("ptr").classList.remove("show"); if(pulling) fullRefresh(); pulling=false; py=null; },{passive:true});
   document.addEventListener("visibilitychange",async()=>{ if(!document.hidden&&S.wakeWant&&!S.wake){ try{ S.wake=await navigator.wakeLock.request("screen"); }catch(e){} render(); } });
   $("scrim").addEventListener("click",closeSheet);
-  $("sheet").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closeSheet(); const c=e.target.closest("[data-quick]"); if(c&&!c.disabled) addSym(c.dataset.quick); });
+  $("sheet").addEventListener("click",e=>{ if(e.target.closest("[data-close]")) closeSheet(); if(S.open==="__coil"){ if(e.target.closest("#coilScan")){ coilScan(); return; } const cs=e.target.closest("[data-coilsort]"); if(cs){ S.coilSort=cs.dataset.coilsort; LS.set("coilSort",S.coilSort); renderCoil(); return; } const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null){ openDetail(r.dataset.sym); return; } } const c=e.target.closest("[data-quick]"); if(c&&!c.disabled) addSym(c.dataset.quick); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.open) closeSheet(); });
   const pick=e=>{ const del=e.target.closest("[data-del]");
     if(del){ const row=del.closest(".row"), s=del.dataset.del; if(row.querySelector(".confirm")) return; const c=document.createElement("div"); c.className="confirm";
@@ -1738,8 +1741,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.7";
+const APP_VERSION="3.8";
 const CHANGELOG=[
+  {v:"3.8",date:"2026-10-18",title:"Spring Coil",items:["New 🌀 Spring Coil button on Home lists stocks whose price is below both the 50-day and 200-day moving averages","Each row shows the price, both averages and how far below each the stock is; sort by furthest below the 200-day or the 50-day","Scans your watchlist, every theme and about 65 popular large caps; tap a stock to open its chart"]},
   {v:"3.7",date:"2026-10-13",title:"Zoom charts",items:["Pinch the stock chart with two fingers to zoom in or out, and move both fingers sideways to slide along","Big ＋ and － buttons under the chart zoom in and out, ◀ ▶ move earlier or later, and Reset shows the whole range again","On a computer, scroll the mouse wheel over the chart to zoom; double-click resets","While zoomed, the change shown is for the visible part of the chart; one finger still scrubs prices"]},
   {v:"3.6",date:"2026-10-13",title:"Energy & Oil",items:["New ⛽ Energy & Oil button on Home jumps straight to the Energy & Oil theme","Oil tankers & shipping group with Frontline (FRO), DHT, International Seaways (INSW), Scorpio Tankers (STNG) and Teekay Tankers (TNK)","Added Shell and BP to the majors, a Refiners group (MPC, VLO, PSX), and oil and energy funds (USO, XLE, XOP)","Energy & Oil moved to second place in the Trends theme list"]},
   {v:"3.5",date:"2026-10-13",title:"Bitcoin, Ethereum and Solana",items:["Live Bitcoin, Ethereum and Solana prices on Home, right under the market indexes, with the 24-hour change","Crypto prices stream around the clock, even on weekends, and need no extra key","Tap a coin for its full chart on Coinbase","Crypto trend now includes the Ethereum (ETHA) and Solana (BSOL) ETFs next to the Bitcoin ETF (IBIT)"]},
@@ -1921,6 +1925,30 @@ function ideasHTML(){
     ${block("🧊","Oversold","RSI under 30",I.over,o=>`RSI ${o.A.R.toFixed(0)} · ${o.A.label}`)}
     ${block("🔥","Overheated","RSI over 75, be careful chasing",I.hot,o=>`RSI ${o.A.R.toFixed(0)} · ${fmtP((o.A.p/o.A.s50-1)*100)} above 50-day avg`)}`}`;
 }
+/* ---------- Spring Coil: price below both the 50-day and 200-day averages ---------- */
+// popular large caps scanned on top of the watchlist and every theme
+const COIL_EXTRA=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","BRK.B","JPM","V","MA","UNH","LLY","JNJ","PG","KO","PEP","WMT","COST","HD","MCD","NKE","SBUX","DIS","NFLX","ADBE","CRM","ORCL","INTC","AMD","QCOM","TXN","CSCO","IBM","PYPL","BA","CAT","DE","GE","MMM","UPS","FDX","PFE","MRK","ABBV","BMY","CVS","T","VZ","TGT","LOW","GS","MS","BAC","WFC","C","XOM","CVX","F","GM","UBER","ABNB","SHOP","PLTR"];
+function coilUniverse(){ return [...new Set(universe().concat(COIL_EXTRA))].filter(x=>!FUNDS.has(x)); }
+function coilRows(){
+  const u=coilUniverse(), rows=[]; let n=0;
+  u.forEach(x=>{ const A=analytics(x); if(!A||A.s200==null) return; n++; if(A.p<A.s50&&A.p<A.s200) rows.push({x,A,b50:(A.p/A.s50-1)*100,b200:(A.p/A.s200-1)*100}); });
+  const k=S.coilSort==="50"?"b50":"b200"; rows.sort((a,b)=>a[k]-b[k]);
+  return {rows,n,total:u.length};
+}
+function renderCoil(){
+  if(S.open!=="__coil") return;
+  const head=`<div class="grab"></div><div class="d-head"><div><h3>🌀 Spring Coil</h3><p>Price below both the 50-day and 200-day averages</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>`;
+  if(!S.tdKey){ $("sheetIn").innerHTML=head+`<div class="card"><p class="hint">Spring Coil needs a year of daily prices. Add the free Twelve Data key in Settings to turn it on.</p><button class="primary" data-open-settings style="align-self:flex-start">Add key</button></div>`; return; }
+  const {rows,n,total}=coilRows(), sort=S.coilSort==="50"?"50":"200";
+  const row=o=>`<div class="er coil-r" data-sym="${esc(o.x)}" role="button" tabindex="0">${logo(o.x)}<div style="flex:1;min-width:0"><b>${esc(o.x)}</b> <span class="num">${fmt$(o.A.p)}</span><br><span class="num">50-day ${fmt$(o.A.s50)} <b class="tdown">${fmtP(o.b50)}</b></span><br><span class="num">200-day ${fmt$(o.A.s200)} <b class="tdown">${fmtP(o.b200)}</b></span></div><span class="pill ${cls(r1d(o.x))}" style="min-width:0">${fmtP(r1d(o.x))}</span></div>`;
+  $("sheetIn").innerHTML=head+`<div class="card" style="gap:8px"><p class="hint">Stocks trading under both moving averages are wound down like a spring. Some bounce back hard, others keep falling, so check the trend and the news first. A starting point for research, not a buy signal on its own.</p>
+    <p class="hint"><b>${rows.length}</b> coiled out of ${n} scanned${n<total?` (${total} in the list; the free data plan loads about 8 a minute, so more fill in while this stays open)`:""}.</p>
+    ${n<total?`<button class="primary coil-big" id="coilScan">⟳ Scan all ${total} stocks</button>`:""}
+    <div class="chipbar"><button data-coilsort="200" aria-pressed="${sort==="200"}">Furthest below 200-day</button><button data-coilsort="50" aria-pressed="${sort==="50"}">Furthest below 50-day</button></div></div>
+    <div class="feed coil-feed">${rows.length?rows.map(row).join(""):`<p class="hint" style="padding:14px 0">${n?"Nothing is below both averages right now.":"Loading price history…"}</p>`}</div>`;
+}
+function coilScan(){ S.gen=(S.gen||0)+1; const g=S.gen, u=coilUniverse(); if(coilRows().n<u.length) toast("Scanning… history loads about 8 stocks a minute"); ensureData(u,{daily:true,gen:g}).then(()=>{ if(S.open==="__coil") renderCoil(); }); }
+function openCoil(){ S.open="__coil"; S.coilSort=LS.get("coilSort","200"); renderCoil(); showSheet(); if(S.tdKey) coilScan(); }
 async function scanAll(){ toast("Scanning… history loads about 8 stocks a minute"); S.gen=(S.gen||0)+1; const g=S.gen; const u=universe(); await ensureData(u,{daily:true,gen:g}); loadMonthly(u); }
 
 /* ---------- analytics ---------- */
@@ -2053,7 +2081,7 @@ function setActiveSubs(){
   want.forEach(s=>{ if(!S.extra.has(s)&&!S.list.includes(s)) subscribe(s,true); });
   S.extra=want;
 }
-let tabT=null; function scheduleTab(){ if(tabT) return; tabT=setTimeout(()=>{ tabT=null; renderTab(); },400); }
+let tabT=null; function scheduleTab(){ if(tabT) return; tabT=setTimeout(()=>{ tabT=null; renderTab(); if(S.open==="__coil") renderCoil(); },400); }
 // 5Y needs weekly closes and All needs monthly closes for each stock; fetched only when picked
 function loadRange(list,tf){ if(tf==="5y") loadWeekly(list.concat(["SPY"])); else if(tf==="all") loadMonthly(list.concat(["SPY"])); }
 function loadNote(list){ const n=list.filter(x=>ret(x,S.ttf)!=null).length; return n<list.length&&S.tdKey?`<p class="hint" style="margin-top:-6px">${TF[S.ttf]||S.ttf} figures for ${n} of ${list.length} stocks so far. The free data plan loads about 8 a minute.</p>`:""; }
