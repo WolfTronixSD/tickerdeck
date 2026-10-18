@@ -29,7 +29,13 @@ function rsi(a, n = 14) { const ch = a.slice(1).map((v, i) => v - a[i]); let g =
 function expect(s) { const c = series(s).map(x => x[1]).concat([live(s)]); const p = c.at(-1), s50 = sma(c, 50), s200 = sma(c, 200);
   let jump = false; for (let i = c.length - 200; i < c.length; i++) { const r = c[i] / c[i - 1]; if (r < .55 || r > 1.8) jump = true; }
   const m = metric(s), peg = m.peTTM > 0 && m.epsGrowthTTMYoy > 0 ? m.peTTM / m.epsGrowthTTMYoy : NaN;
-  return { p, s50, s200, b50: (p / s50 - 1) * 100, b200: (p / s200 - 1) * 100, R: rsi(c), coiled: p < s50 && p < s200, jump, peg }; }
+  const R = rsi(c), s10 = sma(c, 10), b200 = (p / s200 - 1) * 100, de = m["totalDebt/totalEquityQuarterly"];
+  // Coil Score, written out separately from the app
+  const q = [m.epsGrowthTTMYoy == null ? null : m.epsGrowthTTMYoy > 0, m.revenueGrowthTTMYoy == null ? null : m.revenueGrowthTTMYoy > 0, de == null || de < 0 ? null : de < 1].filter(v => v != null);
+  const d = -b200, disc = d <= 0 ? 0 : d <= 20 ? d / 20 : d <= 35 ? 1 : Math.max(.4, 1 - (d - 35) / 50), val = isNaN(peg) ? 0 : Math.max(0, Math.min(1, (2 - peg) / 1.5));
+  const time = p > s10 ? 1 : R < 30 ? .6 : R < 35 ? .4 : R < 50 ? .2 : 0;
+  const coil = Math.round(45 * (q.length ? q.filter(Boolean).length / q.length : 0) + 20 * val + 20 * disc + 15 * time);
+  return { p, s50, s200, b50: (p / s50 - 1) * 100, b200, R, coiled: p < s50 && p < s200, jump, peg, coil }; }
 
 let fails = 0, passes = 0; const ok = (c, m) => { if (c) passes++; else { fails++; console.log("FAIL", m); } };
 const money = t => +t.replace(/[$,]/g, "");
@@ -44,7 +50,7 @@ async function page(w, keys = true) {
       const one = x => ({ meta: { currency: "USD" }, status: "ok", values: series(x).map(([t, c]) => ({ datetime: new Date(t).toISOString().slice(0, 10), close: String(c), volume: "1000" })).reverse() });
       const syms = s.split(","); return r.fulfill({ json: syms.length === 1 ? one(syms[0]) : Object.fromEntries(syms.map(x => [x, one(x)])) }); }
     return r.abort(); });
-  await pg.addInitScript(k => { localStorage.setItem("tdl.key", '"x"'); localStorage.setItem("tdl.tdkey", JSON.stringify(k ? "y" : "")); localStorage.setItem("tdl.seenVer", '"99"'); }, keys);
+  await pg.addInitScript(k => { localStorage.setItem("tdl.key", '"x"'); localStorage.setItem("tdl.tdkey", JSON.stringify(k ? "y" : "")); localStorage.setItem("tdl.seenVer", '"99"'); localStorage.setItem("tdl.coilSort2", '"200"'); }, keys);
   await pg.goto(URL0); await pg.waitForTimeout(1200);
   return { pg, errs };
 }
@@ -60,7 +66,14 @@ let TD_ON = false; const tdCalls = [];
 
 // no Twelve Data key: explains what's needed
 { const { pg, errs } = await page(390, false); await pg.click("#coilBtn"); await pg.waitForTimeout(500);
-  ok(/Add the free Twelve Data key/.test(await pg.textContent("#sheetIn")), "no-key message"); ok(!errs.length, "no errors without key: " + errs.join("; ")); await pg.close(); }
+  ok(/Add the free Twelve Data key/.test(await pg.textContent("#sheetIn")), "no-key message");
+  await pg.click("[data-close]"); await pg.waitForTimeout(500);
+  const A = await pg.$$eval("#actions > *", els => els.map(e => { const r = e.getBoundingClientRect(); return { id: e.id, x: Math.round(r.left), y: Math.round(r.top), h: r.height }; }));
+  ok(A[0].id === "coilBtn", "Spring Coil is the first Home button");
+  ok(A[0].x === A[1].x && A[1].y > A[0].y && new Set(A.map(a => a.y)).size === 2, "Home buttons sit in two rows");
+  ok(A.every(a => a.h >= 48), "Home buttons are at least 48px tall");
+  ok(await pg.$eval("#actions", e => e.scrollWidth > e.clientWidth && getComputedStyle(e).overflowX === "auto"), "Home buttons swipe sideways");
+  if (SHOTS) await pg.screenshot({ path: SHOTS + "/home-grid.png" }); ok(!errs.length, "no errors without key: " + errs.join("; ")); await pg.close(); }
 
 const { pg, errs } = await page(390);
 const U = await pg.evaluate(() => __t.coilUniverse());
@@ -90,6 +103,23 @@ R = await rowsOnScreen();
 for (const r of R) { const e = E[r.x], g = r.t.match(/PEG (n\/a|[\d.]+)/);
   ok(g && (isNaN(e.peg) ? g[1] === "n/a" : Math.abs(+g[1] - e.peg) < .006), `${r.x} PEG ${g && g[1]} vs ${e.peg}`); }
 if (SHOTS) await pg.screenshot({ path: SHOTS + "/coil-default.png" });
+// Coil Score: badges, sort, top picks and map all agree with the independent calculation
+await pg.click('[data-coilsort="coil"]'); await pg.waitForTimeout(300);
+R = await rowsOnScreen();
+const badges = await pg.$$eval(".coil-feed .coil-r", els => els.map(e => ({ x: e.dataset.sym, v: parseInt(e.querySelector(".coil-sc b").textContent) })));
+ok(badges.every(b => b.v === E[b.x].coil), "Coil Score badges: " + badges.filter(b => b.v !== E[b.x].coil).slice(0, 3).map(b => `${b.x} ${b.v} vs ${E[b.x].coil}`).join(", "));
+const byCoil = [...want].sort((a, b) => E[b].coil - E[a].coil || E[a].b200 - E[b].b200);
+ok(badges.map(b => b.x).join() === byCoil.join(), "Coil Score order");
+const picks = await pg.$$eval(".coil-top .coil-pick", els => els.map(e => e.dataset.sym));
+ok(picks.join() === byCoil.slice(0, 3).join(), `top picks ${picks} vs ${byCoil.slice(0, 3)}`);
+const dots = await pg.$$eval(".coil-map .cm-dot", els => els.map(e => e.dataset.sym));
+ok(dots.length === want.length && dots.every(x => want.includes(x)), `map has one dot per coiled stock (${dots.length} vs ${want.length})`);
+const bars = await pg.$$eval(".coil-feed .coil-r", els => els.map(e => { const l = s => parseFloat(e.querySelector(s).style.left); return { x: e.dataset.sym, p: l(".cr-p"), a: l(".m50"), b: l(".m200") }; }));
+ok(bars.every(b => b.p <= b.a && b.p <= b.b), "range bar puts today's price left of both averages");
+await pg.click(`.coil-map .cm-dot[data-sym="${byCoil[0]}"]`, { force: true }); await pg.waitForTimeout(600);
+ok((await pg.evaluate(() => __t.S.open)) === byCoil[0], "tapping a map dot opens that stock");
+await pg.evaluate(() => { __t.S.open = "__coil"; __t.renderCoil(); }); await pg.waitForTimeout(200);
+if (SHOTS) { await pg.evaluate(() => document.querySelector(".coil-top").scrollIntoView()); await pg.waitForTimeout(200); await pg.screenshot({ path: SHOTS + "/coil-top.png" }); }
 // sorts and filters
 const order = async () => (await rowsOnScreen()).map(r => r.x);
 await pg.click('[data-coilsort="peg"]'); await pg.waitForTimeout(300);

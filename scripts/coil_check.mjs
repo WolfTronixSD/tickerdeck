@@ -9,7 +9,7 @@ const src = [
   grab(/^function rsi\(a,n=14\)\{[\s\S]*?return l===0\?100:100-100\/\(1\+g\/l\); \}$/m),
   grab(/\/\* coil-math:start[\s\S]*?\/\* coil-math:end \*\//),
 ].join("\n");
-const C = new Function(src + "\nreturn {mean,sma,rsi,pegCalc,coilStats,coilPick,COIL_FILTERS,COIL_SORTS};")();
+const C = new Function(src + "\nreturn {mean,sma,rsi,pegCalc,coilStats,coilPick,coilScore,COIL_FILTERS,COIL_SORTS};")();
 
 let fails = 0, passes = 0;
 const ok = (cond, msg) => { if (cond) passes++; else { fails++; console.log("FAIL", msg); } };
@@ -90,6 +90,20 @@ ok(C.coilPick(rows, "200", "eps").map(o => o.x).join() === "C,A", "filter earnin
 ok(C.coilPick(rows, "200", "peg").map(o => o.x).join() === "C", "filter PEG under 1.5");
 ok(C.coilPick(rows, "200", "rsi").map(o => o.x).join() === "B,C", "filter oversold");
 ok(C.coilPick(rows, "200", "bounce").map(o => o.x).join() === "C", "filter bouncing");
+
+// 8. Coil Score
+const mkS = (o) => ({ p: 80, s10: 85, R: 40, b200: -25, peg: .5, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]], ...o });
+ok(C.coilScore(mkS({ p: 90 })).score === 100, "every part maxed scores 100");
+ok(C.coilScore(mkS({})).score === 45 + 20 + 20 + 3, "oversold-free, no bounce: timing 0.2 of 15 (3)");
+ok(C.coilScore(mkS({ checks: [["eps", "", false], ["rev", "", true], ["debt", "", null]] })).parts.quality === 22.5, "quality averages only known checks");
+near(C.coilScore(mkS({ peg: 1.25 })).parts.value, 10, 1e-9, "PEG 1.25 earns half the value points");
+ok(C.coilScore(mkS({ peg: NaN })).parts.value === 0 && C.coilScore(mkS({ peg: 3 })).parts.value === 0, "PEG n/a or 3 earns no value points");
+ok(C.coilScore(mkS({ peg: null })).partial, "missing fundamentals marked partial");
+near(C.coilScore(mkS({ b200: -10 })).parts.discount, 10, 1e-9, "10% under the 200-day earns half the discount points");
+ok(C.coilScore(mkS({ b200: -60 })).parts.discount < C.coilScore(mkS({ b200: -30 })).parts.discount, "a 60% plunge scores below a 30% dip");
+ok(C.coilScore(mkS({ b200: -200 })).parts.discount === 8, "discount never drops below 40%");
+ok(C.coilScore(mkS({ p: 80, R: 25 })).parts.timing === 9 && C.coilScore(mkS({ p: 80, R: 33 })).parts.timing === 6, "timing for oversold");
+ok(C.coilPick([{ ...mk("A", -10, -5, 2, 2, 40, 5), p: 1, s10: 2, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]] }, { ...mk("B", -25, -5, .5, 2, 40, 5), p: 3, s10: 2, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]] }], "coil", "all").map(o => o.x).join() === "B,A", "sort by Coil Score");
 
 console.log(`unit tests: ${passes} passed, ${fails} failed`);
 
