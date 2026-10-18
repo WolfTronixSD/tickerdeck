@@ -76,6 +76,18 @@ let TD_ON = false; const tdCalls = [];
   await pg.click(`.bg-r[data-bgx="${A[0].x}"]`); await pg.waitForTimeout(300);
   ok((await pg.$$(".bg-det > div")).length === 10, "tapping a stock shows all 10 metrics");
   if (SHOTS) await pg.screenshot({ path: SHOTS + "/bargain-detail.png" });
+  // backtest panel: numbers come straight from backtest.json
+  const BT = JSON.parse(readFileSync(root + "backtest.json", "utf8"));
+  await pg.click(".bt-box summary"); await pg.waitForTimeout(600);
+  const bt = await pg.$$eval(".bt-t tr", trs => trs.map(t => [...t.children].map(c => c.textContent.trim())));
+  ok(bt[0].length === 1 + BT.horizons.length, "backtest table has a column per horizon");
+  const topRow = bt.find(r => r[0] === "Top quarter by score"), r0 = v => (v >= 0 ? "+" : "") + Math.round(v) + "%";
+  ok(topRow && BT.horizons.every((h, i) => topRow[i + 1].startsWith(r0(h.bargain.top.avg))), "backtest top-quarter numbers match backtest.json: " + (topRow || []).join(" | "));
+  ok(bt.find(r => r[0] === "S&P 500 return")?.slice(1).join() === BT.horizons.map(h => r0(h.spy)).join(), "backtest S&P returns match");
+  ok(/(Higher scores went on|No reliable link)/.test(await pg.textContent(".bt-box")), "backtest verdict shown");
+  const over2 = await pg.evaluate(() => document.getElementById("sheet").scrollWidth - document.getElementById("sheet").clientWidth); ok(over2 <= 0, "backtest table fits the phone width");
+  if (SHOTS) { await pg.evaluate(() => document.querySelector(".bt-box").scrollIntoView()); await pg.waitForTimeout(200); await pg.screenshot({ path: SHOTS + "/bargain-backtest.png" }); }
+  await pg.click(".bt-box summary"); await pg.waitForTimeout(200);
   await pg.click(`[data-bgopen="${A[0].x}"]`); await pg.waitForTimeout(600); ok((await pg.evaluate(() => __t.S.open)) === A[0].x, "Open chart button works");
   const over = await pg.evaluate(() => document.getElementById("sheet").scrollWidth - document.getElementById("sheet").clientWidth); ok(over <= 0, "scorecard fits the phone width");
   ok(!errs.length, "no errors in scorecard: " + errs.join("; ")); await pg.close(); }
@@ -126,6 +138,9 @@ R = await rowsOnScreen();
 for (const r of R) { const e = E[r.x], g = r.t.match(/PEG (n\/a|[\d.]+)/);
   ok(g && (isNaN(e.peg) ? g[1] === "n/a" : Math.abs(+g[1] - e.peg) < .006), `${r.x} PEG ${g && g[1]} vs ${e.peg}`); }
 if (SHOTS) await pg.screenshot({ path: SHOTS + "/coil-default.png" });
+await pg.click(".bt-box summary"); await pg.waitForTimeout(600); ok((await pg.$$(".bt-t tr")).length === 7, "Spring Coil backtest table has 6 rows");
+if (SHOTS) { await pg.evaluate(() => document.querySelector(".bt-box").scrollIntoView()); await pg.waitForTimeout(200); await pg.screenshot({ path: SHOTS + "/coil-backtest.png" }); }
+await pg.click(".bt-box summary"); await pg.waitForTimeout(200);
 // Coil Score: badges, sort, top picks and map all agree with the independent calculation
 await pg.click('[data-coilsort="coil"]'); await pg.waitForTimeout(300);
 R = await rowsOnScreen();
