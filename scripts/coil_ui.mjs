@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 const req = createRequire(import.meta.url);
 let pw; try { pw = req("playwright"); } catch { pw = createRequire("/opt/node-tools/node_modules/")("playwright"); }
 const root = new URL("..", import.meta.url).pathname;
-const html = readFileSync(root + "index.html", "utf8").replace(/\n\}\)\(\);\n<\/script>/, "\nwindow.__t={S,today,parseET,renderCoil,coilUniverse,saveDaily,COIL_EXTRA};\n})();\n</script>");
+const html = readFileSync(root + "index.html", "utf8").replace(/\n\}\)\(\);\n<\/script>/, "\nwindow.__t={S,today,parseET,renderCoil,coilUniverse,saveDaily,COIL_EXTRA,BG_POOL};\n})();\n</script>");
 if (!html.includes("window.__t")) throw new Error("test hook not injected");
 const srv = createServer((q, r) => { const p = q.url.split("?")[0]; if (p === "/" || p === "/index.html") { r.setHeader("content-type", "text/html"); return r.end(html); }
   try { r.end(readFileSync(root + p.slice(1))); } catch { r.statusCode = 404; r.end(); } }).listen(0);
@@ -56,6 +56,29 @@ async function page(w, keys = true) {
 }
 const SHOTS = process.env.SHOTS || "";
 let TD_ON = false; const tdCalls = [];
+
+// Bargain Scorecard with preloaded fundamentals: right stocks, right order, dots add up to the score
+{ const { pg, errs } = await page(390);
+  const pool = await pg.evaluate(() => [...new Set(Object.values(__t.BG_POOL).flat())]);
+  const F = Object.fromEntries(pool.map(x => [x, { cap: 1000 + h(x + "c") % 900000, px: 20 + h(x + "x") % 900, m: { peTTM: 5 + h(x + "1") % 50, forwardPE: 5 + h(x + "2") % 40, epsGrowthTTMYoy: (h(x + "3") % 50) - 10, revenueGrowthTTMYoy: (h(x + "4") % 40) - 5, evEbitdaTTM: 4 + h(x + "5") % 30, pfcfShareTTM: 8 + h(x + "6") % 70, pbQuarterly: 1 + h(x + "7") % 15, "totalDebt/totalEquityQuarterly": (h(x + "8") % 25) / 10, roiTTM: h(x + "9") % 30, roeTTM: h(x + "0") % 25, netProfitMarginTTM: h(x + "a") % 35 } }]));
+  await pg.evaluate(F => { const S = __t.S, now = Date.now(); for (const [x, f] of Object.entries(F)) { S.metric[x] = { m: f.m, at: now }; S.profile[x] = { name: x, cap: f.cap, ex: "", at: now }; S.quotes[x] = { c: f.px, pc: f.px, at: now }; S.bg.rec[x] = { at: now, r: [] }; } }, F);
+  await pg.click("#bargainBtn"); await pg.waitForTimeout(800);
+  const rows = async () => pg.$$eval(".bg-r", els => els.map(e => ({ x: e.dataset.bgx, sc: +e.querySelector(".bg-sc b").textContent, dots: [...e.querySelectorAll(".bg-dots i")].map(i => i.className) })));
+  for (const [k, by] of [["sp", "cap"], ["ndx", "cap"], ["dow", "px"]]) {
+    await pg.click(`[data-bgidx="${k}"]`); await pg.waitForTimeout(300);
+    const R = await rows(), poolK = await pg.evaluate(k => __t.BG_POOL[k], k), want = [...poolK].sort((a, b) => F[b][by] - F[a][by]).slice(0, 25);
+    ok(R.map(r => r.x).join() === want.join(), `${k}: top 25 by ${by}`);
+    ok(R.every(r => { const known = r.dots.filter(d => d !== "dn"), raw = known.reduce((a, d) => a + +d.slice(1), 0); return r.sc === Math.round(raw / known.length * 10); }), `${k}: every score equals its dots`);
+    if (k === "sp" && SHOTS) await pg.screenshot({ path: SHOTS + "/bargain-sp.png" }); }
+  await pg.click('[data-bgidx="all"]'); await pg.waitForTimeout(300);
+  const A = await rows(); ok(A.every((r, i) => !i || A[i - 1].sc >= r.sc) && new Set(A.map(r => r.x)).size === A.length, "Ranking: highest first, each stock once");
+  const bank = A.find(r => r.x === "JPM"); ok(!bank || bank.dots.filter(d => d === "dn").length === 3, "bank has 3 metrics skipped");
+  await pg.click(`.bg-r[data-bgx="${A[0].x}"]`); await pg.waitForTimeout(300);
+  ok((await pg.$$(".bg-det > div")).length === 10, "tapping a stock shows all 10 metrics");
+  if (SHOTS) await pg.screenshot({ path: SHOTS + "/bargain-detail.png" });
+  await pg.click(`[data-bgopen="${A[0].x}"]`); await pg.waitForTimeout(600); ok((await pg.evaluate(() => __t.S.open)) === A[0].x, "Open chart button works");
+  const over = await pg.evaluate(() => document.getElementById("sheet").scrollWidth - document.getElementById("sheet").clientWidth); ok(over <= 0, "scorecard fits the phone width");
+  ok(!errs.length, "no errors in scorecard: " + errs.join("; ")); await pg.close(); }
 
 // a fresh scan asks for price history right away, watchlist and big names first, and shows progress
 { TD_ON = true; const { pg, errs } = await page(390); await pg.click("#coilBtn"); await pg.waitForTimeout(4000);

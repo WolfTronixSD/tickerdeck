@@ -8,8 +8,9 @@ const src = [
   grab(/^const mean=.*$/m), grab(/^const sma=.*$/m),
   grab(/^function rsi\(a,n=14\)\{[\s\S]*?return l===0\?100:100-100\/\(1\+g\/l\); \}$/m),
   grab(/\/\* coil-math:start[\s\S]*?\/\* coil-math:end \*\//),
+  grab(/\/\* bargain-math:start[\s\S]*?\/\* bargain-math:end \*\//),
 ].join("\n");
-const C = new Function(src + "\nreturn {mean,sma,rsi,pegCalc,coilStats,coilPick,coilScore,COIL_FILTERS,COIL_SORTS};")();
+const C = new Function(src + "\nreturn {mean,sma,rsi,pegCalc,coilStats,coilPick,coilScore,COIL_FILTERS,COIL_SORTS,bgValues,bgScore,bgRedFlag,bgTop,BG_RATINGS};")();
 
 let fails = 0, passes = 0;
 const ok = (cond, msg) => { if (cond) passes++; else { fails++; console.log("FAIL", msg); } };
@@ -104,6 +105,31 @@ ok(C.coilScore(mkS({ b200: -60 })).parts.discount < C.coilScore(mkS({ b200: -30 
 ok(C.coilScore(mkS({ b200: -200 })).parts.discount === 8, "discount never drops below 40%");
 ok(C.coilScore(mkS({ p: 80, R: 25 })).parts.timing === 9 && C.coilScore(mkS({ p: 80, R: 33 })).parts.timing === 6, "timing for oversold");
 ok(C.coilPick([{ ...mk("A", -10, -5, 2, 2, 40, 5), p: 1, s10: 2, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]] }, { ...mk("B", -25, -5, .5, 2, 40, 5), p: 3, s10: 2, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]] }], "coil", "all").map(o => o.x).join() === "B,A", "sort by Coil Score");
+
+// 9. Bargain Scorecard
+const cheap = { peTTM: 12, forwardPE: 11, epsGrowthTTMYoy: 20, revenueGrowthTTMYoy: 12, evEbitdaTTM: 8, pfcfShareTTM: 15, pbQuarterly: 2, "totalDebt/totalEquityQuarterly": .3, roiTTM: 20, netProfitMarginTTM: 25 };
+let g = C.bgScore(cheap, 100, "XYZ", null);
+ok(g.score === 20 && g.raw === 20 && g.known === 10 && g.rating[2] === "Strong bargain", "all-strong stock scores 20/20, Strong bargain");
+near(g.v.fcfY, 100 / 15, 1e-9, "FCF yield from price/FCF"); near(g.v.peg, .6, 1e-9, "PEG"); near(g.v.growth, 16, 1e-9, "growth averages sales and EPS");
+const pricey = { peTTM: 60, forwardPE: 45, epsGrowthTTMYoy: -5, revenueGrowthTTMYoy: -2, evEbitdaTTM: 40, pfcfShareTTM: 80, pbQuarterly: 20, "totalDebt/totalEquityQuarterly": 3, roiTTM: 4, netProfitMarginTTM: 3 };
+g = C.bgScore(pricey, 100, "XYZ", null); ok(g.score === 0 && g.rating[2] === "Avoid for now", "all-weak stock scores 0, Avoid");
+const mid = { peTTM: 20, forwardPE: 20, epsGrowthTTMYoy: 15, revenueGrowthTTMYoy: 5, evEbitdaTTM: 15, pfcfShareTTM: 30, pbQuarterly: 5, "totalDebt/totalEquityQuarterly": 1, roiTTM: 10, netProfitMarginTTM: 10 };
+g = C.bgScore(mid, 100, "XYZ", null); ok(g.score === 10 && g.pts.every(x => x.p === 1) && g.rating[2] === "Pricey or mixed", "all-neutral scores 10 (Pricey or mixed)");
+ok(C.bgScore({ ...mid, peTTM: 14.99 }, 100, "XYZ", null).pts[0].p === 2 && C.bgScore({ ...mid, peTTM: 30 }, 100, "XYZ", null).pts[0].p === 1 && C.bgScore({ ...mid, peTTM: 30.1 }, 100, "XYZ", null).pts[0].p === 0, "P/E cut-offs 15 and 30");
+ok(C.bgScore({ ...mid, peTTM: -8 }, 100, "XYZ", null).pts[0].p === 0, "negative P/E (losses) is weak");
+g = C.bgScore({ peTTM: 12, epsGrowthTTMYoy: 20 }, 100, "XYZ", null);
+ok(g.known === 3 && g.score === Math.round(g.raw / 3 * 10), "missing metrics: score scaled from the ones with data");
+g = C.bgScore({ ...cheap, roeTTM: 15, pbQuarterly: 1.2 }, 100, "JPM", null);
+ok(g.bank && g.known === 7 && ["ev", "fcfY", "de"].every(k => g.pts.find(x => x.k === k).p === null) && g.pts.find(x => x.k === "roic").p === 2, "banks skip EV/EBITDA, FCF yield, D/E and use ROE");
+ok(C.bgScore({ ...cheap, pbQuarterly: 2 }, 100, "JPM", null).pts.find(x => x.k === "pb").p === 1, "bank P/B 2 is neutral");
+ok(C.bgScore({}, 100, "XYZ", null).score === null, "no data, no score");
+const rec = (b0, b3) => [{ buy: b0, hold: 10 - b0 }, { buy: 5, hold: 5 }, { buy: 5, hold: 5 }, { buy: b3, hold: 10 - b3 }];
+ok(typeof C.bgRedFlag(rec(5, 7)) === "string" && C.bgRedFlag(rec(6, 7)) === false && C.bgRedFlag(null) === null, "red flag when buy share falls 10+ points in 3 months");
+ok(C.bgScore(cheap, 100, "XYZ", rec(5, 7)).rating[2] === "Fair / watchlist", "red flag drops the rating one level");
+ok(C.bgScore(pricey, 100, "XYZ", rec(5, 7)).rating[2] === "Avoid for now", "red flag can't drop below Avoid");
+const caps = { A: 3, B: 9, C: 1, D: null }, px = { A: 500, B: 50, C: 900, D: 10 };
+ok(C.bgTop(["A", "B", "C", "D"], "sp", x => caps[x], x => px[x], 2).join() === "B,A", "S&P/Nasdaq top by market cap");
+ok(C.bgTop(["A", "B", "C", "D"], "dow", x => caps[x], x => px[x], 2).join() === "C,A", "Dow top by share price");
 
 console.log(`unit tests: ${passes} passed, ${fails} failed`);
 
