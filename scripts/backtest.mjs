@@ -19,7 +19,8 @@ const A = new Function([
 const POOL = [...new Set(Object.values(A.BG_POOL).flat())];
 const SYMS = process.env.SYMS ? process.env.SYMS.split(",") : [...new Set(POOL.concat(A.COIL_EXTRA))];
 const YEARS = [1, 2, 3], DAY = 864e5, NOW = Date.now();
-const SEC_UA = { "User-Agent": "GoldRabbit backtest (github.com/WolfTronixSD/tickerdeck) 41898282+github-actions[bot]@users.noreply.github.com", "Accept-Encoding": "gzip, deflate" };
+// www.sec.gov answers 403 to GitHub's runners; data.sec.gov and efts.sec.gov work with this agent
+const SEC_UA = { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) GoldRabbit backtest (github.com/WolfTronixSD/tickerdeck)" };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function get(url, headers, tries = 3) {
   for (let i = 0; ; i++) {
@@ -113,12 +114,16 @@ const r1 = v => v == null ? null : Math.round(v * 10) / 10, r2 = v => v == null 
 const pct = v => v == null ? "   —  " : (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
 
 // ---------- run ----------
-const cikMap = await get("https://www.sec.gov/files/company_tickers.json", SEC_UA);
-const CIK = new Map(Object.values(cikMap).map(o => [o.ticker.toUpperCase(), String(o.cik_str).padStart(10, "0")]));
+// ticker to SEC company number, from EDGAR's own company search
+async function cikOf(s) {
+  const t = s.replace(".", "-"), j = await get(`https://efts.sec.gov/LATEST/search-index?keysTyped=${encodeURIComponent(t)}`, SEC_UA);
+  const hit = (j.hits?.hits || []).find(h => String(h._source?.tickers || "").split(/,\s*/).map(x => x.toUpperCase()).includes(t));
+  return hit ? String(hit._id).padStart(10, "0") : null;
+}
 const spy = await yahoo("SPY"), spyNow = spy.rows.at(-1);
 const data = {}, skipped = [];
 for (const s of SYMS) {
-  const cik = CIK.get(s.replace(".", "-")) || CIK.get(s);
+  let cik = null; try { cik = await cikOf(s); } catch (e) {}
   if (!cik) { skipped.push(`${s} (no SEC filer)`); continue; }
   try {
     const [cf, P] = [await get(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`, SEC_UA), await yahoo(s)];
