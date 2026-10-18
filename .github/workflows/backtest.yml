@@ -21,9 +21,11 @@ jobs:
         with: { node-version: 22 }
       - name: Probe SEC access
         run: |
-          for ua in "GoldRabbit backtest admin@github.com" "GoldRabbit-backtest 41898282+github-actions@users.noreply.github.com" "Mozilla/5.0 (X11; Linux x86_64) GoldRabbit"; do
-            echo "$ua => $(curl -s -o /dev/null -w '%{http_code}' -A "$ua" https://www.sec.gov/files/company_tickers.json) / $(curl -s -o /dev/null -w '%{http_code}' -A "$ua" https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json)"
+          B="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+          for u in https://www.sec.gov/files/company_tickers.json https://www.sec.gov/include/ticker.txt "https://efts.sec.gov/LATEST/search-index?keysTyped=KO" https://data.sec.gov/submissions/CIK0000021344.json; do
+            echo "$u => $(curl -s -o /dev/null -w '%{http_code}' -A "$B" -H 'Accept: */*' "$u") / $(curl -s -o /dev/null -w '%{http_code}' -A 'Mozilla/5.0 (X11; Linux x86_64) GoldRabbit' "$u")"
           done
+          curl -s -A "Mozilla/5.0 (X11; Linux x86_64) GoldRabbit" "https://efts.sec.gov/LATEST/search-index?keysTyped=KO" | head -c 400; echo
       - run: node scripts/backtest.mjs
         timeout-minutes: 20
         env:
