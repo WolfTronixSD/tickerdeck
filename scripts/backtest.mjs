@@ -15,7 +15,7 @@ const A = new Function([
   grab(/^const BG_POOL=\{[\s\S]*?\]\};$/m), grab(/^const COIL_EXTRA=\[.*\];$/m),
   grab(/\/\* coil-math:start[\s\S]*?\/\* coil-math:end \*\//),
   grab(/\/\* bargain-math:start[\s\S]*?\/\* bargain-math:end \*\//),
-].join("\n") + "\nreturn {BG_POOL,COIL_EXTRA,coilStats,coilScore,bgScore,bgTop,BG_RATINGS};")();
+].join("\n") + "\nreturn {BG_POOL,COIL_EXTRA,coilStats,coilScore,bgScore,bgTop,BG_RATINGS,BG_METRICS_KEYS:BG_METRICS.map(m=>m[0])};")();
 
 const POOL = [...new Set(Object.values(A.BG_POOL).flat())];
 const SYMS = process.env.SYMS ? process.env.SYMS.split(",") : [...new Set(POOL.concat(A.COIL_EXTRA))];
@@ -148,7 +148,7 @@ for (const y of YEARS) {
     const closes = P.rows.slice(0, i + 1).map(r => r.c), st = A.coilStats(closes, M.m);
     const cs = st ? A.coilScore(st) : null;
     rows.push({ x: s, ret: r1(ret), ex: r1(ret - spyRet), score: b.score, known: b.known, rating: b.rating ? A.BG_RATINGS.indexOf(b.rating) : null,
-      coiled: st ? st.coiled && !st.jump : null, coil: cs ? cs.score : null, b200: st ? r1(st.b200) : null, cap: Math.round(M.cap / 1e9), fy: F.fyEnd,
+      coiled: st ? st.coiled && !st.jump : null, coil: cs ? cs.score : null, parts: cs ? Object.fromEntries(Object.entries(cs.parts).map(([k, v]) => [k, r1(v)])) : null, b200: st ? r1(st.b200) : null, cap: Math.round(M.cap / 1e9), fy: F.fyEnd,
       pe: r1(M.m.peTTM), inPool: POOL.includes(s), pts: b.pts.map(p => p.p) });
   }
   const bg = rows.filter(r => r.inPool && r.score != null).sort((a, b) => b.score - a.score || b.ex - a.ex);
@@ -162,10 +162,13 @@ for (const y of YEARS) {
     bargain: { n: shown.length,
       ratings: A.BG_RATINGS.map((r, i) => ({ i, label: r[2], ...group(shown.filter(o => o.rating === i), o => o.ex) })),
       top: { n: q, ...group(shown.slice(0, q), o => o.ex) }, bottom: { n: q, ...group(shown.slice(-q), o => o.ex) },
-      rho: r2(spearman(shown.map(o => o.score), shown.map(o => o.ex))) },
+      rho: r2(spearman(shown.map(o => o.score), shown.map(o => o.ex))),
+      // each metric on its own: does a higher 0/1/2 on it go with a better return?
+      metrics: Object.fromEntries(A.BG_METRICS_KEYS.map((k, j) => { const w = shown.filter(o => o.pts[j] != null); return [k, r2(spearman(w.map(o => o.pts[j]), w.map(o => o.ex)))]; })) },
     coil: { n: coilU.length, coiled: group(coiled, o => o.ex), not: group(coilU.filter(r => !r.coiled), o => o.ex),
       best: group(coiled.slice(0, half), o => o.ex), rest: group(coiled.slice(half), o => o.ex),
-      rho: r2(spearman(coiled.map(o => o.coil), coiled.map(o => o.ex))) },
+      rho: r2(spearman(coiled.map(o => o.coil), coiled.map(o => o.ex))),
+      parts: Object.fromEntries(["quality", "value", "discount", "timing"].map(k => [k, r2(spearman(coiled.map(o => o.parts[k]), coiled.map(o => o.ex)))])) },
     rows: rows.map(({ pts, inPool, ...r }) => ({ ...r, top25: top25.has(r.x) })),
   });
   // printed summary (read in the Actions log)
@@ -177,6 +180,8 @@ for (const y of YEARS) {
   console.log(`  top ${q} by score: avg ${pct(H.bargain.top.avg)}   bottom ${q}: avg ${pct(H.bargain.bottom.avg)}`);
   console.log(`  top 10: ${shown.slice(0, 10).map(o => `${o.x} ${o.score} (${pct(o.ex).trim()})`).join(", ")}`);
   console.log(`Spring Coil (${coilU.length} stocks): coiled n=${H.coil.coiled.n} avg vs S&P ${pct(H.coil.coiled.avg)} | not coiled n=${H.coil.not.n} avg ${pct(H.coil.not.avg)}`);
+  console.log(`  each metric vs return (Spearman): ${Object.entries(H.bargain.metrics).map(([k, v]) => `${k} ${v}`).join(", ")}`);
+  console.log(`  Coil Score parts vs return among coiled (Spearman): ${Object.entries(H.coil.parts).map(([k, v]) => `${k} ${v}`).join(", ")}`);
   console.log(`  coiled, higher Coil Score half: ${pct(H.coil.best.avg)}  lower half: ${pct(H.coil.rest.avg)}  Spearman ${H.coil.rho}`);
   console.log(`  coiled: ${coiled.map(o => `${o.x} ${o.coil} (${pct(o.ex).trim()})`).join(", ")}`);
 }
