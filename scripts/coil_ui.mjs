@@ -31,10 +31,8 @@ function expect(s) { const c = series(s).map(x => x[1]).concat([live(s)]); const
   const m = metric(s), peg = m.peTTM > 0 && m.epsGrowthTTMYoy > 0 ? m.peTTM / m.epsGrowthTTMYoy : NaN;
   const R = rsi(c), s10 = sma(c, 10), b200 = (p / s200 - 1) * 100, de = m["totalDebt/totalEquityQuarterly"];
   // Coil Score, written out separately from the app
-  const q = [m.epsGrowthTTMYoy == null ? null : m.epsGrowthTTMYoy > 0, m.revenueGrowthTTMYoy == null ? null : m.revenueGrowthTTMYoy > 0, de == null || de < 0 ? null : de < 1].filter(v => v != null);
-  const d = -b200, disc = d <= 0 ? 0 : d <= 20 ? d / 20 : d <= 35 ? 1 : Math.max(.4, 1 - (d - 35) / 50), val = isNaN(peg) ? 0 : Math.max(0, Math.min(1, (2 - peg) / 1.5));
-  const time = p > s10 ? 1 : R < 30 ? .6 : R < 35 ? .4 : R < 50 ? .2 : 0;
-  const coil = Math.round(45 * (q.length ? q.filter(Boolean).length / q.length : 0) + 20 * val + 20 * disc + 15 * time);
+  const b50 = (p / s50 - 1) * 100, clamp = v => Math.min(1, Math.max(0, v));
+  const coil = Math.round(65 * clamp(-b50 / 15) + 35 * clamp(-b200 / 40));
   return { p, s50, s200, b50: (p / s50 - 1) * 100, b200, R, coiled: p < s50 && p < s200, jump, peg, coil }; }
 
 let fails = 0, passes = 0; const ok = (c, m) => { if (c) passes++; else { fails++; console.log("FAIL", m); } };

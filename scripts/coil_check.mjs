@@ -92,19 +92,15 @@ ok(C.coilPick(rows, "200", "peg").map(o => o.x).join() === "C", "filter PEG unde
 ok(C.coilPick(rows, "200", "rsi").map(o => o.x).join() === "B,C", "filter oversold");
 ok(C.coilPick(rows, "200", "bounce").map(o => o.x).join() === "C", "filter bouncing");
 
-// 8. Coil Score
-const mkS = (o) => ({ p: 80, s10: 85, R: 40, b200: -25, peg: .5, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]], ...o });
-ok(C.coilScore(mkS({ p: 90 })).score === 100, "every part maxed scores 100");
-ok(C.coilScore(mkS({})).score === 45 + 20 + 20 + 3, "oversold-free, no bounce: timing 0.2 of 15 (3)");
-ok(C.coilScore(mkS({ checks: [["eps", "", false], ["rev", "", true], ["debt", "", null]] })).parts.quality === 22.5, "quality averages only known checks");
-near(C.coilScore(mkS({ peg: 1.25 })).parts.value, 10, 1e-9, "PEG 1.25 earns half the value points");
-ok(C.coilScore(mkS({ peg: NaN })).parts.value === 0 && C.coilScore(mkS({ peg: 3 })).parts.value === 0, "PEG n/a or 3 earns no value points");
-ok(C.coilScore(mkS({ peg: null })).partial, "missing fundamentals marked partial");
-near(C.coilScore(mkS({ b200: -10 })).parts.discount, 10, 1e-9, "10% under the 200-day earns half the discount points");
-ok(C.coilScore(mkS({ b200: -60 })).parts.discount < C.coilScore(mkS({ b200: -30 })).parts.discount, "a 60% plunge scores below a 30% dip");
-ok(C.coilScore(mkS({ b200: -200 })).parts.discount === 8, "discount never drops below 40%");
-ok(C.coilScore(mkS({ p: 80, R: 25 })).parts.timing === 9 && C.coilScore(mkS({ p: 80, R: 33 })).parts.timing === 6, "timing for oversold");
-ok(C.coilPick([{ ...mk("A", -10, -5, 2, 2, 40, 5), p: 1, s10: 2, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]] }, { ...mk("B", -25, -5, .5, 2, 40, 5), p: 3, s10: 2, checks: [["eps", "", true], ["rev", "", true], ["debt", "", true]] }], "coil", "all").map(o => o.x).join() === "B,A", "sort by Coil Score");
+// 8. Coil Score: 65 for the drop under the 50-day (full at 15%), 35 for the discount under the 200-day (full at 40%)
+const mkS = (o) => ({ b50: -15, b200: -40, ...o });
+ok(C.coilScore(mkS({})).score === 100, "15% under the 50-day and 40% under the 200-day scores 100");
+ok(C.coilScore(mkS({ b50: -30, b200: -80 })).score === 100, "deeper never goes past 100");
+near(C.coilScore(mkS({ b50: -7.5 })).parts.dip, 32.5, 1e-9, "7.5% under the 50-day earns half the drop points");
+near(C.coilScore(mkS({ b200: -10 })).parts.discount, 8.75, 1e-9, "10% under the 200-day earns a quarter of the discount points");
+ok(C.coilScore(mkS({ b50: 2, b200: 0 })).score === 0, "above the 50-day and at the 200-day scores 0");
+ok(C.coilScore({ b50: -3, b200: -12 }).score === Math.round(65 * .2 + 35 * .3), "mixed example");
+ok(C.coilPick([mk("A", -10, -5, 2, 2, 40, 5), mk("B", -25, -5, .5, 2, 40, 5)], "coil", "all").map(o => o.x).join() === "B,A", "sort by Coil Score");
 
 // 9. Bargain Scorecard
 const cheap = { peTTM: 12, forwardPE: 11, epsGrowthTTMYoy: 20, revenueGrowthTTMYoy: 12, evEbitdaTTM: 8, pfcfShareTTM: 15, pbQuarterly: 2, "totalDebt/totalEquityQuarterly": .3, roiTTM: 20, netProfitMarginTTM: 25 };

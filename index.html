@@ -131,6 +131,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .coil-sc{min-width:52px;height:48px;padding:0 8px;border-radius:12px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);line-height:1}.coil-sc b{font-size:21px;font-weight:800}.coil-sc small{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.8;margin-top:3px}.coil-sc.hi{color:var(--gain);background:var(--gain-bg)}.coil-sc.mid{color:var(--accent);background:var(--accent-bg)}.coil-sc.lo{color:var(--loss);background:var(--loss-bg)}
 .cr{position:relative;height:16px;margin:8px 6px 0}.cr-line{position:absolute;left:0;right:0;top:7px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--loss),rgba(255,255,255,.18) 50%,var(--gain))}.cr-m{position:absolute;top:1px;width:3px;height:14px;border-radius:2px;margin-left:-1.5px}.cr-m.m200{background:var(--blue)}.cr-m.m50{background:var(--accent)}.cr-p{position:absolute;top:2px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--ink)}.cr-l{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);margin-top:1px}
 .coil-pick{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);min-height:64px;cursor:pointer}.coil-pick:first-of-type{border-top:0}.coil-medal{font-size:26px}.coil-parts{display:flex;gap:3px;margin:6px 0 3px}.coil-parts i{height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;display:block}.coil-parts b{display:block;height:100%}
+.p-dip,.coil-parts .p-dip b{background:var(--blue)}.coil-parts i.p-dip{background:rgba(255,255,255,.08)}
 .p-quality,.coil-parts .p-quality b{background:var(--gain)}.p-value,.coil-parts .p-value b{background:var(--blue)}.p-discount,.coil-parts .p-discount b{background:var(--accent)}.p-timing,.coil-parts .p-timing b{background:#C38BFF}
 .coil-parts i.p-quality,.coil-parts i.p-value,.coil-parts i.p-discount,.coil-parts i.p-timing{background:rgba(255,255,255,.08)}.coil-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 3px 0 8px;vertical-align:-1px}.coil-legend i:first-child{margin-left:0}
 .coil-map{width:100%;height:auto;display:block}.coil-map text{fill:var(--muted);font:600 10.5px var(--display)}.cm-grid{stroke:var(--line);stroke-width:1}.cm-sweet{fill:var(--gain-bg)}.cm-dot{cursor:pointer}.cm-dot.hi circle:first-child{fill:var(--gain)}.cm-dot.mid circle:first-child{fill:var(--accent)}.cm-dot.lo circle:first-child{fill:var(--loss)}.cm-dot circle:first-child{stroke:var(--ink);stroke-width:1.5}.coil-map .cm-dot text{fill:var(--text);font-size:11px;font-weight:700}
@@ -1771,8 +1772,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.15";
+const APP_VERSION="3.16";
 const CHANGELOG=[
+  {v:"3.16",date:"2026-10-18",at:"2026-10-18T23:49:24Z",title:"Coil Score reworked from the backtest",items:["The backtest showed the old Coil Score picked the wrong coiled stocks: higher scores did worse. Earnings, sales, debt, PEG and bounce timing did not predict the next 12 months","New Coil Score: 65 points for the drop under the 50-day average, 35 for the discount under the 200-day. Over 18 dates in the last 3 years, the top half beat the bottom half on 16 of 18 (the old score: 8 of 18)","Coil map now plots those two numbers, with the sweet spot top right","Fundamentals stay on every row as information"]},
   {v:"3.15",date:"2026-10-18",at:"2026-10-18T23:27:56Z",title:"Backtest: did the scores work?",items:["New 📈 Did it work? panel in the Bargain Scorecard and Spring Coil: every stock scored the way it looked 1, 2 and 3 years ago (only the SEC filings and prices public on that date), then compared with its real return since against the S&P 500","Shows returns by rating, top vs bottom quarter, coiled vs not coiled, and a rank link from −1 to 1 that says whether higher scores really did better","Refreshed automatically every Monday by GitHub"]},
   {v:"3.14",date:"2026-10-18",at:"2026-10-18T22:33:04Z",title:"Bargain Scorecard",items:["New 📋 Bargain Scorecard on Home: the top 25 stocks of the S&P 500, Nasdaq 100 and Dow (by live market cap; by price for the price-weighted Dow), plus a combined ranking","Each stock gets 0, 1 or 2 points on P/E, forward P/E, PEG, EV/EBITDA, free cash flow yield, P/B, debt/equity, ROIC, growth and margins, for a score out of 20 and a rating from 🟢 Strong bargain to 🔴 Avoid for now","Ten colored dots show each metric at a glance; tap a stock for the actual numbers","Value-trap check: the rating drops a level when analysts have been turning negative over the last 3 months","Banks are scored on P/B and ROE instead of EV/EBITDA, cash flow yield and debt"]},
   {v:"3.13",date:"2026-10-18",at:"2026-10-18T21:23:08Z",title:"Release times",items:["What's new now shows the time of each release (24-hour, your time zone) next to the date. Early versions from before release times were recorded show the date only"]},
@@ -2118,19 +2120,14 @@ function coilStats(c,m){
   const known=checks.filter(x=>x[2]!=null), good=known.filter(x=>x[2]).length;
   return {p,s10,s50,s200,R,hi,lo,off:(p/hi-1)*100,b50:(p/s50-1)*100,b200:(p/s200-1)*100,coiled:p<s50&&p<s200,jump,pe,epsG,revG,de,peg,checks,good,known:known.length};
 }
-// One 0-100 number from everything on the row, for picking among coiled stocks:
-//   45 business quality (earnings growing, sales growing, debt/equity under 1)
-//   20 value (PEG 0.5 or less scores full, 2 or more scores nothing)
-//   20 discount (best 20-35% under the 200-day; deeper than that looks more like a falling knife)
-//   15 timing (back above the 10-day average beats merely oversold)
-// partial: fundamentals not loaded yet, so only discount and timing count for now.
+// One 0-100 number for picking among coiled stocks, set by the backtest (scripts/backtest.mjs, 18 dates over 3 years):
+//   65 recent drop: how far under the 50-day average (15% or more scores full). The most reliable bounce signal.
+//   35 discount: how far under the 200-day average (40% or more scores full).
+// Earnings, sales, debt, PEG and bounce timing were tested too and did not predict the next 12 months, so they
+// stay on the row as information but are left out of the score.
 function coilScore(o){
-  const q=["eps","rev","debt"].map(k=>o.checks.find(x=>x[0]===k)[2]).filter(v=>v!=null);
-  const d=-o.b200, disc=d<=0?0:d<=20?d/20:d<=35?1:Math.max(.4,1-(d-35)/50);
-  const val=o.peg==null||isNaN(o.peg)?0:Math.max(0,Math.min(1,(2-o.peg)/1.5));
-  const time=o.p>o.s10?1:o.R!=null&&o.R<30?.6:o.R!=null&&o.R<35?.4:o.R!=null&&o.R<50?.2:0;
-  const parts={quality:45*(q.length?q.filter(Boolean).length/q.length:0),value:20*val,discount:20*disc,timing:15*time};
-  return {score:Math.round(parts.quality+parts.value+parts.discount+parts.timing),parts,partial:o.peg==null};
+  const cl=v=>Math.max(0,Math.min(1,v)), parts={dip:65*cl(-o.b50/15),discount:35*cl(-o.b200/40)};
+  return {score:Math.round(parts.dip+parts.discount),parts};
 }
 const COIL_FILTERS={all:o=>true,eps:o=>o.epsG!=null&&o.epsG>0,rsi:o=>o.R!=null&&o.R<35,bounce:o=>o.p>o.s10,peg:o=>o.peg!=null&&!isNaN(o.peg)&&o.peg<1.5};
 const COIL_SORTS={
@@ -2151,39 +2148,38 @@ function coilRows(){
 }
 const COIL_SORT_L=[["coil","Coil Score"],["200","Furthest below 200-day"],["50","Furthest below 50-day"],["score","Best setup"],["peg","Lowest PEG"],["rsi","Most oversold"]];
 const COIL_FILTER_L=[["all","All"],["eps","Earnings growing"],["peg","PEG under 1.5"],["rsi","Oversold"],["bounce","Bouncing"]];
-function coilBadge(o){ const c=coilScore(o); return `<span class="coil-sc ${c.score>=70?"hi":c.score>=50?"mid":"lo"}" title="Coil Score"><b>${c.score}${c.partial?"…":""}</b><small>Coil</small></span>`; }
+function coilBadge(o){ const c=coilScore(o); return `<span class="coil-sc ${c.score>=70?"hi":c.score>=50?"mid":"lo"}" title="Coil Score"><b>${c.score}</b><small>Coil</small></span>`; }
 // 1-year price range with the 200-day (blue), 50-day (amber) and today's price (dot)
 function coilRange(o){ const span=o.hi-o.lo||1, at=v=>Math.max(0,Math.min(100,(v-o.lo)/span*100)).toFixed(1);
   return `<div class="cr" aria-label="1-year range"><i class="cr-line"></i><i class="cr-m m200" style="left:${at(o.s200)}%"></i><i class="cr-m m50" style="left:${at(o.s50)}%"></i><i class="cr-p" style="left:${at(o.p)}%"></i></div><div class="cr-l num"><span>${fmt$(o.lo)}</span><span>1-yr range</span><span>${fmt$(o.hi)}</span></div>`; }
-const COIL_PART_L={quality:"solid business",value:"cheap for its growth",discount:"deep discount",timing:"bounce starting"};
+const COIL_PART_L={dip:"sharp drop vs 50-day",discount:"deep discount vs 200-day"};
 function coilTopHTML(list){
   const top=list.map(o=>({o,c:coilScore(o)})).sort((a,b)=>b.c.score-a.c.score||a.o.b200-b.o.b200).slice(0,3); if(!top.length) return "";
-  const max={quality:45,value:20,discount:20,timing:15};
-  return `<div class="card coil-top"><h4>🏆 Top picks by Coil Score</h4>${top.map(({o,c},i)=>{ const why=Object.keys(c.parts).filter(k=>c.parts[k]/max[k]>=.6).map(k=>k==="timing"&&o.p<=o.s10?"oversold":COIL_PART_L[k]);
-    return `<div class="coil-pick" data-sym="${esc(o.x)}" role="button" tabindex="0"><span class="coil-medal">${["🥇","🥈","🥉"][i]}</span><div style="flex:1;min-width:0"><b>${esc(o.x)}</b> <span class="num">${fmt$(o.p)}</span> <span class="num tdown">${fmtP(o.b200)} vs 200-day</span><div class="coil-parts">${Object.keys(max).map(k=>`<i class="p-${k}" style="flex:${max[k]}"><b style="width:${(c.parts[k]/max[k]*100).toFixed(0)}%"></b></i>`).join("")}</div><span class="coil-f">${why.length?esc(why.join(" · ")):"no standout strength"}${c.partial?" · fundamentals still loading":""}</span></div>${coilBadge(o)}</div>`; }).join("")}
-    <p class="hint coil-legend"><i class="p-quality"></i>business <i class="p-value"></i>value <i class="p-discount"></i>discount <i class="p-timing"></i>timing</p></div>`;
+  const max={dip:65,discount:35};
+  return `<div class="card coil-top"><h4>🏆 Top picks by Coil Score</h4>${top.map(({o,c},i)=>{ const why=Object.keys(c.parts).filter(k=>c.parts[k]/max[k]>=.6).map(k=>COIL_PART_L[k]);
+    return `<div class="coil-pick" data-sym="${esc(o.x)}" role="button" tabindex="0"><span class="coil-medal">${["🥇","🥈","🥉"][i]}</span><div style="flex:1;min-width:0"><b>${esc(o.x)}</b> <span class="num">${fmt$(o.p)}</span> <span class="num tdown">${o.b50.toFixed(0)}% vs 50-day · ${o.b200.toFixed(0)}% vs 200-day</span><div class="coil-parts">${Object.keys(max).map(k=>`<i class="p-${k}" style="flex:${max[k]}"><b style="width:${(c.parts[k]/max[k]*100).toFixed(0)}%"></b></i>`).join("")}</div><span class="coil-f">${why.length?esc(why.join(" · ")):"no standout strength"}</span></div>${coilBadge(o)}</div>`; }).join("")}
+    <p class="hint coil-legend"><i class="p-dip"></i>drop vs 50-day <i class="p-discount"></i>discount vs 200-day</p></div>`;
 }
-// discount (x) vs PEG (y); the lower right is the sweet spot: far below the 200-day and cheap for its growth
+// the two Coil Score inputs: under the 200-day (x) and under the 50-day (y); the upper right is the sweet spot
 function coilMapHTML(list){
-  const pts=list.filter(o=>o.peg!=null); if(pts.length<2) return "";
-  const W=340,H=230,L=34,R=10,T=12,B=34, maxD=Math.max(20,Math.ceil(Math.max(...pts.map(o=>-o.b200))/10)*10), yMax=3;
-  const X=d=>L+d/maxD*(W-L-R), Y=v=>T+(1-Math.min(v,yMax)/yMax)*(H-T-B-18)+18;
-  const yNA=T+6, pos=o=>[X(-o.b200),isNaN(o.peg)?yNA:Y(o.peg)];
+  const pts=list; if(pts.length<2) return "";
+  const W=340,H=230,L=46,R=10,T=12,B=34, maxD=Math.max(20,Math.ceil(Math.max(...pts.map(o=>-o.b200))/10)*10), yMax=Math.max(15,Math.ceil(Math.max(...pts.map(o=>-o.b50))/5)*5);
+  const X=d=>L+d/maxD*(W-L-R), Y=v=>T+(1-Math.max(0,Math.min(v,yMax))/yMax)*(H-T-B);
+  const pos=o=>[X(-o.b200),Y(-o.b50)];
   // label the best six, skipping any label that would land on another one
   const boxes=[], label={};
   pts.map(o=>({o,c:coilScore(o).score})).sort((a,b)=>b.c-a.c).slice(0,6).forEach(({o})=>{ const [cx,cy]=pos(o), w=o.x.length*8.5+4;
     for(const lx of [cx+9,cx-9-w]){ const b=[lx,cy-9,lx+w,cy+4]; if(lx<L||lx+w>W-2) continue; if(boxes.some(q=>b[0]<q[2]&&b[2]>q[0]&&b[1]<q[3]&&b[3]>q[1])||pts.some(p2=>p2!==o&&(([px,py])=>px>b[0]-3&&px<b[2]+3&&py>b[1]-2&&py<b[3]+2)(pos(p2)))) continue; boxes.push(b); label[o.x]=lx; break; } });
-  const dots=pts.slice().sort((a,b)=>coilScore(a).score-coilScore(b).score).map(o=>{ const sc=coilScore(o).score, na=isNaN(o.peg), [cx,cy]=pos(o), big=o.x in label;
+  const dots=pts.slice().sort((a,b)=>coilScore(a).score-coilScore(b).score).map(o=>{ const sc=coilScore(o).score, na=false, [cx,cy]=pos(o), big=o.x in label;
     return `<g data-sym="${esc(o.x)}" class="cm-dot ${sc>=70?"hi":sc>=50?"mid":"lo"}" role="button" aria-label="${esc(o.x)} Coil Score ${sc}"><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${big?7:na?3.5:5}"/>${big?`<text x="${label[o.x].toFixed(1)}" y="${(cy+4).toFixed(1)}">${esc(o.x)}</text>`:""}<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="14" fill="transparent"/></g>`; }).join("");
-  const gx=[0,.25,.5,.75,1].map(f=>Math.round(maxD*f)), gy=[0,1,2,3];
-  return `<div class="card"><h4>🗺️ Coil map</h4><p class="hint" style="margin-top:-4px">Right = further below the 200-day. Low = cheaper for its growth. The green corner is the sweet spot. Dot color is the Coil Score (green 70+, amber 50+, red below). Tap a dot to open it.</p>
-    <svg class="coil-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Discount versus PEG for coiled stocks">
-      <rect x="${X(10)}" y="${Y(1)}" width="${X(maxD)-X(10)}" height="${Y(0)-Y(1)}" class="cm-sweet"/>
-      ${gx.map(d=>`<line x1="${X(d)}" x2="${X(d)}" y1="${T+18}" y2="${H-B}" class="cm-grid"/><text x="${X(d)}" y="${H-B+14}" text-anchor="${d===maxD?"end":d?"middle":"start"}">${d?"-"+d+"%":"0"}</text>`).join("")}
-      ${gy.map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" class="cm-grid"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v}${v===yMax?"+":""}</text>`).join("")}
-      <text x="${L-6}" y="${yNA+4}" text-anchor="end">n/a</text>
+  const gx=[0,.25,.5,.75,1].map(f=>Math.round(maxD*f)), gy=Array.from({length:yMax/(yMax<=20?5:10)+1},(_,i)=>i*(yMax<=20?5:10)).filter(v=>v<=yMax);
+  return `<div class="card"><h4>🗺️ Coil map</h4><p class="hint" style="margin-top:-4px">Right = further below the 200-day. Up = further below the 50-day (a sharper recent drop). The green corner is where the backtest found the best bounces. Dot color is the Coil Score (green 70+, amber 50+, red below). Tap a dot to open it.</p>
+    <svg class="coil-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Drop below the 50-day versus discount below the 200-day for coiled stocks">
+      <rect x="${X(20)}" y="${Y(yMax)}" width="${X(maxD)-X(20)}" height="${Y(10)-Y(yMax)}" class="cm-sweet"/>
+      ${gx.map(d=>`<line x1="${X(d)}" x2="${X(d)}" y1="${T}" y2="${H-B}" class="cm-grid"/><text x="${X(d)}" y="${H-B+14}" text-anchor="${d===maxD?"end":d?"middle":"start"}">${d?"-"+d+"%":"0"}</text>`).join("")}
+      ${gy.map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" class="cm-grid"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v?"-"+v+"%":"0"}</text>`).join("")}
       <text x="${(L+W-R)/2}" y="${H-4}" text-anchor="middle">below 200-day average →</text>
-      <text x="10" y="${(T+H-B)/2+18}" transform="rotate(-90 10 ${(T+H-B)/2+18})" text-anchor="middle">PEG</text>
+      <text x="10" y="${(T+H-B)/2+18}" transform="rotate(-90 10 ${(T+H-B)/2+18})" text-anchor="middle">below 50-day</text>
       ${dots}</svg></div>`;
 }
 function renderCoil(){
@@ -2201,7 +2197,7 @@ function renderCoil(){
   const chips=(L,cur,attr)=>`<div class="chipbar coil-chips">${L.map(([k,l])=>`<button data-${attr}="${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`;
   $("sheetIn").innerHTML=head+`<div class="card" style="gap:8px"><p class="hint">Stocks trading under both moving averages are wound down like a spring. Some bounce back hard, others keep falling, so check the trend and the news first. A starting point for research, not a buy signal on its own.</p>
     <details class="coil-help"${S.coilHelp?" open":""}><summary>What the numbers mean</summary>
-      <p class="hint"><b>Coil Score</b> (0 to 100) rolls everything into one number: 45 points for the business (earnings growing, sales growing, debt/equity under 1), 20 for value (PEG 0.5 or less gets all 20, 2 or more gets none), 20 for the discount (best when 20 to 35% under the 200-day; much deeper starts to look like a falling knife) and 15 for timing (a bounce above the 10-day average beats just being oversold). 70+ is green. A … means fundamentals are still loading.</p>
+      <p class="hint"><b>Coil Score</b> (0 to 100) is set by the backtest below: 65 points for how far the price has dropped under its 50-day average (15% or more gets all 65) and 35 for how far it sits under its 200-day average (40% or more gets all 35). Over the last 3 years, among coiled large caps, the sharpest recent drops bounced best. Earnings, sales, debt, PEG and bounce timing did not predict the next year, so they are shown on each row but left out of the score. 70+ is green.</p>
       <p class="hint"><b>The bar</b> under each stock is its 1-year price range: blue tick = 200-day average, amber tick = 50-day average, white dot = today.</p>
       <p class="hint"><b>Setup</b> counts how many of six checks pass: PEG under 1.5, earnings growing, sales growing, debt/equity under 1, RSI under 35 and price back above its 10-day average. Tap the badge to see which. Checks without data are left out.</p>
       <p class="hint"><b>PEG</b> is the P/E divided by yearly earnings growth. Under 1 (green) means cheap for its growth, 1 to 2 is fair, over 2 (red) is pricey. n/a means losses or shrinking earnings. A one-off jump in earnings can make PEG look cheaper than it is.</p>
