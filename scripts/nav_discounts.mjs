@@ -15,13 +15,17 @@ async function get() {
   for (let i = 0; i < 3; i++) {
     try {
       const res = await fetch(API, { headers: { "Accept": "application/json", "User-Agent": "GoldRabbit/1.0 (+https://wolftronixsd.github.io/tickerdeck/)" } });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return await res.json();
+      const body = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${body.slice(0, 160).replace(/\s+/g, " ")}`);
+      try { return JSON.parse(body); } catch { throw new Error(`Not JSON (${res.headers.get("content-type")}): ${body.slice(0, 160).replace(/\s+/g, " ")}`); }
     } catch (e) { last = e; await new Promise(r => setTimeout(r, 4000 * (i + 1))); }
   }
   throw last;
 }
 
+// surface failures as GitHub annotations so they can be read without the full log
+process.on("uncaughtException", e => { console.log(`::error title=nav-discounts::${String(e && e.message || e).replace(/[\r\n]+/g, " ")}`); process.exit(1); });
+process.on("unhandledRejection", e => { console.log(`::error title=nav-discounts::${String(e && e.message || e).replace(/[\r\n]+/g, " ")}`); process.exit(1); });
 const raw = await get();
 if (!Array.isArray(raw)) throw new Error("Unexpected response (not a list)");
 
