@@ -312,6 +312,13 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .confirm button{background:rgba(0,0,0,.25);padding:8px 12px;border-radius:10px;font-weight:700}
 
 .heat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.bubbles{position:relative;height:400px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.bub{position:absolute;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 -8px 18px rgba(0,0,0,.18);transition:left .55s cubic-bezier(.2,.8,.2,1),top .55s cubic-bezier(.2,.8,.2,1),width .55s cubic-bezier(.2,.8,.2,1),height .55s cubic-bezier(.2,.8,.2,1),background .5s;padding:0;overflow:hidden}
+.bub b{font-weight:800;letter-spacing:-.02em;line-height:1}
+.bub .num{font-weight:600;line-height:1.1}
+.bub:active{filter:brightness(1.15)}
+.bubbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;flex-wrap:wrap}
+.bubbar small{color:var(--muted);font-size:12px}
 .tile{border-radius:14px;padding:12px;min-height:88px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;border:1px solid rgba(255,255,255,.06);transition:background .5s}
 .tile b{font-size:15px;font-weight:800}
 .tile .num{font-size:15px;font-weight:600}
@@ -480,12 +487,24 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
       <div class="viewtoggle" role="group" aria-label="View">
         <button data-view="list" aria-pressed="true">List</button>
         <button data-view="heat" aria-pressed="false">Heat</button>
+        <button data-view="bubble" aria-pressed="false">Bubbles</button>
       </div>
     </div>
   </div>
   <div id="extWrap"></div>
   <div id="listWrap"><div class="list" id="list"></div></div>
   <div class="heat" id="heat" hidden></div>
+  <div id="bubWrap" hidden>
+    <div class="bubbles" id="bubbles" role="group" aria-label="Watchlist bubbles"></div>
+    <div class="bubbar">
+      <small id="bubNote"></small>
+      <div class="viewtoggle" id="bubSize" role="group" aria-label="Bubble size">
+        <button data-bsize="cap">Mkt cap</button>
+        <button data-bsize="move">Move</button>
+        <button data-bsize="hold">Holdings</button>
+      </div>
+    </div>
+  </div>
 
   <div class="section-h"><h2>Leaderboard</h2><small id="boardTf">1 day</small></div>
   <div class="board" id="board"></div>
@@ -1066,6 +1085,51 @@ function rowHTML(s){
   const r=ret(s,S.tf);
   return `<button class="row" data-sym="${esc(s)}" aria-label="${esc(s)} details"><span class="del" data-del="${esc(s)}" role="button" aria-label="Remove ${esc(s)}">−</span>${logo(s)}<div class="who"><b>${esc(s)}${bell}${earnChip(s)}</b><span>${esc(name)}${S.holdings[s]?" · "+money(S.holdings[s]+" sh"):""}</span></div>${spark(s)}<div class="px"><span class="num">${fmt$(p)}</span><span class="pill ${cls(r)}">${fmtP(r)}</span>${extLine(s)}</div></button>`;
 }
+function bubMode(){ const m=LS.get("bsize",null); if(m==="cap"||m==="move"||m==="hold") return m; return S.list.some(s=>S.holdings[s]>0&&price(s)!=null)?"hold":"cap"; }
+function packBubbles(items,W,H){
+  const cx=W/2, cy=H/2, pad=4, asp=W/H;
+  items.forEach((b,i)=>{ const a=i*2.399963, d=i?Math.sqrt(i)*b.r*.9:0; b.x=cx+Math.cos(a)*d*asp; b.y=cy+Math.sin(a)*d; });
+  for(let it=0;it<320;it++){
+    for(let i=0;i<items.length;i++){ const A=items[i];
+      for(let j=i+1;j<items.length;j++){ const B=items[j];
+        let dx=B.x-A.x, dy=B.y-A.y; const d=Math.hypot(dx,dy)||.01, min=A.r+B.r+pad;
+        if(d<min){ const push=(min-d)/2; dx/=d; dy/=d; A.x-=dx*push; A.y-=dy*push; B.x+=dx*push; B.y+=dy*push; } } }
+    const k=it<240?.02:.004;
+    items.forEach(b=>{ b.x+=(cx-b.x)*k; b.y+=(cy-b.y)*k*asp;
+      b.x=Math.max(b.r+pad,Math.min(W-b.r-pad,b.x)); b.y=Math.max(b.r+pad,Math.min(H-b.r-pad,b.y)); });
+  }
+}
+function renderBubbles(){
+  if(S.view!=="bubble") return;
+  const box=$("bubbles"), W=box.clientWidth, H=box.clientHeight, mode=bubMode(), tfl=(TF[S.tf]||S.tf).toLowerCase();
+  document.querySelectorAll("#bubSize button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.bsize===mode));
+  $("bubNote").textContent=`Size = ${{cap:"market cap",move:"size of "+tfl+" move",hold:"my position value"}[mode]} · Color = ${tfl} change`;
+  if(!W||!H) return;
+  const syms=sorted();
+  if(!syms.length){ box.innerHTML=`<p class="hint" style="padding:16px">Your watchlist is empty. Tap ＋ to add a stock.</p>`; return; }
+  box.querySelectorAll(":scope > p").forEach(e=>e.remove());
+  const raw=syms.map(s=>{ const p=price(s), pct=ret(s,S.tf); let w=0;
+    if(mode==="hold") w=p!=null?(S.holdings[s]||0)*p:0;
+    else if(mode==="cap") w=(S.profile[s]&&S.profile[s].cap)||0;
+    else w=pct==null?0:Math.abs(pct);
+    return {s,p,pct,w}; });
+  const mx=Math.max(...raw.map(x=>x.w))||1;
+  raw.forEach(x=>x.v=Math.max(x.w/mx,.06));
+  const tot=raw.reduce((a,x)=>a+x.v,0), unit=Math.sqrt(W*H*.5/(Math.PI*tot)), rMax=Math.min(W,H)*.34;
+  const items=raw.map(x=>({...x,r:Math.max(22,Math.min(rMax,Math.sqrt(x.v)*unit))}));
+  const used=items.reduce((a,b)=>a+Math.PI*(b.r+3)**2,0), lim=W*H*.62; if(used>lim){ const f=Math.sqrt(lim/used); items.forEach(b=>b.r=Math.max(18,b.r*f)); }
+  items.sort((a,b)=>b.r-a.r); packBubbles(items,W,H);
+  const old={}; box.querySelectorAll(".bub").forEach(el=>old[el.dataset.sym]=el); const keep=new Set();
+  items.forEach(b=>{ keep.add(b.s);
+    let el=old[b.s]; if(!el){ el=document.createElement("button"); el.className="bub"; el.dataset.sym=b.s; el.style.cssText=`left:${W/2}px;top:${H/2}px;width:0;height:0`; box.appendChild(el); }
+    const fs=Math.max(10,Math.min(24,b.r*.42)), fs2=Math.max(9,Math.min(15,b.r*.26)), cap=S.profile[b.s]&&S.profile[b.s].cap;
+    const sub=mode==="hold"&&S.holdings[b.s]&&b.p!=null?money(fmt$(S.holdings[b.s]*b.p,0)):mode==="cap"&&cap?"$"+(cap>=1e6?(cap/1e6).toFixed(2)+"T":cap>=1e3?(cap/1e3).toFixed(0)+"B":cap.toFixed(0)+"M"):b.p!=null?fmt$(b.p):"";
+    el.setAttribute("style",`${heatColor(b.pct)};left:${(b.x-b.r).toFixed(1)}px;top:${(b.y-b.r).toFixed(1)}px;width:${(b.r*2).toFixed(1)}px;height:${(b.r*2).toFixed(1)}px`);
+    el.setAttribute("aria-label",`${b.s} ${fmtP(b.pct)}`);
+    el.innerHTML=`<b style="font-size:${fs.toFixed(1)}px">${esc(b.s)}</b>${b.r>=26?`<span class="num" style="font-size:${fs2.toFixed(1)}px">${fmtP(b.pct)}</span>`:""}${sub&&b.r>=40?`<span class="num" style="font-size:${(fs2*.85).toFixed(1)}px;opacity:.8">${sub}</span>`:""}`;
+  });
+  Object.keys(old).forEach(s=>{ if(!keep.has(s)) old[s].remove(); });
+}
 function renderList(){ const L=$("list"), l=sorted(); L.className="list"+(S.editing?" editing":""); L.innerHTML=l.length?l.map(rowHTML).join(""):`<div class="row"><div></div><div class="who"><b>Your watchlist is empty</b><span>Tap ＋ to add a stock.</span></div></div>`; }
 function heatColor(r,tf){ if(r==null) return "background:#1A222D;color:#9AA8BA"; const k=Math.min(1,Math.abs(r)/({"1d":4,"1w":8,"2w":10,"1m":15,"3m":30,"5y":300,"all":1000}[tf||S.tf]||80)), a=.18+k*.72; return r>=0?`background:rgba(22,160,108,${a});color:#EFFFF8`:`background:rgba(214,52,76,${a});color:#FFF1F3`; }
 function renderHeat(){ if(S.view!=="heat") return; $("heat").innerHTML=sorted().map(s=>{const r=ret(s,S.tf);return `<button class="tile" data-sym="${esc(s)}" style="${heatColor(r)}"><b>${esc(s)}</b><div><div class="num">${fmtP(r)}</div><small class="num">${fmt$(price(s))}</small></div></button>`;}).join(""); }
@@ -1115,8 +1179,8 @@ function render(){
   const hv=$("hVer"); if(hv) hv.textContent="v"+APP_VERSION;
   renderLive(); renderBanners(); hero(); tape(); renderList(); renderHeat(); renderBoard(); renderFoot();
   document.querySelectorAll("#seg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tf===S.tf));
-  document.querySelectorAll(".viewtoggle button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===S.view));
-  $("sortSel").value=S.sort; $("listWrap").hidden=S.view!=="list"; $("heat").hidden=S.view!=="heat";
+  document.querySelectorAll(".viewtoggle button[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===S.view));
+  $("sortSel").value=S.sort; $("listWrap").hidden=S.view!=="list"; $("heat").hidden=S.view!=="heat"; $("bubWrap").hidden=S.view!=="bubble"; renderBubbles();
   $("editBtn").textContent=S.editing?"Done":"Edit"; $("editBtn").classList.toggle("on",S.editing);
 }
 
@@ -1251,7 +1315,7 @@ let toastT; function toast(m){ const t=$("toast"); t.textContent=m; t.classList.
 /* ---------- events ---------- */
 function wire(){
   $("seg").addEventListener("click",e=>{ const b=e.target.closest("[data-tf]"); if(!b) return; S.tf=b.dataset.tf; LS.set("tf",S.tf); render(); loadRange(S.list,S.tf); });
-  document.querySelector(".viewtoggle").addEventListener("click",e=>{ const b=e.target.closest("[data-view]"); if(!b) return; S.view=b.dataset.view; LS.set("view",S.view); render(); });
+  document.querySelector(".section-h .viewtoggle").addEventListener("click",e=>{ const b=e.target.closest("[data-view]"); if(!b) return; S.view=b.dataset.view; LS.set("view",S.view); render(); });
   $("sortSel").addEventListener("change",e=>{ S.sort=e.target.value; LS.set("sort",S.sort); render(); });
   $("editBtn").addEventListener("click",()=>{ S.editing=!S.editing; if(S.editing) S.view="list"; render(); });
   $("addBtn").addEventListener("click",openAdd);
@@ -1287,7 +1351,9 @@ function wire(){
       c.innerHTML=`<span>Remove ${esc(s)}?</span><span style="display:flex;gap:6px"><button data-cancel>Cancel</button><button data-yes>Remove</button></span>`;
       c.addEventListener("click",ev=>{ ev.stopPropagation(); if(ev.target.closest("[data-yes]")) removeSym(s); else if(ev.target.closest("[data-cancel]")) c.remove(); }); row.appendChild(c); return; }
     if(S.editing) return; const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); };
-  $("list").addEventListener("click",pick); $("heat").addEventListener("click",pick);
+  $("list").addEventListener("click",pick); $("heat").addEventListener("click",pick); $("bubbles").addEventListener("click",pick);
+  $("bubSize").addEventListener("click",e=>{ const b=e.target.closest("[data-bsize]"); if(!b) return; LS.set("bsize",b.dataset.bsize); renderBubbles(); });
+  { let bt=null; window.addEventListener("resize",()=>{ clearTimeout(bt); bt=setTimeout(()=>{ if(S.view==="bubble") renderBubbles(); },150); }); }
   let sx=0,sy=0,srow=null;
   $("list").addEventListener("touchstart",e=>{ srow=e.target.closest(".row"); sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
   $("list").addEventListener("touchend",e=>{ if(!srow) return; const dx=e.changedTouches[0].clientX-sx, dy=Math.abs(e.changedTouches[0].clientY-sy); if(dx<-60&&dy<30){ const d=srow.querySelector("[data-del]"); d&&pick({target:d}); } srow=null; },{passive:true});
@@ -1795,8 +1861,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.18";
+const APP_VERSION="3.19";
 const CHANGELOG=[
+  {v:"3.19",date:"2026-10-19",at:"2026-10-19T16:10:00Z",title:"Bubbles view",items:["Watchlist has a third view next to List and Heat: Bubbles. Color shows the move for the selected timeframe; size can be market cap, size of the move, or your position value"]},
   {v:"3.18",date:"2026-10-19",at:"2026-10-19T14:30:00Z",title:"Setup link",items:["Settings → Share setup link copies your Finnhub and Twelve Data keys, watchlist, holdings and alerts to GoldRabbit on another screen (home-screen app, Safari or the Hobby Hub), so you don't type the keys again"]},
   {v:"3.17",date:"2026-10-18",at:"2026-10-18T23:55:34Z",title:"Backtest: 12-month test",items:["The Did it work? panel adds a rolling test: scores taken every 2 months over 3 years, each checked against the next 12 months, so one lucky or unlucky date counts less"]},
   {v:"3.16",date:"2026-10-18",at:"2026-10-18T23:49:24Z",title:"Coil Score reworked from the backtest",items:["The backtest showed the old Coil Score picked the wrong coiled stocks: higher scores did worse. Earnings, sales, debt, PEG and bounce timing did not predict the next 12 months","New Coil Score: 65 points for the drop under the 50-day average, 35 for the discount under the 200-day. Over 18 dates in the last 3 years, the top half beat the bottom half on 16 of 18 (the old score: 8 of 18)","Coil map now plots those two numbers, with the sweet spot top right","Fundamentals stay on every row as information"]},
