@@ -10,17 +10,30 @@ const API = `https://www.cefconnect.com/api/v3/DailyPricing?props=${PROPS.join("
 const num = v => (typeof v === "number" && isFinite(v)) ? v : (typeof v === "string" && v.trim() !== "" && isFinite(+v) ? +v : null);
 const r2 = v => v == null ? null : Math.round(v * 100) / 100;
 
+import { execFileSync } from "node:child_process";
+const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
+const why = e => [e && e.message, e && e.cause && (e.cause.code || e.cause.message)].filter(Boolean).join(" / ");
+const parse = (body, what) => { try { return JSON.parse(body); } catch { throw new Error(`${what} not JSON: ${body.slice(0, 160).replace(/\s+/g, " ")}`); } };
+async function viaFetch() {
+  const res = await fetch(API, { headers: { "Accept": "application/json, text/plain, */*", "User-Agent": UA, "Referer": "https://www.cefconnect.com/closed-end-funds-daily-pricing" } });
+  const body = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${body.slice(0, 160).replace(/\s+/g, " ")}`);
+  return parse(body, "fetch");
+}
+function viaCurl() {
+  const body = execFileSync("curl", ["-sS", "--fail-with-body", "--compressed", "--max-time", "60", "--retry", "2", "-A", UA,
+    "-H", "Accept: application/json, text/plain, */*", "-H", "Referer: https://www.cefconnect.com/closed-end-funds-daily-pricing", API],
+    { encoding: "utf8", maxBuffer: 64 << 20, stdio: ["ignore", "pipe", "pipe"] });
+  return parse(body, "curl");
+}
 async function get() {
-  let last;
-  for (let i = 0; i < 3; i++) {
-    try {
-      const res = await fetch(API, { headers: { "Accept": "application/json", "User-Agent": "GoldRabbit/1.0 (+https://wolftronixsd.github.io/tickerdeck/)" } });
-      const body = await res.text();
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${body.slice(0, 160).replace(/\s+/g, " ")}`);
-      try { return JSON.parse(body); } catch { throw new Error(`Not JSON (${res.headers.get("content-type")}): ${body.slice(0, 160).replace(/\s+/g, " ")}`); }
-    } catch (e) { last = e; await new Promise(r => setTimeout(r, 4000 * (i + 1))); }
+  const errs = [];
+  for (let i = 0; i < 2; i++) {
+    try { return await viaFetch(); } catch (e) { errs.push("fetch: " + why(e)); }
+    try { return viaCurl(); } catch (e) { errs.push("curl: " + (String(e.stderr || "").trim() || why(e)).slice(0, 200)); }
+    await new Promise(r => setTimeout(r, 5000));
   }
-  throw last;
+  throw new Error(errs.join(" | "));
 }
 
 // surface failures as GitHub annotations so they can be read without the full log
