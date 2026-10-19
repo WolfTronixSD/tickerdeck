@@ -5,7 +5,9 @@ import { writeFileSync, readFileSync, existsSync } from "node:fs";
 
 const PROPS = ["Ticker","Name","CategoryName","Strategy","SponsorName","Price","NAV","Discount","Discount52WkAvg","ZScore1Yr",
   "DistributionRatePrice","DistributionFrequency","MarketCapUSDm","AvgDailyVolume","ExpenseRatio","IsLeveraged","LastUpdated"];
-const API = `https://www.cefconnect.com/api/v3/DailyPricing?props=${PROPS.join(",")}/`;
+// The API trims fields when it is given a props list, so try the full payload first and keep the richest answer.
+const BASE = "https://www.cefconnect.com/api/v3/DailyPricing";
+const APIS = [`${BASE}/`, `${BASE}?props=Ticker,Name,PriceDate/`, `${BASE}?props=${PROPS.join(",")}/`];
 
 const num = v => (typeof v === "number" && isFinite(v)) ? v : (typeof v === "string" && v.trim() !== "" && isFinite(+v) ? +v : null);
 const r2 = v => v == null ? null : Math.round(v * 100) / 100;
@@ -14,26 +16,38 @@ import { execFileSync } from "node:child_process";
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
 const why = e => [e && e.message, e && e.cause && (e.cause.code || e.cause.message)].filter(Boolean).join(" / ");
 const parse = (body, what) => { try { return JSON.parse(body); } catch { throw new Error(`${what} not JSON: ${body.slice(0, 160).replace(/\s+/g, " ")}`); } };
-async function viaFetch() {
+async function viaFetch(API) {
   const res = await fetch(API, { headers: { "Accept": "application/json, text/plain, */*", "User-Agent": UA, "Referer": "https://www.cefconnect.com/closed-end-funds-daily-pricing" } });
   const body = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${body.slice(0, 160).replace(/\s+/g, " ")}`);
   return parse(body, "fetch");
 }
-function viaCurl() {
+function viaCurl(API) {
   const body = execFileSync("curl", ["-sS", "--fail-with-body", "--compressed", "--max-time", "60", "--retry", "2", "-A", UA,
     "-H", "Accept: application/json, text/plain, */*", "-H", "Referer: https://www.cefconnect.com/closed-end-funds-daily-pricing", API],
     { encoding: "utf8", maxBuffer: 64 << 20, stdio: ["ignore", "pipe", "pipe"] });
   return parse(body, "curl");
 }
-async function get() {
+async function getOne(API) {
   const errs = [];
   for (let i = 0; i < 2; i++) {
-    try { return await viaFetch(); } catch (e) { errs.push("fetch: " + why(e)); }
-    try { return viaCurl(); } catch (e) { errs.push("curl: " + (String(e.stderr || "").trim() || why(e)).slice(0, 200)); }
+    try { return await viaFetch(API); } catch (e) { errs.push("fetch: " + why(e)); }
+    try { return viaCurl(API); } catch (e) { errs.push("curl: " + (String(e.stderr || "").trim() || why(e)).slice(0, 200)); }
     await new Promise(r => setTimeout(r, 5000));
   }
   throw new Error(errs.join(" | "));
+}
+// share of funds that came back with fund size and volume
+const rich = a => Array.isArray(a) && a.length ? a.filter(f => f && f.MarketCapUSDm != null && f.AvgDailyVolume != null).length / a.length : 0;
+async function get() {
+  let best = null, errs = [];
+  for (const API of APIS) {
+    try { const a = await getOne(API); if (Array.isArray(a) && a.length >= 100 && (!best || rich(a) > rich(best))) best = a; if (rich(best) > .5) break; }
+    catch (e) { errs.push(e.message); }
+  }
+  if (!best) throw new Error(errs.join(" || "));
+  console.log(`Using ${best.length} funds, ${Math.round(rich(best) * 100)}% with size and volume`);
+  return best;
 }
 
 // surface failures as GitHub annotations so they can be read without the full log
