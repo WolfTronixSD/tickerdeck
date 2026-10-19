@@ -417,6 +417,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
       <button class="primary" type="submit">Start</button>
     </form>
     <p class="err" id="keyErr"></p>
+    <p class="hint">Already set up in your other GoldRabbit (home-screen app or Safari)? There, go to Settings → <b>Share setup link</b> and open the link here. No need to type the keys again.</p>
     <p class="hint">Tip: in Safari, tap Share, then <b>Add to Home Screen</b>, and GoldRabbit opens full screen like an app.</p>
   </div>
 </div>
@@ -535,6 +536,23 @@ const HOLIDAYS={"2026-01-01":"New Year's Day","2026-01-19":"MLK Day","2026-02-16
 const EARLY={"2026-11-27":"Day after Thanksgiving","2026-12-24":"Christmas Eve","2027-11-26":"Day after Thanksgiving"};
 
 const LS={get(k,d){try{const v=localStorage.getItem("tdl."+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){if(k==="daily"){ saveDaily(); return; }try{localStorage.setItem("tdl."+k,JSON.stringify(v));}catch(e){}}};
+// Setup link (#setup=...): copies keys and lists from GoldRabbit on one screen (home-screen app, Safari, the hub)
+// to another, since iPhone gives each of them its own storage. Lives only in the address after #, never sent to a server.
+const SETUP_KEYS=["key","tdkey","list","hold","cost","alerts","targets","divs"];
+(function importSetup(){
+  const m=location.hash.match(/setup=([A-Za-z0-9_-]+)/); if(!m) return;
+  history.replaceState(null,"",location.pathname+location.search);
+  let data; try{ const b=m[1].replace(/-/g,"+").replace(/_/g,"/"); data=JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){ return; }
+  if(!data||typeof data!=="object") return;
+  const has=!!LS.get("key","");
+  if(has&&!confirm("Use the GoldRabbit setup from your other app? This replaces the keys and watchlist here.")) return;
+  for(const k of SETUP_KEYS) if(k in data) try{ localStorage.setItem("tdl."+k,JSON.stringify(data[k])); }catch(e){}
+})();
+function setupLink(){
+  const d={}; for(const k of SETUP_KEYS){ const v=LS.get(k,null); if(v!=null&&v!=="") d[k]=v; }
+  const b=btoa(unescape(encodeURIComponent(JSON.stringify(d)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  return location.origin+location.pathname+"#setup="+b;
+}
 const S={
   key:LS.get("key",""), list:LS.get("list",DEFAULT_LIST.slice()), holdings:LS.get("hold",{}), cost:LS.get("cost",{}), alerts:LS.get("alerts",{}),
   quotes:{}, live:{}, metric:LS.get("metric",{}), profile:LS.get("profile",{}), earnings:LS.get("earn",{}), ticks:{},
@@ -1290,9 +1308,14 @@ function openSettings(){
       <p class="hint">Powers the 1D to 1Y charts and exact 1-month, 6-month and 1-year returns. Free: create an account at <a href="https://twelvedata.com/register" target="_blank" rel="noopener" style="color:var(--accent)">twelvedata.com/register</a>, then copy the API key from your dashboard.</p>
       <form class="calc" id="tdForm" style="flex-wrap:nowrap"><input class="field" id="tdIn" placeholder="Twelve Data API key" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:14px" value="${esc(S.tdKey)}"><button class="primary" type="submit">Save</button></form>
       <p class="err" id="tdErrTxt"></p></div>
+    <div class="card"><h4>Use on another screen</h4><p class="hint">The home-screen app, Safari and the Hobby Hub each keep their own copy of GoldRabbit, so keys don't carry over by themselves. Send yourself this link and open it there once: it brings your Finnhub and Twelve Data keys, watchlist, holdings and alerts. It contains your keys, so keep it private.</p>
+      <button class="ghost" id="setupShare" style="align-self:flex-start">🔗 Share setup link</button></div>
     <div class="card"><h4>About</h4><div class="kv"><span>Version</span><b class="num">v${APP_VERSION}</b></div><button class="ghost" data-open-versions style="align-self:flex-start">What's new & version history</button></div>
     <div class="card"><h4>Live prices · Finnhub</h4><p class="hint">Connected. Change it if you made a new key.</p><button class="ghost" id="forget" style="align-self:flex-start">Change Finnhub key</button></div>`;
   $("forget").addEventListener("click",()=>{ closeSheet(); forget(); });
+  $("setupShare").addEventListener("click",async()=>{ const link=setupLink();
+    try{ if(navigator.share){ await navigator.share({title:"GoldRabbit setup",url:link}); return; } }catch(e){ if(e.name==="AbortError") return; }
+    try{ await navigator.clipboard.writeText(link); toast("Setup link copied"); }catch(e){ prompt("Copy this setup link:",link); } });
   $("extTog").addEventListener("click",()=>{ S.showExt=!S.showExt; LS.set("showExt",S.showExt); render(); openSettings(); });
   $("mvChips").addEventListener("click",e=>{ const b=e.target.closest("[data-mv]"); if(!b) return; S.moveAlert=+b.dataset.mv; LS.set("moveAlert",S.moveAlert); toast(S.moveAlert?`Alerts at ${S.moveAlert}% daily moves`:"Big move alerts off"); openSettings(); });
   $("tdForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$("tdIn").value.trim();
@@ -1772,8 +1795,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.17";
+const APP_VERSION="3.18";
 const CHANGELOG=[
+  {v:"3.18",date:"2026-10-19",at:"2026-10-19T14:30:00Z",title:"Setup link",items:["Settings → Share setup link copies your Finnhub and Twelve Data keys, watchlist, holdings and alerts to GoldRabbit on another screen (home-screen app, Safari or the Hobby Hub), so you don't type the keys again"]},
   {v:"3.17",date:"2026-10-18",at:"2026-10-18T23:55:34Z",title:"Backtest: 12-month test",items:["The Did it work? panel adds a rolling test: scores taken every 2 months over 3 years, each checked against the next 12 months, so one lucky or unlucky date counts less"]},
   {v:"3.16",date:"2026-10-18",at:"2026-10-18T23:49:24Z",title:"Coil Score reworked from the backtest",items:["The backtest showed the old Coil Score picked the wrong coiled stocks: higher scores did worse. Earnings, sales, debt, PEG and bounce timing did not predict the next 12 months","New Coil Score: 65 points for the drop under the 50-day average, 35 for the discount under the 200-day. Over 18 dates in the last 3 years, the top half beat the bottom half on 16 of 18 (the old score: 8 of 18)","Coil map now plots those two numbers, with the sweet spot top right","Fundamentals stay on every row as information"]},
   {v:"3.15",date:"2026-10-18",at:"2026-10-18T23:27:56Z",title:"Backtest: did the scores work?",items:["New 📈 Did it work? panel in the Bargain Scorecard and Spring Coil: every stock scored the way it looked 1, 2 and 3 years ago (only the SEC filings and prices public on that date), then compared with its real return since against the S&P 500","Shows returns by rating, top vs bottom quarter, coiled vs not coiled, and a rank link from −1 to 1 that says whether higher scores really did better","Refreshed automatically every Monday by GitHub"]},
