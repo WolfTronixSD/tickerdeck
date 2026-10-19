@@ -173,6 +173,9 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 @keyframes twinkle{to{opacity:.35}}
 .chipbar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
 .chipbar::-webkit-scrollbar{display:none}
+.nv-pill{min-width:74px;height:52px;border-radius:12px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);line-height:1;color:var(--gain);background:var(--gain-bg)}.nv-pill b{font:800 18px var(--mono,monospace)}.nv-pill small{font-size:10px;opacity:.8;margin-top:4px}.nv-pill.pm{color:var(--loss);background:var(--loss-bg)}
+.nv-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;font-size:10.5px;font-weight:700;vertical-align:2px;background:var(--accent-bg);color:var(--accent)}
+.nv-det{display:flex;flex-direction:column;gap:6px;padding:0 0 14px 32px}.nv-det>div{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}.nv-det>div span{color:var(--muted)}.nv-btns{display:flex;gap:8px;margin-top:6px}.nv-btns button{flex:1}
 .chipbar button{flex:none;height:34px;padding:0 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
 .chipbar button[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
 .trow{display:grid;grid-template-columns:auto 1fr 70px auto 30px;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line);width:100%;text-align:left}
@@ -452,6 +455,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="actions" id="actions">
     <button id="coilBtn">🌀 Spring Coil</button>
     <button id="bargainBtn">📋 Bargain Scorecard</button>
+    <button id="navBtn">🏷️ NAV discounts</button>
     <button id="refreshBtn">⟳ Refresh</button>
     <button id="shareBtn">⇪ Share summary</button>
     <button id="briefBtn">☕ Briefing</button>
@@ -1333,6 +1337,14 @@ function wire(){
   $("repBtn").addEventListener("click",()=>openReport(LS.get("repP","1w")));
   $("coilBtn").addEventListener("click",()=>openCoil());
   $("bargainBtn").addEventListener("click",()=>openBargain());
+  $("navBtn").addEventListener("click",()=>openNav());
+  $("sheet").addEventListener("click",e=>{ if(S.open!=="__nav") return;
+    const so=e.target.closest("[data-nvsort]"); if(so){ S.nv.sort=so.dataset.nvsort; S.nv.shown=15; LS.set("nvSort",S.nv.sort); renderNav(); return; }
+    if(e.target.closest("[data-nvtrade]")){ S.nv.trade=!S.nv.trade; S.nv.shown=15; LS.set("nvTrade",S.nv.trade); renderNav(); return; }
+    if(e.target.closest("[data-nvmore]")){ S.nv.shown+=15; renderNav(); return; }
+    const ad=e.target.closest("[data-nvadd]"); if(ad){ const s=ad.dataset.nvadd; if(S.list.includes(s)) toast(s+" is already on your list"); else addSym(s); return; }
+    const op=e.target.closest("[data-nvopen]"); if(op){ openDetail(op.dataset.nvopen); return; }
+    const r=e.target.closest("[data-nvx]"); if(r){ const s=r.dataset.nvx; S.nv.open[s]=!S.nv.open[s]; renderNav(); } });
   $("cmpBtn").addEventListener("click",()=>openCompare(S.list[0]||"AAPL",S.list[1]||"SPY"));
   $("erFeed").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r) openDetail(r.dataset.sym); });
   $("idx").addEventListener("click",e=>{ const b=e.target.closest("[data-idx]"); if(b&&price(b.dataset.idx)!=null) openDetail(b.dataset.idx); });
@@ -1861,8 +1873,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.19";
+const APP_VERSION="3.20";
 const CHANGELOG=[
+  {v:"3.20",date:"2026-10-19",at:"2026-10-19T18:20:00Z",title:"NAV discounts",items:["New 🏷️ NAV discounts button on Home: closed-end funds trading furthest below the value of what they hold, refreshed each weekday","Sort by deepest discount, unusually cheap for that fund (vs its own 1-year average) or highest yield; Tradeable only hides tiny, thinly traded funds","Tap a fund for price vs NAV, yield, size, fees and leverage, then add it to your watchlist or open its chart"]},
   {v:"3.19",date:"2026-10-19",at:"2026-10-19T16:10:00Z",title:"Bubbles view",items:["Watchlist has a third view next to List and Heat: Bubbles. Color shows the move for the selected timeframe; size can be market cap, size of the move, or your position value"]},
   {v:"3.18",date:"2026-10-19",at:"2026-10-19T14:30:00Z",title:"Setup link",items:["Settings → Share setup link copies your Finnhub and Twelve Data keys, watchlist, holdings and alerts to GoldRabbit on another screen (home-screen app, Safari or the Hobby Hub), so you don't type the keys again"]},
   {v:"3.17",date:"2026-10-18",at:"2026-10-18T23:55:34Z",title:"Backtest: 12-month test",items:["The Did it work? panel adds a rolling test: scores taken every 2 months over 3 years, each checked against the next 12 months, so one lucky or unlucky date counts less"]},
@@ -2185,6 +2198,47 @@ async function bgLoad(){
     P.done++; if(S.open==="__bargain"&&(P.done%3===0||P.done===P.total)) renderBargain();
   } } finally{ P.running=0; bgBusy=0; if(S.open==="__bargain") renderBargain(); }
 }
+/* ---------- NAV discounts: closed-end funds trading below the value of what they hold (nav_discounts.json, made each weekday by .github/workflows/nav-discounts.yml) ---------- */
+const NV_SORTS=[["deep","Deepest discount"],["odd","Unusually cheap"],["yield","Highest yield"]];
+function nvLoad(){ if(S.nv.data||S.nv.data===0) return; S.nv.data=0; fetch("nav_discounts.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{ S.nv.data=j&&Array.isArray(j.funds)?j:null; }).catch(()=>{ S.nv.data=null; }).finally(renderNav); }
+// tradeable = at least $100M of shares and 20k shares a day, so one small trade doesn't move the price
+const nvTradeable=f=>(f.mc==null||f.mc>=100)&&(f.v==null||f.v>=20000);
+function nvRows(){ const j=S.nv.data; if(!j) return []; let l=j.funds.filter(f=>!S.nv.trade||nvTradeable(f));
+  if(S.nv.sort==="odd") l=l.filter(f=>f.z!=null&&f.d<0).sort((a,b)=>a.z-b.z);
+  else if(S.nv.sort==="yield") l=l.filter(f=>f.y!=null&&f.d<0).sort((a,b)=>b.y-a.y);
+  else l=l.slice().sort((a,b)=>a.d-b.d);
+  return l; }
+const nvP=v=>v==null?"—":(v>0?"+":"")+v.toFixed(1)+"%";
+const nvM=v=>v==null?"—":v>=1000?"$"+(v/1000).toFixed(1)+"B":"$"+Math.round(v)+"M";
+function nvOdd(f){ return f.z!=null&&f.z<=-2?"Cheaper than usual":f.z!=null&&f.z>=2?"Pricier than usual":""; }
+function renderNav(){
+  if(S.open!=="__nav") return;
+  const j=S.nv.data, rows=nvRows(), shown=rows.slice(0,S.nv.shown);
+  const body=j===0||j===undefined?`<p class="hint" style="padding:12px 0">Loading fund list…</p>`
+    : !j?`<p class="hint" style="padding:12px 0">The fund list isn't ready yet. It is built each weekday evening; check back after the next update.</p>`
+    : !rows.length?`<p class="hint" style="padding:12px 0">No funds match.</p>`
+    : shown.map((f,i)=>{ const open=S.nv.open[f.s], odd=nvOdd(f);
+      return `<div class="bg-r" data-nvx="${esc(f.s)}" role="button" tabindex="0" aria-expanded="${!!open}"><span class="bg-n">${i+1}</span><div style="flex:1;min-width:0"><b>${esc(f.s)}</b>${S.list.includes(f.s)?`<span class="nv-tag">on list</span>`:""}${odd&&f.z<0?`<span class="nv-tag">${odd}</span>`:""}<span class="coil-f" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.n)}</span><span class="coil-f">${esc(f.c)}${f.y!=null?` · ${f.y.toFixed(1)}% yield`:""}${f.d52!=null?` · usually ${nvP(f.d52)}`:""}</span></div><span class="nv-pill ${f.d>0?"pm":""}"><b>${nvP(f.d)}</b><small>${f.d<0?"discount":"premium"}</small></span></div>
+      ${open?`<div class="nv-det">
+        <div><span>Price / NAV per share</span><b class="num">${fmt$(f.p)} / ${fmt$(f.nav)}</b></div>
+        <div><span>You pay for $1 of holdings</span><b class="num">${fmt$(f.p/f.nav)}</b></div>
+        <div><span>Average discount, past year</span><b class="num">${nvP(f.d52)}</b></div>
+        <div><span>vs its usual (z-score)</span><b class="num ${f.z!=null&&f.z<=-2?"tup":f.z!=null&&f.z>=2?"tdown":""}">${f.z==null?"—":f.z.toFixed(1)}${odd?" · "+odd.toLowerCase():""}</b></div>
+        <div><span>Distribution yield</span><b class="num">${f.y==null?"—":f.y.toFixed(2)+"%"}${f.fq?" · "+esc(f.fq).toLowerCase():""}</b></div>
+        <div><span>Fund size / daily volume</span><b class="num">${nvM(f.mc)} · ${f.v==null?"—":Math.round(f.v/1000)+"k sh"}</b></div>
+        <div><span>Expense ratio</span><b class="num">${f.er==null?"—":f.er.toFixed(2)+"%"}${f.lev?" · uses leverage":""}</b></div>
+        ${f.sp?`<div><span>Manager</span><b>${esc(f.sp)}</b></div>`:""}
+        <div class="nv-btns"><button class="ghost coil-big" data-nvadd="${esc(f.s)}">${S.list.includes(f.s)?"✓ On your list":"＋ Add to watchlist"}</button><button class="ghost coil-big" data-nvopen="${esc(f.s)}">Open chart</button></div></div>`:""}`; }).join("");
+  $("sheetIn").innerHTML=`<div class="grab"></div><div class="d-head"><div><h3>🏷️ NAV discounts</h3><p>Closed-end funds selling below the value of what they hold</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="chipbar coil-chips">${NV_SORTS.map(([k,l])=>`<button data-nvsort="${k}" aria-pressed="${S.nv.sort===k}">${l}</button>`).join("")}<button data-nvtrade aria-pressed="${S.nv.trade}">${S.nv.trade?"✓ ":""}Tradeable only</button></div>
+    <div class="card" style="gap:4px">
+      <p class="hint">${S.nv.sort==="odd"?"Ranked by how far today's discount is below the fund's own 1-year average (z-score). Below −2 is unusually cheap for that fund.":S.nv.sort==="yield"?"Funds at a discount, ranked by yearly payout as a % of price.":"A −15% discount means you pay about 85¢ for each $1 of stocks or bonds inside the fund."}${S.nv.trade?" Tradeable only hides funds under $100M or 20k shares a day.":""}</p>
+      <div class="bg-feed">${body}</div>
+      ${rows.length>S.nv.shown?`<button class="ghost coil-big" data-nvmore>Show more (${rows.length-S.nv.shown} left)</button>`:""}
+    </div>
+    <p class="hint">${j&&j.asOf?`Fund prices and NAVs as of ${new Date(j.asOf+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})} close, from CEFConnect. ${j.count} funds. `:""}Some funds stay at a discount for years, often because of high fees, leverage or payouts that return your own money. A discount alone isn't a reason to buy. Not investment advice.</p>`;
+}
+function openNav(){ S.nv=S.nv||{open:{},shown:15}; S.nv.sort=LS.get("nvSort","deep"); S.nv.trade=LS.get("nvTrade",true); S.nv.shown=15; S.open="__nav"; renderNav(); showSheet(); nvLoad(); }
 function openBargain(){ S.open="__bargain"; renderBargain(); showSheet(); bgLoad(); }
 /* ---------- Spring Coil: price below both the 50-day and 200-day averages ---------- */
 // popular large caps scanned on top of the watchlist and every theme
