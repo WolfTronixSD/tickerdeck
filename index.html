@@ -558,7 +558,10 @@ const HUES={AAPL:"#5B6573",MSFT:"#2F7BEA",NVDA:"#4A9B1C",MU:"#1B5BC4",BE:"#1FA3A
 const HOLIDAYS={"2026-01-01":"New Year's Day","2026-01-19":"MLK Day","2026-02-16":"Presidents Day","2026-04-03":"Good Friday","2026-05-25":"Memorial Day","2026-06-19":"Juneteenth","2026-07-03":"Independence Day","2026-09-07":"Labor Day","2026-11-26":"Thanksgiving","2026-12-25":"Christmas","2027-01-01":"New Year's Day","2027-01-18":"MLK Day","2027-02-15":"Presidents Day","2027-03-26":"Good Friday","2027-05-31":"Memorial Day","2027-06-18":"Juneteenth","2027-07-05":"Independence Day","2027-09-06":"Labor Day","2027-11-25":"Thanksgiving","2027-12-24":"Christmas"};
 const EARLY={"2026-11-27":"Day after Thanksgiving","2026-12-24":"Christmas Eve","2027-11-26":"Day after Thanksgiving"};
 
-const LS={get(k,d){try{const v=localStorage.getItem("tdl."+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){if(k==="daily"){ saveDaily(); return; }try{localStorage.setItem("tdl."+k,JSON.stringify(v));}catch(e){}}};
+const LS={get(k,d){try{const v=localStorage.getItem("tdl."+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){if(k==="daily"){ saveDaily(); return; }try{localStorage.setItem("tdl."+k,JSON.stringify(v));}catch(e){} if(k==="key"||k==="tdkey") mirrorKeys(); }};
+// keys are also kept in IndexedDB and the browser is asked to keep this site's storage, so a cleared localStorage doesn't mean typing the Finnhub key again
+function mirrorKeys(){ try{ IDB.set("keys",{key:LS.get("key",""),tdkey:LS.get("tdkey","")}); if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){} }
+async function restoreKeys(){ try{ const k=await IDB.get("keys"); if(!k||typeof k!=="object") return; if(k.key&&!LS.get("key","")){ try{ localStorage.setItem("tdl.key",JSON.stringify(k.key)); }catch(e){} S.key=k.key; } if(k.tdkey&&!LS.get("tdkey","")){ try{ localStorage.setItem("tdl.tdkey",JSON.stringify(k.tdkey)); }catch(e){} S.tdKey=k.tdkey; } }catch(e){} }
 // Setup link (#setup=...): copies keys and lists from GoldRabbit on one screen (home-screen app, Safari, the hub)
 // to another, since iPhone gives each of them its own storage. Lives only in the address after #, never sent to a server.
 const SETUP_KEYS=["key","tdkey","list","hold","cost","alerts","targets","divs"];
@@ -1873,8 +1876,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.20";
+const APP_VERSION="3.21";
 const CHANGELOG=[
+  {v:"3.21",date:"2026-10-20",title:"Keys stay put",items:["Your Finnhub and Twelve Data keys are now saved twice (localStorage and IndexedDB) and restored automatically if one gets cleared","GoldRabbit asks the browser to keep its storage permanently, so it should stop asking for the key"]},
   {v:"3.20",date:"2026-10-19",at:"2026-10-19T18:20:00Z",title:"NAV discounts",items:["New 🏷️ NAV discounts button on Home: closed-end funds trading furthest below the value of what they hold, refreshed each weekday","Sort by deepest discount, unusually cheap for that fund (vs its own 1-year average) or highest yield; Tradeable only hides tiny, thinly traded funds","Tap a fund for price vs NAV, yield, size, fees and leverage, then add it to your watchlist or open its chart"]},
   {v:"3.19",date:"2026-10-19",at:"2026-10-19T16:10:00Z",title:"Bubbles view",items:["Watchlist has a third view next to List and Heat: Bubbles. Color shows the move for the selected timeframe; size can be market cap, size of the move, or your position value"]},
   {v:"3.18",date:"2026-10-19",at:"2026-10-19T14:30:00Z",title:"Setup link",items:["Settings → Share setup link copies your Finnhub and Twelve Data keys, watchlist, holdings and alerts to GoldRabbit on another screen (home-screen app, Safari or the Hobby Hub), so you don't type the keys again"]},
@@ -2646,7 +2650,7 @@ $("keyForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$(
   try{ const q=await api("/quote?symbol=AAPL"); if(!q||typeof q.c!=="number") throw 0; LS.set("key",k); $("keyErr").textContent=""; start(); }
   catch(err){ S.key=""; $("keyErr").textContent=S.apiErr==="key"?"Finnhub didn't accept that key. Check it and try again.":"Couldn't reach Finnhub. Check your connection and try again."; } });
 wire();
-if(S.key) start(); else showOnb();
+(async()=>{ if(!S.key||!S.tdKey) await restoreKeys(); if(S.key){ mirrorKeys(); start(); } else showOnb(); })();
 if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
 </script>
