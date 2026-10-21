@@ -497,6 +497,16 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="tab" id="tab-home">
   <div class="idx" id="idx" aria-label="Market indexes"></div>
   <div class="idx coins" id="coins" aria-label="Crypto prices"></div>
+  <div class="seg" role="group" aria-label="Time frame" id="seg">
+    <button data-tf="1d" aria-pressed="true">1D</button>
+    <button data-tf="1w" aria-pressed="false">1W</button>
+    <button data-tf="2w" aria-pressed="false">2W</button>
+    <button data-tf="1m" aria-pressed="false">1M</button>
+    <button data-tf="6m" aria-pressed="false">6M</button>
+    <button data-tf="ytd" aria-pressed="false">YTD</button>
+    <button data-tf="1y" aria-pressed="false">1Y</button>
+    <button data-tf="5y" aria-pressed="false">5Y</button>
+  </div>
   <section class="hero" id="hero"></section>
   <div class="actions" id="actions">
     <button id="coilBtn">🌀 Spring Coil</button>
@@ -518,17 +528,6 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   </div>
   <section class="clock" id="clock" aria-label="Market clock"></section>
   <div id="tmrWrap"></div>
-
-  <div class="seg" role="group" aria-label="Time frame" id="seg">
-    <button data-tf="1d" aria-pressed="true">1D</button>
-    <button data-tf="1w" aria-pressed="false">1W</button>
-    <button data-tf="2w" aria-pressed="false">2W</button>
-    <button data-tf="1m" aria-pressed="false">1M</button>
-    <button data-tf="6m" aria-pressed="false">6M</button>
-    <button data-tf="ytd" aria-pressed="false">YTD</button>
-    <button data-tf="1y" aria-pressed="false">1Y</button>
-    <button data-tf="5y" aria-pressed="false">5Y</button>
-  </div>
 
   <div class="section-h">
     <h2>Watchlist</h2>
@@ -2030,8 +2029,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.27";
+const APP_VERSION="3.28";
 const CHANGELOG=[
+  {v:"3.28",date:"2026-10-21",title:"Timeframe bar moved up",items:["The 1D–5Y timeframe bar now sits near the top of Home, right under the index tiles and above the watchlist summary it controls","It still sticks to the top of the screen as you scroll"]},
   {v:"3.27",date:"2026-10-21",title:"Stock wisdom",items:["New 🦉 Stock wisdom button on Home: 20 lessons from market history, as 10 traps to avoid, 6 habits that work and 4 signals to watch, each with what history shows and what to do","Wisdom of the day, plus a mind map: tap any box to jump to that lesson","Before you buy: an 8-point checklist to go through before any new purchase","Crash plan: write down what you'll do in a 20% or 30% drop; it saves on this device as you type"]},
   {v:"3.26",date:"2026-10-20",title:"Fiber & Photonics section",items:["Fiber & Photonics is now its own section: tap 💡 Fiber & Photonics on Home, or pick it on the Trends tab","Live prices grouped by role: lasers & transceivers, optical chips & interconnects, fiber & connectors, and links between data centers","After the close, the group's after-hours and pre-market moves, refreshed every 30 minutes overnight","\"Why optics matter for AI\" explains who makes what, co-packaged optics, and what moves these stocks","Removed the optics row from the Tomorrow card"]},
   {v:"3.25",date:"2026-10-20",title:"Fiber & photonics",items:["Tomorrow card: new Fiber & photonics row for AI data-center optics: Lumentum, Coherent, Applied Optoelectronics, Credo, Marvell, Ciena and Corning","Shows each stock's after-hours or pre-market move, or the last session's move, refreshed every 30 minutes overnight; tap one to open it","\"Why optics matter for AI\" explains who makes what: lasers, transceivers, DSP chips, fiber, data-center links and co-packaged optics","Ask Claude now includes the optics moves"]},
