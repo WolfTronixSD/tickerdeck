@@ -178,6 +178,31 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .nv-det{display:flex;flex-direction:column;gap:6px;padding:0 0 14px 32px}.nv-det>div{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}.nv-det>div span{color:var(--muted)}.nv-btns{display:flex;gap:8px;margin-top:6px}.nv-btns button{flex:1}
 .chipbar button{flex:none;height:34px;padding:0 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
 .chipbar button[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
+.movers{border-radius:var(--r);padding:16px 14px 14px;background:radial-gradient(110% 70% at 0% 0%,rgba(43,217,154,.16),transparent 60%),radial-gradient(110% 70% at 100% 100%,rgba(255,92,114,.16),transparent 60%),var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.movers h2{margin:0;font-size:18px;letter-spacing:-.01em}
+.movers .mvtop small{color:var(--muted);font-size:12px}
+.mvchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.mvchips button{padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--muted)}
+.mvchips button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#0B0F14}
+.mvcol{border-radius:14px;background:rgba(0,0,0,.28);border:1px solid var(--line);overflow:hidden}
+.mvcol.mvup{box-shadow:inset 3px 0 0 var(--gain)}.mvcol.mvdn{box-shadow:inset 3px 0 0 var(--loss)}
+.mvhead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:700;font-size:13px;letter-spacing:.02em}
+.mvcol.mvup .mvhead{background:linear-gradient(90deg,var(--gain-bg),transparent);color:var(--gain)}
+.mvcol.mvdn .mvhead{background:linear-gradient(90deg,var(--loss-bg),transparent);color:var(--loss)}
+.mvhead small{font-family:var(--mono);font-size:11px;opacity:.85}
+.mvrow{display:grid;grid-template-columns:18px auto 1fr auto;align-items:center;gap:10px;width:100%;padding:10px 14px;border-top:1px solid var(--line);text-align:left}
+.mvrow:active{background:var(--panel2)}
+.mvrank{font-family:var(--mono);font-size:12px;color:var(--faint);text-align:center}
+.mvrow:first-of-type .mvrank{color:var(--accent);font-weight:700}
+.mvwho{display:flex;flex-direction:column;min-width:0;gap:2px}
+.mvwho small{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mvbar{display:block;height:4px;border-radius:4px;background:rgba(255,255,255,.06);margin-top:3px;overflow:hidden}
+.mvbar i{display:block;height:100%;border-radius:4px}
+.mvrow.mvup .mvbar i{background:linear-gradient(90deg,rgba(43,217,154,.35),var(--gain))}
+.mvrow.mvdn .mvbar i{background:linear-gradient(90deg,rgba(255,92,114,.35),var(--loss))}
+.mvpx{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:13px}
+.mvpct{font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px}
+.mvrow.mvup .mvpct{color:var(--gain);background:var(--gain-bg)}.mvrow.mvdn .mvpct{color:var(--loss);background:var(--loss-bg)}
 .trow{display:grid;grid-template-columns:auto 1fr 70px auto 30px;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line);width:100%;text-align:left}
 .trow:first-child{border-top:0}
 .trow .addb{width:30px;height:30px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);font-weight:700;color:var(--accent);display:grid;place-items:center}
@@ -1876,8 +1901,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.21";
+const APP_VERSION="3.22";
 const CHANGELOG=[
+  {v:"3.22",date:"2026-10-20",title:"Biggest movers, upgraded",items:["Hot Trends now shows the top 5 gainers and top 5 losers in their own cards, with rank, price and a size bar","Movers default to today (1D) and have their own 1D/1W/1M/3M/YTD/1Y switch, separate from the page timeframe","The % shown now always matches the period the list is ranked by"]},
   {v:"3.21",date:"2026-10-20",title:"Keys stay put",items:["Your Finnhub and Twelve Data keys are now saved twice (localStorage and IndexedDB) and restored automatically if one gets cleared","GoldRabbit asks the browser to keep its storage permanently, so it should stop asking for the key"]},
   {v:"3.20",date:"2026-10-19",at:"2026-10-19T18:20:00Z",title:"NAV discounts",items:["New 🏷️ NAV discounts button on Home: closed-end funds trading furthest below the value of what they hold, refreshed each weekday","Sort by deepest discount, unusually cheap for that fund (vs its own 1-year average) or highest yield; Tradeable only hides tiny, thinly traded funds","Tap a fund for price vs NAV, yield, size, fees and leverage, then add it to your watchlist or open its chart"]},
   {v:"3.19",date:"2026-10-19",at:"2026-10-19T16:10:00Z",title:"Bubbles view",items:["Watchlist has a third view next to List and Heat: Bubbles. Color shows the move for the selected timeframe; size can be market cap, size of the move, or your position value"]},
@@ -2512,7 +2538,7 @@ const THEMES={
 const TREND_KEYS=["mag7","energy","macro","cyber","defense","banks","health","power","quantum","crypto","robotics","semis"];
 const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communication"],["XLY","Consumer Disc."],["XLF","Financials"],["XLI","Industrials"],["XLV","Health Care"],["XLE","Energy"],["XLB","Materials"],["XLP","Consumer Staples"],["XLU","Utilities"],["XLRE","Real Estate"]];
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
-S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); S.trend=LS.get("trend","power"); S.extra=new Set();
+S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); S.mtf=LS.get("mtf","1d"); S.trend=LS.get("trend","power"); S.extra=new Set();
 const themeSyms=k=>[...new Set(Object.values(THEMES[k].groups).flat())];
 function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); return []; }
 const loading={};
@@ -2578,9 +2604,20 @@ function renderTheme(t){
   const list=themeSyms(t);
   $("tab-"+t).innerHTML=heroHTML(t,list)+tfChips()+loadNote(list)+groupsHTML(t)+`<a class="claude" href="${claudeURL(`Analyze the ${THEMES[t].title} stock theme right now: ${list.join(", ")}. Live data from my tracker:\n${list.filter(s=>price(s)!=null).map(s=>`${s} ${fmt$(price(s))} today ${fmtP(r1d(s))}, 1Y ${fmtP(ret(s,"1y"))}`).join("\n")}\n\nSearch the web for the latest news. Who are the leaders and laggards and why, what are the catalysts and risks, and which names look most stretched?`)}" target="_blank" rel="noopener">✨ Ask Claude about ${esc(THEMES[t].name)}</a>`;
 }
+const MTF=[["1d","1D"],["1w","1W"],["1m","1M"],["3m","3M"],["ytd","YTD"],["1y","1Y"]];
+function moversHTML(all){
+  const tf=S.mtf, rs=all.map(s=>({s,r:ret(s,tf)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
+  const ups=rs.filter(x=>x.r>0).slice(0,5), dns=rs.filter(x=>x.r<0).reverse().slice(0,5);
+  const mx=Math.max(1e-9,...ups.concat(dns).map(x=>Math.abs(x.r)));
+  const row=(x,i,up)=>{ const pr=S.profile[x.s]||{}; return `<button class="mvrow ${up?"mvup":"mvdn"}" data-sym="${esc(x.s)}"><span class="mvrank">${i+1}</span>${logo(x.s)}<span class="mvwho"><b>${esc(x.s)}</b><small>${esc(pr.name||"")}</small><i class="mvbar"><i style="width:${(Math.abs(x.r)/mx*100).toFixed(1)}%"></i></i></span><span class="mvpx"><span class="num">${fmt$(price(x.s))}</span><span class="mvpct num">${up?"▲":"▼"} ${Math.abs(x.r).toFixed(2)}%</span></span></button>`; };
+  const col=(arr,up)=>`<div class="mvcol ${up?"mvup":"mvdn"}"><div class="mvhead"><span>${up?"🚀 Top gainers":"🧊 Top losers"}</span><small>${arr.length?fmtP(arr[0].r):""}</small></div>${arr.length?arr.map((x,i)=>row(x,i,up)).join(""):`<p class="hint" style="padding:14px">${rs.length?(up?"Nothing up":"Nothing down"):"Loading…"}</p>`}</div>`;
+  const label=tf==="1d"?"Today's biggest movers":`Biggest movers · ${TF[tf]}`;
+  return `<section class="movers"><div class="mvtop"><div><h2>${label}</h2><small>${rs.length} stocks across all trends · ${rs.filter(x=>x.r>=0).length} up · ${rs.filter(x=>x.r<0).length} down</small></div></div>
+    <div class="mvchips">${MTF.map(([k,l])=>`<button data-mtf="${k}" aria-pressed="${tf===k}">${l}</button>`).join("")}</div>
+    ${col(ups,true)}${col(dns,false)}</section>`;
+}
 function renderTrends(){
   const all=[...new Set(TREND_KEYS.flatMap(themeSyms))];
-  const movers=all.map(s=>({s,r:r1d(s)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r);
   const cards=TREND_KEYS.map(k=>{ const st=themeStats(themeSyms(k),S.ttf); return {k,avg:st.avg}; }).sort((a,b)=>(b.avg??-1e9)-(a.avg??-1e9));
   const T=THEMES[S.trend];
   $("tab-trends").innerHTML=`<section class="thero" style="--tbg:radial-gradient(120% 90% at 0% 0%,rgba(255,92,114,.25),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(255,181,71,.22),transparent 60%),#120A0C">
@@ -2588,8 +2625,7 @@ function renderTrends(){
       <div class="board" style="background:rgba(0,0,0,.25)">${cards.map(c=>{ const mx=Math.max(...cards.map(x=>Math.abs(x.avg||0)))||1, w=Math.abs(c.avg||0)/mx*50, st=(c.avg||0)>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row" style="grid-template-columns:110px 1fr 70px"><b style="font-size:12px">${THEMES[c.k].name}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(c.avg)}">${fmtP(c.avg)}</span></div>`; }).join("")}</div></section>
     ${tfChips()}${loadNote(tabSyms(S.tab).filter(x=>x!=="SPY"))}
     ${ideasHTML()}
-    <div class="section-h"><h2>Today's biggest movers</h2><small>across all trends</small></div>
-    <div class="list">${movers.slice(0,3).concat(movers.length>6?movers.slice(-3):[]).map(x=>trowHTML(x.s)).join("")||`<p class="hint" style="padding:14px">Loading…</p>`}</div>
+    ${moversHTML(all)}
     <div class="chipbar">${TREND_KEYS.map(k=>`<button data-trend="${k}" aria-pressed="${S.trend===k}">${THEMES[k].name}</button>`).join("")}</div>
     ${heroHTML(S.trend,themeSyms(S.trend))}
     ${groupsHTML(S.trend)}
@@ -2617,6 +2653,7 @@ function wireTabs(){
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   ["sectors","ai","space","trends"].forEach(k=>$("tab-"+k).addEventListener("click",e=>{
     const add=e.target.closest("[data-add]"); if(add){ e.stopPropagation(); const s=add.dataset.add; if(S.list.includes(s)) removeSym(s); else addSym(s); setTimeout(renderTab,50); return; }
+    const mt=e.target.closest("[data-mtf]"); if(mt){ S.mtf=mt.dataset.mtf; LS.set("mtf",S.mtf); renderTab(); loadRange(tabSyms(S.tab),S.mtf); return; }
     const tf=e.target.closest("[data-ttf]"); if(tf){ S.ttf=tf.dataset.ttf; LS.set("ttf",S.ttf); renderTab(); loadRange(tabSyms(S.tab),S.ttf); return; }
     if(e.target.closest("#scanAll")){ scanAll(); return; }
     const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); setActiveSubs(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
