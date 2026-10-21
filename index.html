@@ -183,6 +183,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .tmr h2{margin:0;font-size:18px}.tmr h2 span{color:var(--muted);font-weight:500;font-size:15px}
 .tmr-head small{color:var(--muted);font-size:12px}
 .tmr h3{margin:6px 0 -2px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.tmr-tag{font-size:11px;font-weight:500;color:var(--muted);opacity:.8}.tmr-role{color:var(--muted);font-size:12px}.tmr-notes{margin:6px 0;padding-left:18px;display:grid;gap:4px}
 .tmr-mood{flex:none;font-weight:700;font-size:13px;padding:5px 11px;border-radius:999px}
 .tmr-sub{margin:-4px 0 0;color:var(--muted);font-size:12px}
 .tmr-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -978,6 +979,7 @@ function dowStats(wd){
   const a=dowCache.g[wd]; if(!a||a.length<20) return null;
   return {n:a.length,up:a.filter(x=>x>0).length/a.length*100,avg:mean(a)};
 }
+const OPTICS=["LITE","COHR","AAOI","CRDO","MRVL","CIEN","GLW"];
 function tomorrowData(){
   const st=marketState(); if(st.phase==="open"||!st.nextOpen) return null;
   const next=etISO(st.nextOpen), np=etParts(st.nextOpen), wd=new Date(Date.UTC(np.y,np.mo-1,np.d)).getUTCDay(), info=dayInfo(np.y,np.mo,np.d);
@@ -1019,7 +1021,10 @@ function tomorrowData(){
     if(map[x]&&map[x].date===next) setups.push({x,t:`reports ${map[x].hour==="bmo"?"before the open":map[x].hour==="amc"?"after the close":"that day"}; expect a bigger move than usual`,w:20}); });
   setups.sort((a,b)=>b.w-a.w);
   const dw=dowStats(wd), mon=season("SPY"), mo=mon&&mon[np.mo-1];
-  return {st,next,np,wd,info,title,dayName,tiles,world,extra,mood,up,dn,n:sig.length,mine,ev,er,tonight,setups:setups.slice(0,4),dw,mo,isToday};
+  // fiber optics & photonics: the after-hours/pre-market move when there is one, else the last session's move
+  const optics=OPTICS.map(x=>{ const q=ovnQ(x); if(!q||q.chg==null&&q.ah==null) return null; const ext=q.ah!=null&&q.age<20*3600e3;
+    return {x,role:(q.name.split(" · ")[1]||""),v:ext?q.ah:q.chg,ext}; }).filter(Boolean);
+  return {st,next,np,wd,info,title,dayName,tiles,world,extra,mood,up,dn,n:sig.length,mine,ev,er,tonight,setups:setups.slice(0,4),dw,mo,isToday,optics};
 }
 function renderTomorrow(){
   const el=$("tmrWrap"); if(!el) return; const D=tomorrowData();
@@ -1034,7 +1039,7 @@ function renderTomorrow(){
   const hist=[D.dw?row("History",`${D.dayName}s, last ${Math.round(D.dw.n/52)||1} yrs: S&amp;P up <b>${D.dw.up.toFixed(0)}%</b> of the time, avg ${fmtP(D.dw.avg)}`):"",
     D.mo&&D.mo.avg!=null?row("",`${D.st.nextOpen.toLocaleDateString([], {month:"long",timeZone:"America/New_York"})} over 10 yrs: S&amp;P avg ${fmtP(D.mo.avg)}, up ${D.mo.win} of ${D.mo.n} years`):""].join("");
   const moverHead=D.st.phase==="pre"?"Your stocks pre-market":"Your stocks after hours";
-  const prompt=`What should I expect when the US stock market opens ${D.isToday?"today":"on "+dateTxt}? Search the web for overnight news, futures and the economic calendar.\nData from my tracker:\n${D.tiles.map(t=>`- ${t.l}: ${fmtP(t.v)}${t.live?"":" (last trade)"}`).join("\n")}\n${D.world.map(o=>`- ${o.q.name}: ${fmtP(o.q.chg)}`).join("\n")}\n${D.mine.length?`My stocks ${D.st.phase==="pre"?"pre-market":"after hours"}: ${D.mine.slice(0,8).map(o=>`${o.x} ${fmtP(o.e.chg)}`).join(", ")}\n`:""}${D.er.length?`Earnings: ${D.er.map(o=>`${o.x} ${o.e.hour||""}`).join(", ")}\n`:""}${D.ev.length?`Calendar: ${D.ev.map(e=>e.title).join("; ")}\n`:""}My watchlist: ${S.list.join(", ")}. Keep it short: the overnight story, what matters at the open, and what to watch for my stocks. Not investment advice.`;
+  const prompt=`What should I expect when the US stock market opens ${D.isToday?"today":"on "+dateTxt}? Search the web for overnight news, futures and the economic calendar.\nData from my tracker:\n${D.tiles.map(t=>`- ${t.l}: ${fmtP(t.v)}${t.live?"":" (last trade)"}`).join("\n")}\n${D.world.map(o=>`- ${o.q.name}: ${fmtP(o.q.chg)}`).join("\n")}\n${D.mine.length?`My stocks ${D.st.phase==="pre"?"pre-market":"after hours"}: ${D.mine.slice(0,8).map(o=>`${o.x} ${fmtP(o.e.chg)}`).join(", ")}\n`:""}${D.er.length?`Earnings: ${D.er.map(o=>`${o.x} ${o.e.hour||""}`).join(", ")}\n`:""}${D.ev.length?`Calendar: ${D.ev.map(e=>e.title).join("; ")}\n`:""}${D.optics.length?`Fiber & photonics: ${D.optics.map(o=>`${o.x} ${fmtP(o.v)}${o.ext?"":" (last session)"}`).join(", ")}\n`:""}My watchlist: ${S.list.join(", ")}. Keep it short: the overnight story, what matters at the open, and what to watch for my stocks. Not investment advice.`;
   el.innerHTML=`<section class="tmr">
     <div class="tmr-head"><div><h2>${D.title} <span>· ${esc(dateTxt)}</span></h2><small>${D.info.early?"Half day, closes 1:00 PM ET":"What to expect at the open"}${S.ovn&&S.ovn.made?` · updated ${ago(Date.parse(S.ovn.made))}`:""}</small></div>
       ${MOOD?`<span class="tmr-mood" style="color:${MOOD[1]};background:${MOOD[2]}">${MOOD[0]}</span>`:""}</div>
@@ -1042,6 +1047,19 @@ function renderTomorrow(){
     ${D.tiles.length?`<div class="tmr-tiles">${D.tiles.map(tile).join("")}</div>`:""}
     ${D.world.length||D.extra.length?`<div class="tmr-chips">${D.world.map(o=>`<span>${esc(o.q.name.split(" · ")[1]||o.q.name)} <b class="num ${tcls(o.q.chg)}">${fmtP(o.q.chg)}</b></span>`).join("")}${D.extra.map(x=>`<span>${x.l} ${x.val} <b class="num ${x.v==null?"":(x.inv?-x.v:x.v)>=0?"tup":"tdown"}">${x.bp!=null?`${x.bp>=0?"+":"−"}${Math.abs(x.bp).toFixed(1)} bp`:fmtP(x.v)}</b></span>`).join("")}</div>`:""}
     ${D.mine.length||D.tonight.length?`<h3>${moverHead}</h3><div class="tmr-list">${D.mine.slice(0,5).map(o=>`<button class="tmr-row" data-sym="${esc(o.x)}"><span class="tmr-what"><b>${esc(o.x)}</b>${D.tonight.includes(o.x)?` <span class="tmr-yours">reported</span>`:""}</span><span class="num ${tcls(o.e.chg)}">${o.e.chg>=0?"▲":"▼"} ${Math.abs(o.e.chg).toFixed(2)}%</span></button>`).join("")}${D.tonight.filter(x=>!D.mine.some(o=>o.x===x)).map(x=>row("Tonight",`<b>${esc(x)}</b> reported after the close; no after-hours trades seen yet`)).join("")}</div>`:""}
+    ${D.optics.length?`<h3>Fiber &amp; photonics <span class="tmr-tag">AI data centers</span></h3><div class="tmr-list">${D.optics.map(o=>`<button class="tmr-row" data-sym="${esc(o.x)}"><span class="tmr-what"><b>${esc(o.x)}</b> <span class="tmr-role">${esc(o.role)}</span></span><span class="num ${tcls(o.v)}">${o.v>=0?"▲":"▼"} ${Math.abs(o.v).toFixed(2)}%${o.ext?"":` <i class="tmr-est">last session</i>`}</span></button>`).join("")}</div>
+    <details class="coil-help"><summary>Why optics matter for AI</summary>
+      <p class="hint">AI clusters link thousands of GPUs with light instead of copper, so every GPU build-out pulls lasers, transceivers and fiber with it.</p>
+      <ul class="hint tmr-notes">
+        <li><b>Lasers</b>: Lumentum makes the indium phosphide lasers that are the light source inside transceivers.</li>
+        <li><b>Transceivers</b>: Coherent and Applied Optoelectronics make the modules linking switches to servers; Credo makes high-speed interconnects.</li>
+        <li><b>Optical DSP chips</b>: Marvell and Broadcom (AVGO) lead.</li>
+        <li><b>Fiber</b>: Corning supplies fiber, cable and connectors inside data centers; Meta signed a $6 billion fiber deal with it in January.</li>
+        <li><b>Between data centers</b>: Ciena's systems link sites as AI clusters spread across cities.</li>
+        <li><b>Co-packaged optics</b>: Nvidia and Broadcom are moving optics into the switch chip itself (about 3.5× less power). Volume ramp expected 2027–28; Nvidia invested in Lumentum and Coherent to lock in supply.</li>
+        <li><b>What moves them</b>: very sensitive to bond yields and AI spending news. Watch hyperscaler capex in Meta, Microsoft and Alphabet earnings.</li>
+      </ul>
+      <p class="hint">Not investment advice.</p></details>`:""}
     <h3>On deck</h3><div class="tmr-list">${evRows.join("")||row("",`No scheduled reports or earnings on your list.`)}${hist}</div>
     ${D.setups.length?`<h3>Setups on your list</h3><div class="tmr-list">${D.setups.map(o=>`<button class="tmr-row" data-sym="${esc(o.x)}"><span class="tmr-what"><b>${esc(o.x)}</b> ${esc(o.t)}</span></button>`).join("")}</div>`:""}
     <a class="claude" href="${claudeURL(prompt)}" target="_blank" rel="noopener">✨ Ask Claude what to expect</a>
@@ -2017,8 +2035,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.24";
+const APP_VERSION="3.25";
 const CHANGELOG=[
+  {v:"3.25",date:"2026-10-20",title:"Fiber & photonics",items:["Tomorrow card: new Fiber & photonics row for AI data-center optics: Lumentum, Coherent, Applied Optoelectronics, Credo, Marvell, Ciena and Corning","Shows each stock's after-hours or pre-market move, or the last session's move, refreshed every 30 minutes overnight; tap one to open it","\"Why optics matter for AI\" explains who makes what: lasers, transceivers, DSP chips, fiber, data-center links and co-packaged optics","Ask Claude now includes the optics moves"]},
   {v:"3.24",date:"2026-10-20",title:"Tomorrow card",items:["After the close, Home shows what to expect at the next open: a mood read (leaning up, mixed or leaning down) from overnight signals","S&P and Nasdaq futures, VIX, Bitcoin, Asia and Europe markets, the 10-year yield and oil, refreshed every 30 minutes overnight","Your stocks' after-hours or pre-market moves, now kept even if you close the app","The next session's calendar: economic reports, earnings for your stocks and the market movers, early closes","How the S&P usually does on that weekday, plus setups on your list: stretched, oversold, sitting on a key average or reporting","Ask Claude what to expect, with all of it filled in"]},
   {v:"3.23",date:"2026-10-20",title:"Bug fixes",items:["Earnings, dividends and the calendar now use the New York market date, so \"today\" no longer flips to tomorrow after 5 PM Pacific","NAV discounts: the list was empty because the data source stopped sending trading volume; volume now carries over from the last good day and the list is back","Gold Picks: \"beat S&P\" now only shows when a stock actually beat it (no more \"beat by 0 pts\"), and a weak number is never listed as a strength","Saved timeframe and report settings from older versions can no longer break a screen"]},
   {v:"3.22",date:"2026-10-20",title:"Biggest movers, upgraded",items:["Hot Trends now shows the top 5 gainers and top 5 losers in their own cards, with rank, price and a size bar","Movers default to today (1D) and have their own 1D/1W/1M/3M/YTD/1Y switch, separate from the page timeframe","The % shown now always matches the period the list is ranked by"]},
@@ -2776,7 +2795,8 @@ function wireTabs(){
     if(e.target.closest("#scanAll")){ scanAll(); return; }
     const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); setActiveSubs(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
-  $("tmrWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
+  $("tmrWrap").addEventListener("click",async e=>{ const r=e.target.closest("[data-sym]"); if(!r) return; const x=r.dataset.sym;
+    if(price(x)==null){ r.style.opacity=".5"; await ensureData([x]); r.style.opacity=""; } if(price(x)!=null) openDetail(x); });
   $("extWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   $("divWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   ["sigFeed","seaFeed"].forEach(id=>$(id).addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));

@@ -23,6 +23,14 @@ const SYMS = [
   ["FTSE", "UK · FTSE 100", "world", ".FTSE", "^FTSE", "^ukx"],
   ["SPY", "S&P 500 ETF", "etf", "SPY", "SPY", null],
   ["QQQ", "Nasdaq 100 ETF", "etf", "QQQ", "QQQ", null],
+  // fiber optics & photonics for AI data centers (the card's "Fiber & photonics" row)
+  ["LITE", "Lumentum · lasers", "optics", "LITE", "LITE", null],
+  ["COHR", "Coherent · transceivers", "optics", "COHR", "COHR", null],
+  ["AAOI", "Applied Optoelectronics · transceivers", "optics", "AAOI", "AAOI", null],
+  ["CRDO", "Credo · interconnects", "optics", "CRDO", "CRDO", null],
+  ["MRVL", "Marvell · optical DSPs", "optics", "MRVL", "MRVL", null],
+  ["CIEN", "Ciena · data-center links", "optics", "CIEN", "CIEN", null],
+  ["GLW", "Corning · fiber", "optics", "GLW", "GLW", null],
 ];
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
 const num = v => { if (typeof v === "number") return isFinite(v) ? v : null; if (typeof v !== "string") return null; const s = v.replace(/[,%+\s]/g, ""); return s !== "" && isFinite(+s) ? +s : null; };
@@ -105,9 +113,12 @@ const q = {};
 for (const [k, name, g] of SYMS) {
   const v = got[k];
   if (!v) { if (old[k]) q[k] = { ...old[k], stale: true }; continue; }
-  const chg = v.chgDirect != null && !v.ext ? v.chgDirect : v.prev ? (v.p / v.prev - 1) * 100 : null;
-  // ETFs: the after-hours or pre-market move, measured from the last regular close
-  const ah = g === "etf" && v.reg && v.p !== v.reg ? (v.p / v.reg - 1) * 100 : null;
+  const stock = g === "etf" || g === "optics";
+  // optics stocks: chg is the regular session's move; everything else: the latest move vs the previous close/settle
+  const chg = g === "optics" ? (v.chgDirect != null ? v.chgDirect : v.prev && v.reg ? (v.reg / v.prev - 1) * 100 : null)
+    : v.chgDirect != null && !v.ext ? v.chgDirect : v.prev ? (v.p / v.prev - 1) * 100 : null;
+  // ETFs and stocks: the after-hours or pre-market move, measured from the last regular close
+  const ah = stock && v.reg && v.p !== v.reg ? (v.p / v.reg - 1) * 100 : null;
   q[k] = { name, g, p: r4(v.p), prev: r4(v.prev), chg: chg == null ? null : r4(chg), ah: ah == null ? null : r4(ah), at: v.t ? new Date(v.t).toISOString() : null, src: v.src };
 }
 const fresh = Object.values(q).filter(x => !x.stale).length;
