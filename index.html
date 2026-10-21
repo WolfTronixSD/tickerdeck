@@ -178,6 +178,25 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .nv-det{display:flex;flex-direction:column;gap:6px;padding:0 0 14px 32px}.nv-det>div{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}.nv-det>div span{color:var(--muted)}.nv-btns{display:flex;gap:8px;margin-top:6px}.nv-btns button{flex:1}
 .chipbar button{flex:none;height:34px;padding:0 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
 .chipbar button[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
+.tmr{background:radial-gradient(120% 80% at 100% 0%,rgba(110,168,255,.14),transparent 60%),var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px;display:flex;flex-direction:column;gap:10px}
+.tmr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tmr h2{margin:0;font-size:18px}.tmr h2 span{color:var(--muted);font-weight:500;font-size:15px}
+.tmr-head small{color:var(--muted);font-size:12px}
+.tmr h3{margin:6px 0 -2px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.tmr-mood{flex:none;font-weight:700;font-size:13px;padding:5px 11px;border-radius:999px}
+.tmr-sub{margin:-4px 0 0;color:var(--muted);font-size:12px}
+.tmr-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tmr-tile{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:9px 11px;display:flex;flex-direction:column;gap:2px}
+.tmr-tile:last-child:nth-child(odd){grid-column:1/-1}
+.tmr-tile small{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tmr-tile b{font-size:17px}
+.tmr-tile i{font-style:normal;font-size:10px;color:var(--faint)}.tmr-tile.stale b{opacity:.6}
+.tmr-chips{display:flex;flex-wrap:wrap;gap:6px}.tmr-chips span{font-size:12px;color:var(--muted);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.tmr-list{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:2px 12px}
+.tmr-row{display:flex;gap:10px;align-items:baseline;justify-content:space-between;width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.tmr-list>.tmr-row:first-child{border-top:0}
+.tmr-when{flex:none;width:84px;color:var(--muted);font-size:12px}.tmr-what{flex:1;min-width:0}
+.tmr-yours{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-bg);padding:2px 6px;border-radius:6px;vertical-align:1px}
+.tmr-est{font-style:normal;font-size:11px;color:var(--faint)}
 .movers{border-radius:var(--r);padding:16px 14px 14px;background:radial-gradient(110% 70% at 0% 0%,rgba(43,217,154,.16),transparent 60%),radial-gradient(110% 70% at 100% 100%,rgba(255,92,114,.16),transparent 60%),var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
 .movers h2{margin:0;font-size:18px;letter-spacing:-.01em}
 .movers .mvtop small{color:var(--muted);font-size:12px}
@@ -494,6 +513,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button data-open-settings>⚙ Settings</button>
   </div>
   <section class="clock" id="clock" aria-label="Market clock"></section>
+  <div id="tmrWrap"></div>
 
   <div class="seg" role="group" aria-label="Time frame" id="seg">
     <button data-tf="1d" aria-pressed="true">1D</button>
@@ -845,7 +865,7 @@ function addTick(s,p,t){
 let saveT=null, frame=null; const dirty=new Set();
 // which session a trade at time t (ms) belongs to, in New York time
 function sessionAt(t){ const q=etParts(new Date(t)), inf=dayInfo(q.y,q.mo,q.d), m=q.h*60+q.mi; if(!inf.open) return "closed"; if(m>=240&&m<570) return "pre"; if(m>=570&&m<inf.close) return "reg"; if(m>=inf.close&&m<1200) return "post"; return "closed"; }
-S.ext={}; S.showExt=LS.get("showExt",true);
+S.ext=LS.get("ext",{}); S.showExt=LS.get("showExt",true); setInterval(()=>{ if(S.extDirty){ S.extDirty=0; LS.set("ext",S.ext); } },15000);
 // extended-hours quote to show now: pre-market trades during pre-market, after-hours trades until the next pre-market
 function extOf(s){
   if(!S.showExt) return null; const e=S.ext[s]; if(!e) return null; const ph=marketState().phase;
@@ -859,7 +879,7 @@ function extLine(s){ const e=extOf(s); return e?`<small class="extl"><b>${e.sess
 function onTrade(s,p,t){
   if(!S.list.includes(s)&&!IDX.some(x=>x[0]===s)&&!S.extra.has(s)) return;
   const sess=sessionAt(t);
-  if(sess==="pre"||sess==="post"){ const prevE=S.ext[s]; S.ext[s]={p,t,sess}; S.tickCount++; S.lastTick=Date.now(); dirty.add(s);
+  if(sess==="pre"||sess==="post"){ const prevE=S.ext[s]; S.ext[s]={p,t,sess}; S.extDirty=1; S.tickCount++; S.lastTick=Date.now(); dirty.add(s);
     if(prevE&&prevE.p!==p) (S.edir||(S.edir={}))[s]=p>prevE.p?1:-1; if(!frame) frame=requestAnimationFrame(flush); return; }
   const prev=price(s); S.live[s]={p,t}; S.tickCount++; S.lastTick=Date.now();
   addTick(s,p,t); dirty.add(s); if(prev!=null&&p!==prev) (S.dir||(S.dir={}))[s]=p>prev?1:-1;
@@ -882,7 +902,7 @@ function flush(){
   });
   if(S.dir) S.dir={};
   dirty.clear();
-  if(Date.now()-lastFull>3000){ lastFull=Date.now(); hero(); tape(); renderIdx(); renderExtMovers(); renderHeat(); renderBoard(); renderBanners(); if(S.tab!=="home"&&!S.open) renderTab(); }
+  if(Date.now()-lastFull>3000){ lastFull=Date.now(); hero(); tape(); renderIdx(); renderExtMovers(); renderTomorrow(); renderHeat(); renderBoard(); renderBanners(); if(S.tab!=="home"&&!S.open) renderTab(); }
   renderLive();
 }
 
@@ -923,8 +943,10 @@ function marketState(now=new Date()){
   return {phase,t,p,m,nextOpen,nextClose};
 }
 const cd=ms=>{ const s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), mi=Math.floor(s%3600/60); return d?`${d}d ${h}h ${mi}m`:`${String(h).padStart(2,"0")}:${String(mi).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; };
+let clockPhase=null;
 function renderClock(){
   const st=marketState(), now=new Date();
+  if(st.phase!==clockPhase){ const first=clockPhase==null; clockPhase=st.phase; if(!first) renderTomorrow(); }
   const label={open:"Market open",pre:"Pre-market",after:"After hours",closed:"Market closed"}[st.phase], dcls=st.phase==="open"?"open":st.phase==="closed"?"":"ext";
   $("mktDot").className="dot "+dcls;
   $("mktText").textContent=`${label} · ${st.p.h%12||12}:${String(st.p.mi).padStart(2,"0")} ${st.p.h<12?"AM":"PM"} ET`;
@@ -937,6 +959,93 @@ function renderClock(){
     ${why?`<p class="hint">${esc(why)}</p>`:""}
     <div class="clock-meta"><div><b>${st.phase==="open"?"Closing bell":"Opening bell"}</b><span>${target?`${target.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}, ${target.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})} your time`:"—"}</span></div>
     <div><b>Next holiday</b><span>${nhK?`${esc(HOLIDAYS[nhK])}, ${new Date(nhK+"T12:00:00").toLocaleDateString([], {month:"short",day:"numeric"})}`:"—"}</span></div></div>`;
+}
+
+/* ---------- tomorrow: what to expect at the next open ---------- */
+// overnight.json is written every 30 min between the close and the next open by .github/workflows/overnight.yml
+S.ovn=LS.get("ovn",null); let ovnAt=0;
+function ovnLoad(force){ if(!force&&Date.now()-ovnAt<5*60000) return; ovnAt=Date.now();
+  fetch("overnight.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.q){ S.ovn=j; LS.set("ovn",j); renderTomorrow(); } }).catch(()=>{}); }
+// a quote counts as live if it traded in the last 3 hours (futures pause 5–6 PM ET and all weekend)
+const ovnQ=k=>{ const q=S.ovn&&S.ovn.q&&S.ovn.q[k]; if(!q||q.p==null) return null; const age=q.at?Date.now()-Date.parse(q.at):1e12; return {...q,live:age<3*3600e3&&!q.stale,age}; };
+let dowCache=null;
+// how the S&P (SPY) did on a given weekday over the daily history we have (about 2 years)
+function dowStats(wd){
+  const d=S.daily.SPY; if(!d||!d.c||d.c.length<120) return null;
+  if(!dowCache||dowCache.key!==d.c.length+":"+d.day){ const g={};
+    for(let i=1;i<d.c.length;i++){ const p=etParts(new Date(d.c[i][0])), w=new Date(Date.UTC(p.y,p.mo-1,p.d)).getUTCDay(), r=(d.c[i][1]/d.c[i-1][1]-1)*100; (g[w]=g[w]||[]).push(r); }
+    dowCache={key:d.c.length+":"+d.day,g}; }
+  const a=dowCache.g[wd]; if(!a||a.length<20) return null;
+  return {n:a.length,up:a.filter(x=>x>0).length/a.length*100,avg:mean(a)};
+}
+function tomorrowData(){
+  const st=marketState(); if(st.phase==="open"||!st.nextOpen) return null;
+  const next=etISO(st.nextOpen), np=etParts(st.nextOpen), wd=new Date(Date.UTC(np.y,np.mo-1,np.d)).getUTCDay(), info=dayInfo(np.y,np.mo,np.d);
+  const isToday=next===today(), tmr=etISO(new Date(Date.now()+864e5))===next;
+  const dayName=st.nextOpen.toLocaleDateString([], {weekday:"long",timeZone:"America/New_York"});
+  const title=isToday?"Today":tmr?"Tomorrow":dayName;
+  // overnight gauges: futures when they're trading, otherwise the index ETFs' extended-hours move
+  const ES=ovnQ("ES"), NQ=ovnQ("NQ"), VIX=ovnQ("VIX"), TNX=ovnQ("TNX"), CL=ovnQ("CL");
+  const etfMove=k=>{ const e=extOf(k); if(e) return {v:e.chg,live:true,how:e.sess==="pre"?"pre-market":"after hours"}; const q=ovnQ(k); return q&&q.ah!=null?{v:q.ah,live:q.live,how:"after hours"}:null; };
+  const spyX=etfMove("SPY"), qqqX=etfMove("QQQ");
+  const btc=C.px.BTC&&C.px.BTC.p&&C.px.BTC.o?{v:(C.px.BTC.p/C.px.BTC.o-1)*100,live:Date.now()-(C.px.BTC.t||0)<6*3600e3}:null;
+  const tiles=[];
+  if(ES&&ES.live) tiles.push({k:"ES",l:"S&P futures",v:ES.chg,live:true}); else if(spyX) tiles.push({k:"SPY",l:`S&P · ${spyX.how}`,v:spyX.v,live:spyX.live}); else if(ES) tiles.push({k:"ES",l:"S&P futures",v:ES.chg,live:false});
+  if(NQ&&NQ.live) tiles.push({k:"NQ",l:"Nasdaq futures",v:NQ.chg,live:true}); else if(qqqX) tiles.push({k:"QQQ",l:`Nasdaq · ${qqqX.how}`,v:qqqX.v,live:qqqX.live}); else if(NQ) tiles.push({k:"NQ",l:"Nasdaq futures",v:NQ.chg,live:false});
+  if(VIX) tiles.push({k:"VIX",l:"VIX fear gauge",v:VIX.chg,live:VIX.live,inv:true,val:VIX.p.toFixed(1)});
+  if(btc) tiles.push({k:"BTC",l:"Bitcoin 24h",v:btc.v,live:btc.live});
+  const world=["N225","HSI","DAX","FTSE"].map(k=>({k,q:ovnQ(k)})).filter(o=>o.q&&o.q.chg!=null&&o.q.age<20*3600e3);
+  const extra=[TNX&&{l:"10-yr yield",val:TNX.p.toFixed(2)+"%",v:TNX.chg,inv:true,bp:TNX.prev!=null?(TNX.p-TNX.prev)*100:null},CL&&{l:"Oil",val:fmt$(CL.p),v:CL.chg}].filter(Boolean);
+  // mood: count live overnight signals pointing up vs down (VIX and yields count the other way)
+  const sig=[]; tiles.forEach(t=>{ if(t.live&&t.v!=null) sig.push(t.inv?-t.v:t.v); });
+  const asia=world.filter(o=>o.k==="N225"||o.k==="HSI"); if(asia.length&&(st.p.h>=20||st.p.h<9)) sig.push(mean(asia.map(o=>o.q.chg)));
+  const mine=S.list.map(x=>({x,e:extOf(x)})).filter(o=>o.e).sort((a,b)=>Math.abs(b.e.chg)-Math.abs(a.e.chg));
+  if(mine.length>=3) sig.push(mean(mine.map(o=>o.e.chg)));
+  const up=sig.filter(v=>v>0.1).length, dn=sig.filter(v=>v<-0.1).length;
+  const mood=sig.length<2?null:up-dn>=2?"up":dn-up>=2?"down":"mixed";
+  // calendar for that session
+  const map=S.earnings.map||{}, ev=marketEvents(next,next).map(e=>({t:e.note&&/(\d+:\d+ [AP]M)/.test(e.note)?e.note.match(/(\d+:\d+ [AP]M)/)[1]:"",title:e.title,est:e.est,kind:e.kind}));
+  if(wd===4&&!ev.some(e=>/claims/i.test(e.title))) ev.push({t:"8:30 AM",title:"Weekly jobless claims",kind:"macro"});
+  if(info.early) ev.push({t:"1:00 PM",title:`Early close (${info.early})`,kind:"calendar"});
+  const er=[...new Set(S.list.concat(MOVERS))].filter(x=>map[x]&&map[x].date===next).map(x=>({x,e:map[x],mine:S.list.includes(x)}))
+    .sort((a,b)=>(b.mine-a.mine)||((a.e.hour==="bmo"?0:1)-(b.e.hour==="bmo"?0:1)));
+  const tonight=S.list.filter(x=>map[x]&&map[x].date===today()&&map[x].hour==="amc"&&(st.phase==="after"||st.phase==="closed"));
+  // setups on your list
+  const setups=[]; S.list.forEach(x=>{ const A=analytics(x); if(!A) return; const p=price(x)||A.p, d50=A.s50?(p/A.s50-1)*100:null, d200=A.s200?(p/A.s200-1)*100:null;
+    if(A.R>=70) setups.push({x,t:`RSI ${A.R.toFixed(0)}, stretched; pullbacks are common from here`,w:A.R-60});
+    else if(A.R<=30) setups.push({x,t:`RSI ${A.R.toFixed(0)}, oversold; watch for a bounce`,w:40-A.R});
+    if(d50!=null&&Math.abs(d50)<1) setups.push({x,t:`sitting on its 50-day average (${fmtP(d50)})`,w:8});
+    else if(d200!=null&&Math.abs(d200)<1.5) setups.push({x,t:`testing its 200-day average (${fmtP(d200)})`,w:9});
+    if(map[x]&&map[x].date===next) setups.push({x,t:`reports ${map[x].hour==="bmo"?"before the open":map[x].hour==="amc"?"after the close":"that day"}; expect a bigger move than usual`,w:20}); });
+  setups.sort((a,b)=>b.w-a.w);
+  const dw=dowStats(wd), mon=season("SPY"), mo=mon&&mon[np.mo-1];
+  return {st,next,np,wd,info,title,dayName,tiles,world,extra,mood,up,dn,n:sig.length,mine,ev,er,tonight,setups:setups.slice(0,4),dw,mo,isToday};
+}
+function renderTomorrow(){
+  const el=$("tmrWrap"); if(!el) return; const D=tomorrowData();
+  if(!D){ el.innerHTML=""; return; }
+  ovnLoad();
+  const dateTxt=D.st.nextOpen.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric",timeZone:"America/New_York"});
+  const MOOD={up:["Leaning up","var(--gain)","var(--gain-bg)"],down:["Leaning down","var(--loss)","var(--loss-bg)"],mixed:["Mixed","var(--accent)","var(--accent-bg)"]}[D.mood];
+  const tile=t=>`<div class="tmr-tile${t.live?"":" stale"}"><small>${esc(t.l)}</small><b class="num ${t.v==null?"":(t.inv?-t.v:t.v)>=0?"tup":"tdown"}">${t.val?`${t.val} `:""}${fmtP(t.v)}</b>${t.live?"":`<i>last trade</i>`}</div>`;
+  const row=(a,b,c="")=>`<div class="tmr-row"><span class="tmr-when">${a}</span><span class="tmr-what">${b}</span>${c}</div>`;
+  const evRows=D.ev.map(e=>row(e.t?e.t+" ET":"All day",`${esc(e.title)}${e.est?` <i class="tmr-est">est.</i>`:""}`))
+    .concat(D.er.slice(0,6).map(o=>row(o.e.hour==="bmo"?"Before open":o.e.hour==="amc"?"After close":"During day",`<b>${esc(o.x)}</b> earnings${o.mine?` <span class="tmr-yours">yours</span>`:""}`)));
+  const hist=[D.dw?row("History",`${D.dayName}s, last ${Math.round(D.dw.n/52)||1} yrs: S&amp;P up <b>${D.dw.up.toFixed(0)}%</b> of the time, avg ${fmtP(D.dw.avg)}`):"",
+    D.mo&&D.mo.avg!=null?row("",`${D.st.nextOpen.toLocaleDateString([], {month:"long",timeZone:"America/New_York"})} over 10 yrs: S&amp;P avg ${fmtP(D.mo.avg)}, up ${D.mo.win} of ${D.mo.n} years`):""].join("");
+  const moverHead=D.st.phase==="pre"?"Your stocks pre-market":"Your stocks after hours";
+  const prompt=`What should I expect when the US stock market opens ${D.isToday?"today":"on "+dateTxt}? Search the web for overnight news, futures and the economic calendar.\nData from my tracker:\n${D.tiles.map(t=>`- ${t.l}: ${fmtP(t.v)}${t.live?"":" (last trade)"}`).join("\n")}\n${D.world.map(o=>`- ${o.q.name}: ${fmtP(o.q.chg)}`).join("\n")}\n${D.mine.length?`My stocks ${D.st.phase==="pre"?"pre-market":"after hours"}: ${D.mine.slice(0,8).map(o=>`${o.x} ${fmtP(o.e.chg)}`).join(", ")}\n`:""}${D.er.length?`Earnings: ${D.er.map(o=>`${o.x} ${o.e.hour||""}`).join(", ")}\n`:""}${D.ev.length?`Calendar: ${D.ev.map(e=>e.title).join("; ")}\n`:""}My watchlist: ${S.list.join(", ")}. Keep it short: the overnight story, what matters at the open, and what to watch for my stocks. Not investment advice.`;
+  el.innerHTML=`<section class="tmr">
+    <div class="tmr-head"><div><h2>${D.title} <span>· ${esc(dateTxt)}</span></h2><small>${D.info.early?"Half day, closes 1:00 PM ET":"What to expect at the open"}${S.ovn&&S.ovn.made?` · updated ${ago(Date.parse(S.ovn.made))}`:""}</small></div>
+      ${MOOD?`<span class="tmr-mood" style="color:${MOOD[1]};background:${MOOD[2]}">${MOOD[0]}</span>`:""}</div>
+    ${D.mood?`<p class="tmr-sub">${D.up} of ${D.n} overnight signals point up, ${D.dn} down. A read on the mood, not a forecast.</p>`:`<p class="tmr-sub">Overnight signals fill in as futures and after-hours trades come in.</p>`}
+    ${D.tiles.length?`<div class="tmr-tiles">${D.tiles.map(tile).join("")}</div>`:""}
+    ${D.world.length||D.extra.length?`<div class="tmr-chips">${D.world.map(o=>`<span>${esc(o.q.name.split(" · ")[1]||o.q.name)} <b class="num ${tcls(o.q.chg)}">${fmtP(o.q.chg)}</b></span>`).join("")}${D.extra.map(x=>`<span>${x.l} ${x.val} <b class="num ${x.v==null?"":(x.inv?-x.v:x.v)>=0?"tup":"tdown"}">${x.bp!=null?`${x.bp>=0?"+":"−"}${Math.abs(x.bp).toFixed(1)} bp`:fmtP(x.v)}</b></span>`).join("")}</div>`:""}
+    ${D.mine.length||D.tonight.length?`<h3>${moverHead}</h3><div class="tmr-list">${D.mine.slice(0,5).map(o=>`<button class="tmr-row" data-sym="${esc(o.x)}"><span class="tmr-what"><b>${esc(o.x)}</b>${D.tonight.includes(o.x)?` <span class="tmr-yours">reported</span>`:""}</span><span class="num ${tcls(o.e.chg)}">${o.e.chg>=0?"▲":"▼"} ${Math.abs(o.e.chg).toFixed(2)}%</span></button>`).join("")}${D.tonight.filter(x=>!D.mine.some(o=>o.x===x)).map(x=>row("Tonight",`<b>${esc(x)}</b> reported after the close; no after-hours trades seen yet`)).join("")}</div>`:""}
+    <h3>On deck</h3><div class="tmr-list">${evRows.join("")||row("",`No scheduled reports or earnings on your list.`)}${hist}</div>
+    ${D.setups.length?`<h3>Setups on your list</h3><div class="tmr-list">${D.setups.map(o=>`<button class="tmr-row" data-sym="${esc(o.x)}"><span class="tmr-what"><b>${esc(o.x)}</b> ${esc(o.t)}</span></button>`).join("")}</div>`:""}
+    <a class="claude" href="${claudeURL(prompt)}" target="_blank" rel="noopener">✨ Ask Claude what to expect</a>
+  </section>`;
 }
 
 /* ---------- charts ---------- */
@@ -1207,7 +1316,7 @@ async function loadMarketNews(){
 }
 function render(){
   document.body.classList.toggle("priv",S.priv);
-  renderIdx(); renderExtMovers(); renderEarnings(); renderNews(); if(S.tab==="home") renderTab();
+  renderIdx(); renderExtMovers(); renderTomorrow(); renderEarnings(); renderNews(); if(S.tab==="home") renderTab();
   $("wakeBtn").classList.toggle("on",!!S.wake);
   $("privBtn").classList.toggle("on",S.priv); $("privBtn").setAttribute("aria-pressed",S.priv);
   $("soundBtn").classList.toggle("on",S.sound); $("soundBtn").setAttribute("aria-pressed",S.sound);
@@ -1908,8 +2017,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.23";
+const APP_VERSION="3.24";
 const CHANGELOG=[
+  {v:"3.24",date:"2026-10-20",title:"Tomorrow card",items:["After the close, Home shows what to expect at the next open: a mood read (leaning up, mixed or leaning down) from overnight signals","S&P and Nasdaq futures, VIX, Bitcoin, Asia and Europe markets, the 10-year yield and oil, refreshed every 30 minutes overnight","Your stocks' after-hours or pre-market moves, now kept even if you close the app","The next session's calendar: economic reports, earnings for your stocks and the market movers, early closes","How the S&P usually does on that weekday, plus setups on your list: stretched, oversold, sitting on a key average or reporting","Ask Claude what to expect, with all of it filled in"]},
   {v:"3.23",date:"2026-10-20",title:"Bug fixes",items:["Earnings, dividends and the calendar now use the New York market date, so \"today\" no longer flips to tomorrow after 5 PM Pacific","NAV discounts: the list was empty because the data source stopped sending trading volume; volume now carries over from the last good day and the list is back","Gold Picks: \"beat S&P\" now only shows when a stock actually beat it (no more \"beat by 0 pts\"), and a weak number is never listed as a strength","Saved timeframe and report settings from older versions can no longer break a screen"]},
   {v:"3.22",date:"2026-10-20",title:"Biggest movers, upgraded",items:["Hot Trends now shows the top 5 gainers and top 5 losers in their own cards, with rank, price and a size bar","Movers default to today (1D) and have their own 1D/1W/1M/3M/YTD/1Y switch, separate from the page timeframe","The % shown now always matches the period the list is ranked by"]},
   {v:"3.21",date:"2026-10-20",title:"Keys stay put",items:["Your Finnhub and Twelve Data keys are now saved twice (localStorage and IndexedDB) and restored automatically if one gets cleared","GoldRabbit asks the browser to keep its storage permanently, so it should stop asking for the key"]},
@@ -2666,6 +2776,7 @@ function wireTabs(){
     if(e.target.closest("#scanAll")){ scanAll(); return; }
     const tr=e.target.closest("[data-trend]"); if(tr){ S.trend=tr.dataset.trend; LS.set("trend",S.trend); renderTab(); setActiveSubs(); S.gen=(S.gen||0)+1; ensureData(themeSyms(S.trend).concat(tabSyms("trends")),{daily:true,gen:S.gen}); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
+  $("tmrWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   $("extWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   $("divWrap").addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   ["sigFeed","seaFeed"].forEach(id=>$(id).addEventListener("click",e=>{ const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); }));
