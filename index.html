@@ -175,6 +175,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .chipbar::-webkit-scrollbar{display:none}
 .nv-pill{min-width:74px;height:52px;border-radius:12px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);line-height:1;color:var(--gain);background:var(--gain-bg)}.nv-pill b{font:800 18px var(--mono,monospace)}.nv-pill small{font-size:10px;opacity:.8;margin-top:4px}.nv-pill.pm{color:var(--loss);background:var(--loss-bg)}
 .nv-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;font-size:10.5px;font-weight:700;vertical-align:2px;background:var(--accent-bg);color:var(--accent)}
+.ws-it{padding:12px 0;border-bottom:1px solid var(--line);scroll-margin:80px}.ws-it:last-child{border-bottom:0}.ws-h{display:flex;align-items:center;gap:10px}.ws-n{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font:700 12px var(--mono);color:var(--c);border:1px solid var(--c)}.ws-it p{margin:6px 0 0 36px;font-size:13.5px;line-height:1.5;color:var(--muted)}.ws-it .ws-fix{color:var(--text)}.ws-fix span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--c);margin-right:4px}.ws-hl{background:var(--accent-bg);border-radius:10px;padding-inline:8px}.ws-today .ws-it{border:0;padding-top:4px}.ws-chk{display:flex;gap:12px;align-items:flex-start;padding:10px 0;font-size:14px;line-height:1.4;border-bottom:1px solid var(--line)}.ws-chk input{width:20px;height:20px;flex:none;accent-color:var(--gain);margin-top:1px}.ws-pl{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}.ws-pl input{height:42px;border-radius:10px;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:0 12px;font-size:16px}
 .nv-det{display:flex;flex-direction:column;gap:6px;padding:0 0 14px 32px}.nv-det>div{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}.nv-det>div span{color:var(--muted)}.nv-btns{display:flex;gap:8px;margin-top:6px}.nv-btns button{flex:1}
 .chipbar button{flex:none;height:34px;padding:0 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
 .chipbar button[aria-pressed="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
@@ -501,6 +502,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button id="coilBtn">🌀 Spring Coil</button>
     <button id="bargainBtn">📋 Bargain Scorecard</button>
     <button id="navBtn">🏷️ NAV discounts</button>
+    <button id="wiseBtn">🦉 Stock wisdom</button>
     <button id="refreshBtn">⟳ Refresh</button>
     <button id="shareBtn">⇪ Share summary</button>
     <button id="briefBtn">☕ Briefing</button>
@@ -1481,6 +1483,14 @@ function wire(){
   $("coilBtn").addEventListener("click",()=>openCoil());
   $("bargainBtn").addEventListener("click",()=>openBargain());
   $("navBtn").addEventListener("click",()=>openNav());
+  $("wiseBtn").addEventListener("click",()=>openWisdom());
+  $("sheet").addEventListener("click",e=>{ if(S.open!=="__wise") return;
+    const tb=e.target.closest("[data-wstab]"); if(tb){ S.ws.tab=tb.dataset.wstab; LS.set("wsTab",S.ws.tab); renderWisdom(); $("sheet").scrollTop=0; return; }
+    const sk=e.target.closest("[data-wsskip]"); if(sk){ S.ws.skip+=Number(sk.dataset.wsskip); renderWisdom(); return; }
+    const go=e.target.closest("[data-wsgo]"); if(go){ const [k,i]=go.dataset.wsgo.split(":"); S.ws.tab=k; LS.set("wsTab",k); renderWisdom(); const el=$("ws-"+k+"-"+i); if(el){ el.classList.add("ws-hl"); el.scrollIntoView({block:"center",behavior:"smooth"}); } return; }
+    if(e.target.closest("[data-wsreset]")){ S.ws.chk={}; renderWisdom(); } });
+  $("sheet").addEventListener("change",e=>{ if(S.open!=="__wise") return; const c=e.target.closest("[data-wschk]"); if(c){ S.ws.chk[c.dataset.wschk]=c.checked; renderWisdom(); } });
+  $("sheet").addEventListener("input",e=>{ if(S.open!=="__wise") return; const p=e.target.closest("[data-wsplan]"); if(p){ const o=LS.get("crashPlan",{}); o[p.dataset.wsplan]=p.value.slice(0,200); LS.set("crashPlan",o); } });
   $("sheet").addEventListener("click",e=>{ if(S.open!=="__nav") return;
     const so=e.target.closest("[data-nvsort]"); if(so){ S.nv.sort=so.dataset.nvsort; S.nv.shown=15; LS.set("nvSort",S.nv.sort); renderNav(); return; }
     if(e.target.closest("[data-nvtrade]")){ S.nv.trade=!S.nv.trade; S.nv.shown=15; LS.set("nvTrade",S.nv.trade); renderNav(); return; }
@@ -2020,8 +2030,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.26";
+const APP_VERSION="3.27";
 const CHANGELOG=[
+  {v:"3.27",date:"2026-10-21",title:"Stock wisdom",items:["New 🦉 Stock wisdom button on Home: 20 lessons from market history, as 10 traps to avoid, 6 habits that work and 4 signals to watch, each with what history shows and what to do","Wisdom of the day, plus a mind map: tap any box to jump to that lesson","Before you buy: an 8-point checklist to go through before any new purchase","Crash plan: write down what you'll do in a 20% or 30% drop; it saves on this device as you type"]},
   {v:"3.26",date:"2026-10-20",title:"Fiber & Photonics section",items:["Fiber & Photonics is now its own section: tap 💡 Fiber & Photonics on Home, or pick it on the Trends tab","Live prices grouped by role: lasers & transceivers, optical chips & interconnects, fiber & connectors, and links between data centers","After the close, the group's after-hours and pre-market moves, refreshed every 30 minutes overnight","\"Why optics matter for AI\" explains who makes what, co-packaged optics, and what moves these stocks","Removed the optics row from the Tomorrow card"]},
   {v:"3.25",date:"2026-10-20",title:"Fiber & photonics",items:["Tomorrow card: new Fiber & photonics row for AI data-center optics: Lumentum, Coherent, Applied Optoelectronics, Credo, Marvell, Ciena and Corning","Shows each stock's after-hours or pre-market move, or the last session's move, refreshed every 30 minutes overnight; tap one to open it","\"Why optics matter for AI\" explains who makes what: lasers, transceivers, DSP chips, fiber, data-center links and co-packaged optics","Ask Claude now includes the optics moves"]},
   {v:"3.24",date:"2026-10-20",title:"Tomorrow card",items:["After the close, Home shows what to expect at the next open: a mood read (leaning up, mixed or leaning down) from overnight signals","S&P and Nasdaq futures, VIX, Bitcoin, Asia and Europe markets, the 10-year yield and oil, refreshed every 30 minutes overnight","Your stocks' after-hours or pre-market moves, now kept even if you close the app","The next session's calendar: economic reports, earnings for your stocks and the market movers, early closes","How the S&P usually does on that weekday, plus setups on your list: stretched, oversold, sitting on a key average or reporting","Ask Claude what to expect, with all of it filled in"]},
@@ -2393,6 +2404,66 @@ function renderNav(){
 }
 function openNav(){ S.nv=S.nv||{open:{},shown:15}; S.nv.sort=LS.get("nvSort","deep"); S.nv.trade=LS.get("nvTrade",true); S.nv.shown=15; S.open="__nav"; renderNav(); showSheet(); nvLoad(); }
 function openBargain(){ S.open="__bargain"; renderBargain(); showSheet(); bgLoad(); }
+/* ---------- Stock wisdom: 20 lessons from market history, a mind map, a pre-buy checklist and a crash plan ---------- */
+const WS_TRAPS=[
+ ["Panic-selling dips","The S&P 500 drops about 14% at some point in an average year, yet ends the year higher about 3 years in 4.","Expect a 10–15% dip every year and decide now that you won't sell into it."],
+ ["Timing the market","The best days usually come right after the worst ones. Missing the 10 best days over 20 years has roughly halved returns.","Stay invested and buy on a fixed schedule."],
+ ["Chasing hot winners","Last year's top funds and sectors usually lag the year after.","Buy because of your plan, not because something is up."],
+ ["“It always comes back”","Indexes have recovered; many single stocks never did. The Nasdaq-100 fell about 80% after 2000 and took about 15 years to get back.","Know whether you own an index or a single bet."],
+ ["Blind averaging down","A cheap stock can keep getting cheaper.","Average down only on diversified funds, or when the business itself hasn't broken."],
+ ["Over-concentration","About 4% of all stocks created nearly all of the market's net gains; most single stocks trail cash over their lifetime.","Diversify, and cap any one stock at a loss you could live with."],
+ ["Paying active fees","About 85–90% of active large-cap funds trail their index over 15 years.","Use low-cost index funds as your core."],
+ ["Holding leveraged ETFs","2x and 3x funds lose value over time in choppy markets.","Day-trading tools only, never long-term holds."],
+ ["Fee and tax drag","A 1% yearly fee can eat about a quarter of your ending wealth over 30 years.","Cheap funds, tax-advantaged accounts, fewer trades."],
+ ["Needing money soon","Having to sell in a downturn locks in the loss.","Emergency fund first; invest only money you won't touch for 5+ years."]];
+const WS_HABITS=[
+ ["Time in the market","Compounding needs decades to do its work.","Start early, add regularly, let it run."],
+ ["Automate buying","Dollar-cost averaging takes emotion out of the decision.","Set an automatic buy on payday."],
+ ["Rebalance 1–2x a year","Forces you to trim what ran up and add to what lagged.","Pick fixed dates and stick to them."],
+ ["Reinvest dividends","Historically a large share of total return.","Turn on dividend reinvestment."],
+ ["Write a crash plan","People who decide in advance behave far better in the moment.","Fill in the Crash plan tab here."],
+ ["Size by risk","A beta of 1.44 (like QQQ) means it moves about 1.4x the market.","Hold a smaller position in volatile names to carry the same risk."]];
+const WS_WATCH=[
+ ["Valuation (CAPE)","A CAPE above about 35 has been followed by below-average 10-year returns. It says almost nothing about next month.","Use it to set expectations, not to time trades."],
+ ["Bond yield vs P/E","When bonds pay more than stocks' earnings yield (1 ÷ P/E), stocks need real earnings growth to justify prices.","Compare the 10-year yield with 1 ÷ forward P/E."],
+ ["Earnings guidance","Prices follow where earnings are heading, not where they were.","Watch revisions, guidance and margins at each report."],
+ ["Your own behavior","Fund investors routinely earn less than the very funds they own by buying high and selling low.","Check your plan before every trade."]];
+const WS_ALL=[...WS_TRAPS.map((x,i)=>["traps",i,x]),...WS_HABITS.map((x,i)=>["habits",i,x]),...WS_WATCH.map((x,i)=>["watch",i,x])];
+const WS_TABS=[["today","Today"],["map","Mind map"],["traps","10 traps"],["habits","6 habits"],["watch","4 signals"],["check","Before you buy"],["plan","Crash plan"]];
+const WS_CHECK=["I can explain what the company does and how it makes money","I'm buying for a reason in my plan, not because it's up","This position is small enough that a 50% drop wouldn't hurt me","I know if it's cheap or expensive (P/E, PEG vs. its peers)","Earnings and sales are growing, and debt is manageable","I've checked when it next reports earnings","I know my exit: what would make me sell","I won't need this money for at least 5 years"];
+const WS_PLAN=[["ef","Emergency fund covers (months)"],["long","Money I won't touch for 5+ years"],["mix","Target mix: stocks / bonds / cash"],["cap","Largest single position allowed (% of portfolio)"],["d20","If the market drops 20%, I will"],["d30","If it drops 30% or more, I will"],["reb","My rebalance dates each year"]];
+const wsNum=(k,i)=>k==="traps"?i+1:k==="habits"?i+11:i+17;
+const wsCol=k=>k==="traps"?"var(--loss)":k==="habits"?"var(--gain)":"var(--accent)";
+function wsDay(){ const d=new Date(), n=Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))/864e5); return ((n+(S.ws.skip||0))%20+20)%20; }
+function wsItem(k,i,x){ return `<div class="ws-it" id="ws-${k}-${i}" style="--c:${wsCol(k)}"><div class="ws-h"><span class="ws-n">${wsNum(k,i)}</span><b>${esc(x[0])}</b></div><p>${esc(x[1])}</p><p class="ws-fix"><span>${k==="watch"?"How to use it":k==="habits"?"Do this":"Fix"}</span> ${esc(x[2])}</p></div>`; }
+function wsMap(){
+  const leaf=(k,i,x,cx,y)=>`<g data-wsgo="${k}:${i}" style="cursor:pointer"><rect x="${cx}" y="${y}" width="150" height="24" rx="7" fill="var(--panel)" stroke="${wsCol(k)}" stroke-opacity=".55"/><text x="${cx+8}" y="${y+16}" font-size="11" fill="var(--text)">${wsNum(k,i)} ${esc(x[0])}</text></g>`;
+  const branch=(k,list,y,label)=>`<path d="M20 ${y+14}H32" stroke="var(--line)" stroke-width="1.5"/><rect x="32" y="${y}" width="200" height="28" rx="8" fill="${wsCol(k)}" fill-opacity=".14" stroke="${wsCol(k)}" stroke-width="1.5"/><text x="44" y="${y+19}" font-size="12.5" font-weight="700" fill="var(--text)">${label}</text>${list.map((x,i)=>leaf(k,i,x,i%2?194:38,y+36+Math.floor(i/2)*30)).join("")}`;
+  return `<svg viewBox="0 0 360 496" width="100%" role="img" aria-label="Mind map: avoid 10 traps, keep 6 habits, watch 4 signals" style="display:block;max-width:520px;margin:0 auto">
+    <rect x="100" y="8" width="160" height="34" rx="10" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1.5"/><text x="180" y="30" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">Invest well</text>
+    <path d="M180 42V50H20V406" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+    ${branch("traps",WS_TRAPS,60,"10 traps to avoid")}${branch("habits",WS_HABITS,256,"6 habits that work")}${branch("watch",WS_WATCH,392,"4 signals to watch")}</svg>`;
+}
+function renderWisdom(){
+  if(S.open!=="__wise") return;
+  const t=S.ws.tab; let body="";
+  if(t==="today"){ const [k,i,x]=WS_ALL[wsDay()];
+    body=`<div class="card ws-today" style="--c:${wsCol(k)}"><span class="coil-lbl">Wisdom of the day · ${wsNum(k,i)} of 20</span>${wsItem(k,i,x)}<div class="nv-btns"><button class="ghost" data-wsskip="-1">‹ Previous</button><button class="ghost" data-wsskip="1">Next ›</button></div></div>
+      <div class="card"><b>The core rule</b><p class="hint" style="color:var(--text)">Stay invested, stay diversified, keep costs low, and decide your crash plan before the crash. Most investors lose money through their own behavior, not through the market.</p></div>
+      <div class="card"><b>Right now, check</b><p class="hint">Is the 10-year Treasury yield above 1 ÷ the Nasdaq-100's forward P/E? If so, stocks are paying less than bonds and need earnings growth to hold up. Watch the next big-tech earnings and the Fed meeting.</p></div>`; }
+  else if(t==="map") body=`<div class="card">${wsMap()}<p class="hint">Tap any box to read that lesson.</p></div>`;
+  else if(t==="traps"||t==="habits"||t==="watch"){ const L=t==="traps"?WS_TRAPS:t==="habits"?WS_HABITS:WS_WATCH; body=`<div class="card" style="gap:0">${L.map((x,i)=>wsItem(t,i,x)).join("")}</div>`; }
+  else if(t==="check"){ const n=WS_CHECK.filter((_,i)=>S.ws.chk[i]).length;
+    body=`<div class="card" style="gap:2px"><p class="hint">Go through this before any new buy. ${n}/${WS_CHECK.length} checked.</p>${WS_CHECK.map((q,i)=>`<label class="ws-chk"><input type="checkbox" data-wschk="${i}" ${S.ws.chk[i]?"checked":""}><span>${esc(q)}</span></label>`).join("")}
+      <p class="hint" style="margin-top:8px;color:${n===WS_CHECK.length?"var(--gain)":"var(--muted)"}">${n===WS_CHECK.length?"All clear. You've done your homework.":"Anything unchecked is a reason to wait or buy smaller."}</p><button class="ghost" data-wsreset>Clear checklist</button></div>`; }
+  else if(t==="plan"){ const p=LS.get("crashPlan",{});
+    body=`<div class="card"><p class="hint">Fill this in while markets are calm. It saves on this device as you type.</p>${WS_PLAN.map(([k,l])=>`<label class="ws-pl"><span>${esc(l)}</span><input type="text" data-wsplan="${k}" value="${esc(p[k]||"")}" placeholder="…" autocomplete="off"></label>`).join("")}</div>`; }
+  $("sheetIn").innerHTML=`<div class="grab"></div><div class="d-head"><div><h3>🦉 Stock wisdom</h3><p>20 lessons from market history: traps, habits and signals</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="chipbar coil-chips">${WS_TABS.map(([k,l])=>`<button data-wstab="${k}" aria-pressed="${t===k}">${l}</button>`).join("")}</div>
+    ${body}
+    <p class="hint">Figures are rounded, widely cited historical averages. General education, not investment advice.</p>`;
+}
+function openWisdom(){ S.ws=S.ws||{skip:0,chk:{}}; S.ws.tab=LS.get("wsTab","today"); S.open="__wise"; renderWisdom(); showSheet(); }
 /* ---------- Spring Coil: price below both the 50-day and 200-day averages ---------- */
 // popular large caps scanned on top of the watchlist and every theme
 const COIL_EXTRA=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","BRK.B","JPM","V","MA","UNH","LLY","JNJ","PG","KO","PEP","WMT","COST","HD","MCD","NKE","SBUX","DIS","NFLX","ADBE","CRM","ORCL","INTC","AMD","QCOM","TXN","CSCO","IBM","PYPL","BA","CAT","DE","GE","MMM","UPS","FDX","PFE","MRK","ABBV","BMY","CVS","T","VZ","TGT","LOW","GS","MS","BAC","WFC","C","XOM","CVX","F","GM","UBER","ABNB","SHOP","PLTR"];
