@@ -1,0 +1,29 @@
+name: overnight
+on:
+  schedule:
+    # every 30 minutes from the US close to the next open (times are UTC; covers EDT and EST)
+    - cron: "15,45 20-23 * * 0-4"   # Sun–Thu evenings
+    - cron: "15,45 0-14 * * 1-5"    # Mon–Fri overnight and early morning
+  workflow_dispatch:
+  push:
+    paths: ["scripts/overnight.mjs", ".github/workflows/overnight.yml"]
+permissions:
+  contents: write
+concurrency: { group: overnight, cancel-in-progress: true }
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/overnight.mjs
+        timeout-minutes: 3
+      - name: Save overnight.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add overnight.json
+          git diff --cached --quiet && exit 0
+          git commit -m "overnight: refresh"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done
