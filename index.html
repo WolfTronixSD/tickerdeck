@@ -621,7 +621,10 @@ const fmtP=v=>v==null||isNaN(v)?"—":(v>0?"+":"")+Number(v).toFixed(2)+"%";
 const cls=v=>v==null?"na":v>=0?"up":"down";
 const tcls=v=>v==null?"":v>=0?"tup":"tdown";
 const money=s=>`<span class="money">${s}</span>`;
-const today=()=>new Date().toISOString().slice(0,10);
+// calendar dates are US market dates (New York), not UTC, so "today" doesn't flip to tomorrow at 5 PM Pacific
+const etDayFmt=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"});
+const etISO=d=>etDayFmt.format(d);
+const today=()=>etISO(new Date());
 function hue(s){ if(HUES[s]) return HUES[s]; let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 55% 42%)`; }
 function logo(s){ const p=S.profile[s]; return `<div class="logo" style="background:${hue(s)}${s.length>3?";font-size:10px":""}">${p&&p.logo?`<img src="${esc(p.logo)}" alt="" loading="lazy" onerror="this.remove()">`:""}${p&&p.logo?"":esc(s.slice(0,4))}</div>`; }
 function ago(ms){ const s=Math.round((Date.now()-ms)/1000); if(s<5) return "just now"; if(s<60) return s+"s ago"; const m=Math.round(s/60); if(m<60) return m+" min ago"; const h=Math.round(m/60); return h<48?h+" h ago":Math.round(h/24)+" days ago"; }
@@ -799,7 +802,7 @@ async function loadStatic(s,{metric=true,profile=true}={}){
 }
 async function loadEarnings(){
   if(S.earnings.at&&S.earnings.span===100&&Date.now()-S.earnings.at<12*3600e3) return;
-  const from=today(), to=new Date(Date.now()+100*864e5).toISOString().slice(0,10);
+  const from=today(), to=etISO(new Date(Date.now()+100*864e5));
   try{ const r=await api(`/calendar/earnings?from=${from}&to=${to}`); const map={};
     (r.earningsCalendar||[]).forEach(e=>{ if(!map[e.symbol]||e.date<map[e.symbol].date) map[e.symbol]={date:e.date,hour:e.hour,eps:e.epsEstimate}; });
     S.earnings={at:Date.now(),span:100,map}; LS.set("earn",S.earnings); }catch(e){}
@@ -1186,7 +1189,7 @@ function renderIdx(){
   $("idx").innerHTML=IDX.map(([sym,name])=>{ const p=price(sym), r=r1d(sym); return `<button data-idx="${sym}" aria-label="${name}"><small>${name}</small><span class="num ${tcls(r)}">${fmtP(r)}</span><small class="num" style="font-weight:400">${p?fmt$(p):"—"}</small>${(e=>e?`<small class="num" style="color:var(--blue)">${e.sess==="pre"?"PRE":"AH"} <span class="${tcls(e.chg)}">${fmtP(e.chg)}</span></small>`:"")(extOf(sym))}</button>`; }).join("");
 }
 function renderEarnings(){
-  const map=S.earnings.map||{}, now=today(), lim=new Date(Date.now()+30*864e5).toISOString().slice(0,10);
+  const map=S.earnings.map||{}, now=today(), lim=etISO(new Date(Date.now()+30*864e5));
   const rows=S.list.filter(s=>map[s]&&map[s].date>=now&&map[s].date<=lim).sort((a,b)=>map[a].date.localeCompare(map[b].date));
   $("erFeed").innerHTML=rows.length?rows.map(s=>{ const e=map[s], d=Math.round((new Date(e.date+"T12:00:00")-new Date(now+"T12:00:00"))/864e5);
     return `<div class="er" data-sym="${esc(s)}" role="button" tabindex="0">${logo(s)}<div style="flex:1;min-width:0"><b>${esc(s)}</b><br><span>${esc((S.profile[s]||{}).name||"")}${e.eps!=null?` · EPS est. ${fmt$(e.eps)}`:""}</span></div><div class="when">${new Date(e.date+"T12:00:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}<br><span>${d===0?"today":d===1?"tomorrow":"in "+d+" days"}${e.hour==="bmo"?" · before open":e.hour==="amc"?" · after close":""}</span></div></div>`; }).join("")
@@ -1304,7 +1307,7 @@ async function openDetail(s){
     if(!x){ $("recCard").innerHTML=`<h4>Analyst ratings</h4><p class="hint">No analyst ratings available.</p>`; }
     else { const parts=[["Strong buy",x.strongBuy,"#1FB07E"],["Buy",x.buy,"#2BD99A"],["Hold",x.hold,"#9AA8BA"],["Sell",x.sell,"#FF8A5C"],["Strong sell",x.strongSell,"#FF5C72"]], tot=parts.reduce((a,b)=>a+b[1],0)||1;
       $("recCard").innerHTML=`<h4>Analyst ratings · ${tot} analysts</h4><div class="rec">${parts.filter(p=>p[1]).map(p=>`<i style="flex:${p[1]};background:${p[2]}" title="${p[0]} ${p[1]}"></i>`).join("")}</div><div class="rec-lab"><span class="tup">${Math.round((x.strongBuy+x.buy)/tot*100)}% buy</span><span>${Math.round(x.hold/tot*100)}% hold</span><span class="tdown">${Math.round((x.sell+x.strongSell)/tot*100)}% sell</span></div>`; } }catch(e){ $("recCard")&&($("recCard").innerHTML=`<h4>Analyst ratings</h4><p class="hint">Couldn't load ratings.</p>`); }
-  try{ const from=new Date(Date.now()-90*864e5).toISOString().slice(0,10); const r=await api(`/stock/insider-transactions?symbol=${encodeURIComponent(s)}&from=${from}`); if(S.open!==s) return;
+  try{ const from=etISO(new Date(Date.now()-90*864e5)); const r=await api(`/stock/insider-transactions?symbol=${encodeURIComponent(s)}&from=${from}`); if(S.open!==s) return;
     const tx=((r&&r.data)||[]).filter(t=>t.transactionCode==="P"||t.transactionCode==="S").sort((a,b)=>(b.transactionDate||"").localeCompare(a.transactionDate||""));
     if(!tx.length) $("insCard").innerHTML=`<h4>Insider trading · 90 days</h4><p class="hint">No open-market insider buys or sells.</p>`;
     else { const bought=tx.filter(t=>t.change>0).reduce((a,t)=>a+t.change*(t.transactionPrice||0),0), sold=tx.filter(t=>t.change<0).reduce((a,t)=>a-t.change*(t.transactionPrice||0),0);
@@ -1314,7 +1317,7 @@ async function openDetail(s){
   catch(e){ $("insCard")&&($("insCard").innerHTML=`<h4>Insider trading · 90 days</h4><p class="hint">Not available for this stock.</p>`); }
   try{ const pe=await api(`/stock/peers?symbol=${encodeURIComponent(s)}`); if(S.open!==s) return; const list=(pe||[]).filter(x=>x!==s).slice(0,8);
     if(list.length){ $("peers").innerHTML=list.map(x=>`<button class="chip" data-quick="${esc(x)}" ${S.list.includes(x)?"disabled":""}>${S.list.includes(x)?"✓ ":"+ "}${esc(x)}</button>`).join(""); $("peerCard").hidden=false; } }catch(e){}
-  try{ const to=today(), from=new Date(Date.now()-7*864e5).toISOString().slice(0,10); const n=await api(`/company-news?symbol=${encodeURIComponent(s)}&from=${from}&to=${to}`); if(S.open!==s) return;
+  try{ const to=today(), from=etISO(new Date(Date.now()-7*864e5)); const n=await api(`/company-news?symbol=${encodeURIComponent(s)}&from=${from}&to=${to}`); if(S.open!==s) return;
     $("news").innerHTML=(n||[]).slice(0,6).map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener"><b>${esc(a.headline)}</b><span>${esc(a.source)} · ${ago(a.datetime*1000)}</span></a>`).join("")||`<p class="hint">No news in the past week.</p>`; }catch(e){ $("news")&&($("news").innerHTML=`<p class="hint">Couldn't load news.</p>`); }
 }
 function saveAlert(s,a,b){ const above=parseFloat(a)||null, below=parseFloat(b)||null; if(above||below) S.alerts[s]={above,below}; else delete S.alerts[s]; LS.set("alerts",S.alerts); toast(above||below?`Alert saved for ${s}`:`Alert cleared for ${s}`); checkAlerts(s); render(); }
@@ -1475,7 +1478,7 @@ function marketEvents(from,to){
   return ev.sort((x,y)=>x.date.localeCompare(y.date));
 }
 function aheadData(P){
-  const A=AHEAD[P], from=new Date(Date.now()+864e5).toISOString().slice(0,10), to=new Date(Date.now()+A.days*864e5).toISOString().slice(0,10), map=S.earnings.map||{};
+  const A=AHEAD[P], from=etISO(new Date(Date.now()+864e5)), to=etISO(new Date(Date.now()+A.days*864e5)), map=S.earnings.map||{};
   const mine=S.list.filter(x=>map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x]}));
   const movers=MOVERS.filter(x=>!S.list.includes(x)&&map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x]}));
   const divs=S.list.map(x=>({x,n:nextDiv(x)})).filter(o=>o.n&&o.n.ex>=from&&o.n.ex<=to);
@@ -1496,6 +1499,7 @@ function aheadData(P){
   return {A,from,to,mine,movers,divs,events,months,seasRows,spyR,spyP,rangeRows,tested,cross,hot,cold};
 }
 function openAhead(P){
+  if(!AHEAD[P]) P=Object.keys(AHEAD)[0];
   S.open="__ahead"; LS.set("aheadP",P);
   const D=aheadData(P), A=D.A, li=(a,b,c="")=>`<div class="brief-li"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
   const sec=(t,b,sub="")=>b?`<div class="card brief-sec"><h4>${t}</h4>${sub?`<p class="hint" style="margin-top:-4px">${sub}</p>`:""}${b}</div>`:"";
@@ -1527,7 +1531,7 @@ function openAhead(P){
 /* ---------- weekly / monthly / yearly reports ---------- */
 const REP={"1w":{name:"Weekly",span:"week",ahead:7},"1m":{name:"Monthly",span:"month",ahead:30},"1y":{name:"Yearly",span:"year",ahead:30}};
 function reportData(P){
-  const t=today(), ahead=new Date(Date.now()+REP[P].ahead*864e5).toISOString().slice(0,10);
+  const t=today(), ahead=etISO(new Date(Date.now()+REP[P].ahead*864e5));
   const st=rangeStart(P), from=new Date(st), to=new Date();
   const L=S.list.map(x=>({x,r:ret(x,P)})).filter(o=>o.r!=null).sort((a,b)=>b.r-a.r);
   const idx=IDX.map(([x,n])=>({x,n,r:ret(x,P)}));
@@ -1557,6 +1561,7 @@ function reportText(D){
   return out.join("\n");
 }
 function openReport(P,load=true){
+  if(!REP[P]) P="1w";
   S.open="__report"; S.repP=P; LS.set("repP",P);
   const D=reportData(P), R=REP[P], f=d=>d.toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"});
   const li=(a,b,c="")=>`<div class="brief-li"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
@@ -1639,7 +1644,7 @@ function divInfo(s){ const m=(S.metric[s]&&S.metric[s].m)||{}, y=m.currentDivide
 const pays=s=>{ const d=divInfo(s); return (d.yield||0)>0||(d.dps||0)>0; };
 async function loadDivs(s){
   if(!pays(s)) return; const c=S.divs[s]; if(c&&Date.now()-c.at<5*864e5) return;
-  const from=new Date(Date.now()-760*864e5).toISOString().slice(0,10), to=new Date(Date.now()+150*864e5).toISOString().slice(0,10);
+  const from=etISO(new Date(Date.now()-760*864e5)), to=etISO(new Date(Date.now()+150*864e5));
   let list=null, src="";
   try{ const r=await api(`/stock/dividend?symbol=${encodeURIComponent(s)}&from=${from}&to=${to}`,{soft:true}); if(Array.isArray(r)){ list=r.map(d=>({ex:d.date,pay:d.payDate||null,amt:+d.amount})).filter(d=>d.ex); src="Finnhub"; } }catch(e){}
   if(!list&&S.tdKey){ try{ const r=await fetch(`${TD}/dividends?symbol=${encodeURIComponent(s)}&start_date=${from}&country=United%20States&apikey=${encodeURIComponent(S.tdKey)}`).then(x=>x.json()); if(r&&Array.isArray(r.dividends)){ list=r.dividends.map(d=>({ex:d.ex_date||d.payment_date,pay:d.payment_date||null,amt:+d.amount})).filter(d=>d.ex); src="Twelve Data"; } }catch(e){} }
@@ -1654,7 +1659,7 @@ function nextDiv(s){
   let n=new Date(past[past.length-1].ex+"T12:00:00"); while(n<new Date()) n=new Date(n.getTime()+g*864e5);
   return {ex:n.toISOString().slice(0,10),pay:null,amt:past[past.length-1].amt,est:true,freq:freqOf(past)};
 }
-function freqOf(l){ const n=l.filter(d=>d.ex>=new Date(Date.now()-366*864e5).toISOString().slice(0,10)&&d.ex<=today()).length; return n>=11?"Monthly":n>=4?"Quarterly":n>=2?"Semi-annual":n===1?"Annual":""; }
+function freqOf(l){ const n=l.filter(d=>d.ex>=etISO(new Date(Date.now()-366*864e5))&&d.ex<=today()).length; return n>=11?"Monthly":n>=4?"Quarterly":n>=2?"Semi-annual":n===1?"Annual":""; }
 const dShort=d=>new Date(d+"T12:00:00").toLocaleDateString([], {month:"short",day:"numeric"});
 function divHTML(s){
   const d=divInfo(s); if(!pays(s)) return S.metric[s]?`<div class="card"><h4>Dividends</h4><p class="hint">${esc(s)} doesn't pay a dividend.</p></div>`:"";
@@ -1684,7 +1689,7 @@ function openBriefing(){
   const L=S.list.filter(x=>price(x)!=null).map(x=>({x,r:r1d(x)})).filter(o=>o.r!=null).sort((a,b)=>b.r-a.r);
   const idx=IDX.map(([x,n])=>({n,r:r1d(x)})).filter(o=>o.r!=null);
   const pre=st.phase==="pre"||(st.phase==="closed"&&st.p.h<9);
-  const week=new Date(Date.now()+7*864e5).toISOString().slice(0,10), t=today();
+  const week=etISO(new Date(Date.now()+7*864e5)), t=today();
   const er=S.list.filter(x=>S.earnings.map&&S.earnings.map[x]&&S.earnings.map[x].date>=t&&S.earnings.map[x].date<=week).map(x=>({x,e:S.earnings.map[x]})).sort((a,b)=>a.e.date.localeCompare(b.e.date));
   const dv=S.list.map(x=>({x,n:nextDiv(x)})).filter(o=>o.n&&o.n.ex>=t&&o.n.ex<=week);
   const near=[]; S.list.forEach(x=>{ const p=price(x); if(!p) return; const a=S.alerts[x]||{}; [a.above,a.below].concat((S.targets[x]||[]).filter(q=>!q.fired).map(q=>q.p)).forEach(v=>{ if(v&&Math.abs(v/p-1)<.03) near.push({x,v,d:(v/p-1)*100}); }); });
@@ -1710,7 +1715,7 @@ function openBriefing(){
     <a class="claude" href="${claudeURL(`Write my morning market briefing for ${now.toLocaleDateString()}. Search the web for overnight news, futures, and today's economic calendar. My watchlist with live moves:\n${L.map(o=>`${o.x} ${fmt$(price(o.x))} ${fmtP(o.r)}`).join("\n")}\n${er.length?`Earnings this week: ${er.map(o=>o.x+" "+o.e.date).join(", ")}\n`:""}Keep it tight: what happened overnight, what matters today, and what to watch for my stocks.`)}" target="_blank" rel="noopener">✨ Ask Claude to expand this briefing</a>`;
   showSheet();
   (async()=>{ const top=L.length?[L[0],L[L.length-1]].filter((o,i,a)=>a.indexOf(o)===i):[]; let html="";
-    for(const o of top){ try{ const from=new Date(Date.now()-2*864e5).toISOString().slice(0,10); const n=await api(`/company-news?symbol=${encodeURIComponent(o.x)}&from=${from}&to=${today()}`); const a=(n||[])[0]; if(a) html+=`<a href="${esc(a.url)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:14px;font-weight:600;line-height:1.4;display:block;margin-top:8px"><span class="vtag">${esc(o.x)}</span> ${esc(a.headline)}</a>`; }catch(e){} }
+    for(const o of top){ try{ const from=etISO(new Date(Date.now()-2*864e5)); const n=await api(`/company-news?symbol=${encodeURIComponent(o.x)}&from=${from}&to=${today()}`); const a=(n||[])[0]; if(a) html+=`<a href="${esc(a.url)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:14px;font-weight:600;line-height:1.4;display:block;margin-top:8px"><span class="vtag">${esc(o.x)}</span> ${esc(a.headline)}</a>`; }catch(e){} }
     const el=$("briefStockNews"); if(el&&S.open==="__brief") el.innerHTML=html; })();
 }
 
@@ -1801,7 +1806,7 @@ function factorText(k,F,good){
   switch(k){
     case "rel6": return `6M ${fmtP(o.r6)} vs S&P ${fmtP(o.s6)}`;
     case "rel3": return `3M ${f1(F.rel3)} pts vs S&P`;
-    case "rel12": return `1Y ${good?"beat":"trailed"} S&P by ${Math.abs(F.rel12).toFixed(0)} pts`;
+    case "rel12": { const d=Math.round(Math.abs(F.rel12)); return d===0?"1Y in line with S&P":`1Y ${F.rel12>0?"beat":"trailed"} S&P by ${d} pt${d===1?"":"s"}`; }
     case "trend": return good?`Uptrend: ${A.checks.filter(c=>c[1]).length}/${A.checks.length} signals`:`Weak trend: ${A.checks.filter(c=>c[1]).length}/${A.checks.length} signals`;
     case "rsiFit": return good?`RSI ${A.R.toFixed(0)}, room to run`:A.R>55?`Overheated: RSI ${A.R.toFixed(0)}`:`Weak momentum: RSI ${A.R.toFixed(0)}`;
     case "epsG": return `EPS ${f1(o.epsG)}% y/y`;
@@ -1832,8 +1837,10 @@ function rankPicks(){
     if(S.hz==="forever"&&r.F.lowDebt!=null&&r.F.lowDebt<-3) r.score-=8;
     r.score=Math.max(0,Math.min(100,r.score));
     const have=r.parts.filter(p=>p.q!=null).sort((a,b)=>b.q*b.w-a.q*a.w);
-    r.good=have.filter(p=>p.q>=.6).slice(0,3).map(p=>factorText(p.k,r.F,true));
-    const bad=have.filter(p=>p.q<=.3&&p.k!=="divG").sort((a,b)=>a.q*b.w-b.q*a.w)[0]; r.risk=bad?factorText(bad.k,r.F,false):null; });
+    // a factor can rank well in the group and still be negative (e.g. everything trailed the S&P), so signed ones must point the right way
+    const SIGNED={rel3:1,rel6:1,rel12:1,above200:1,epsG:1,revG:1,revG5:1}, fits=(p,good)=>!SIGNED[p.k]||r.F[p.k]==null||(good?r.F[p.k]>0:r.F[p.k]<0);
+    r.good=have.filter(p=>p.q>=.6&&fits(p,true)).slice(0,3).map(p=>factorText(p.k,r.F,true));
+    const bad=have.filter(p=>p.q<=.3&&p.k!=="divG"&&fits(p,false)).sort((a,b)=>a.q*b.w-b.q*a.w)[0]; r.risk=bad?factorText(bad.k,r.F,false):null; });
   const ok=rows.filter(r=>r.cov>=.5).sort((a,b)=>b.score-a.score);
   return {ok,total:list.length,scope:pickScope().length};
 }
@@ -1901,8 +1908,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.22";
+const APP_VERSION="3.23";
 const CHANGELOG=[
+  {v:"3.23",date:"2026-10-20",title:"Bug fixes",items:["Earnings, dividends and the calendar now use the New York market date, so \"today\" no longer flips to tomorrow after 5 PM Pacific","NAV discounts: the list was empty because the data source stopped sending trading volume; volume now carries over from the last good day and the list is back","Gold Picks: \"beat S&P\" now only shows when a stock actually beat it (no more \"beat by 0 pts\"), and a weak number is never listed as a strength","Saved timeframe and report settings from older versions can no longer break a screen"]},
   {v:"3.22",date:"2026-10-20",title:"Biggest movers, upgraded",items:["Hot Trends now shows the top 5 gainers and top 5 losers in their own cards, with rank, price and a size bar","Movers default to today (1D) and have their own 1D/1W/1M/3M/YTD/1Y switch, separate from the page timeframe","The % shown now always matches the period the list is ranked by"]},
   {v:"3.21",date:"2026-10-20",title:"Keys stay put",items:["Your Finnhub and Twelve Data keys are now saved twice (localStorage and IndexedDB) and restored automatically if one gets cleared","GoldRabbit asks the browser to keep its storage permanently, so it should stop asking for the key"]},
   {v:"3.20",date:"2026-10-19",at:"2026-10-19T18:20:00Z",title:"NAV discounts",items:["New 🏷️ NAV discounts button on Home: closed-end funds trading furthest below the value of what they hold, refreshed each weekday","Sort by deepest discount, unusually cheap for that fund (vs its own 1-year average) or highest yield; Tradeable only hides tiny, thinly traded funds","Tap a fund for price vs NAV, yield, size, fees and leverage, then add it to your watchlist or open its chart"]},
@@ -2232,7 +2240,7 @@ async function bgLoad(){
 const NV_SORTS=[["deep","Deepest discount"],["odd","Unusually cheap"],["yield","Highest yield"]];
 function nvLoad(){ if(S.nv.data||S.nv.data===0) return; S.nv.data=0; fetch("nav_discounts.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{ S.nv.data=j&&Array.isArray(j.funds)?j:null; }).catch(()=>{ S.nv.data=null; }).finally(renderNav); }
 // tradeable = at least $100M of shares and 20k shares a day, so one small trade doesn't move the price
-const nvTradeable=f=>(f.mc==null||f.mc>=100)&&(f.v==null||f.v>=20000);
+const nvTradeable=f=>(f.mc==null||f.mc>=100)&&(!(f.v>0)||f.v>=20000); // no volume figure = unknown, judged on size alone
 function nvRows(){ const j=S.nv.data; if(!j) return []; let l=j.funds.filter(f=>!S.nv.trade||nvTradeable(f));
   if(S.nv.sort==="odd") l=l.filter(f=>f.z!=null&&f.d<0).sort((a,b)=>a.z-b.z);
   else if(S.nv.sort==="yield") l=l.filter(f=>f.y!=null&&f.d<0).sort((a,b)=>b.y-a.y);
@@ -2538,7 +2546,7 @@ const THEMES={
 const TREND_KEYS=["mag7","energy","macro","cyber","defense","banks","health","power","quantum","crypto","robotics","semis"];
 const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communication"],["XLY","Consumer Disc."],["XLF","Financials"],["XLI","Industrials"],["XLV","Health Care"],["XLE","Energy"],["XLB","Materials"],["XLP","Consumer Staples"],["XLU","Utilities"],["XLRE","Real Estate"]];
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
-S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); S.mtf=LS.get("mtf","1d"); S.trend=LS.get("trend","power"); S.extra=new Set();
+S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); if(!TF[S.ttf]) S.ttf="1d"; S.mtf=LS.get("mtf","1d"); if(!TF[S.mtf]) S.mtf="1d"; S.trend=LS.get("trend","power"); S.extra=new Set();
 const themeSyms=k=>[...new Set(Object.values(THEMES[k].groups).flat())];
 function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); return []; }
 const loading={};
@@ -2570,7 +2578,7 @@ function heroHTML(t,list,extra=""){
   const T=THEMES[t], st=themeStats(list,S.ttf), sp=ret("SPY",S.ttf);
   return `<section class="thero" style="--tbg:${T.bg}">${t==="space"?`<div class="stars"></div>`:""}
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><h2>${T.title}</h2><p>${T.desc}</p></div></div>
-    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big ${tcls(st.avg)}">${fmtP(st.avg)}</span><span class="hint">equal-weight · ${TF[S.ttf]||({"3m":"3 months"})[S.ttf]}${sp!=null&&st.avg!=null?` · ${st.avg>=sp?"beating":"trailing"} S&amp;P by ${Math.abs(st.avg-sp).toFixed(1)} pts`:""}</span></div>
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big ${tcls(st.avg)}">${fmtP(st.avg)}</span><span class="hint">equal-weight · ${TF[S.ttf]}${sp!=null&&st.avg!=null?` · ${st.avg>=sp?"beating":"trailing"} S&amp;P by ${Math.abs(st.avg-sp).toFixed(1)} pts`:""}</span></div>
     <div class="breadth" title="Advancers vs decliners"><i style="flex:${st.up};background:var(--gain)"></i><i style="flex:${st.dn};background:var(--loss)"></i></div>
     <div class="row3"><div><b>Leader</b><span class="tup">${st.best?esc(st.best.s)+" "+fmtP(st.best.r):"—"}</span></div><div><b>Laggard</b><span class="${st.worst&&st.worst.r<0?"tdown":"tup"}">${st.worst?esc(st.worst.s)+" "+fmtP(st.worst.r):"—"}</span></div><div><b>Breadth</b><span>${st.up} up · ${st.dn} dn</span></div></div>${extra}</section>`;
 }
@@ -2596,7 +2604,7 @@ function renderSectors(){
       <div class="row3"><div><b>Leading</b><span class="tup">${tiles[0]&&tiles[0].r!=null?tiles[0].n:"—"}</span></div><div><b>Lagging</b><span class="tdown">${tiles[tiles.length-1]&&tiles[tiles.length-1].r!=null?tiles[tiles.length-1].n:"—"}</span></div><div><b>S&amp;P 500</b><span class="${tcls(ret("SPY",S.ttf))}">${fmtP(ret("SPY",S.ttf))}</span></div></div></section>
     ${tfChips()}${loadNote(tabSyms(S.tab).filter(x=>x!=="SPY"))}
     <div class="sgrid">${tiles.map(x=>`<button class="stile" data-sym="${x.s}" style="${heatColor(x.r,S.ttf)}"><b>${x.n}</b><small>${x.s} · ${fmt$(price(x.s))}</small><span class="num">${fmtP(x.r)}</span>${price(x.s)!=null?spark(x.s,S.ttf):""}</button>`).join("")}</div>
-    <div class="section-h"><h2>Ranking</h2><small>${TF[S.ttf]||"3 months"}</small></div>
+    <div class="section-h"><h2>Ranking</h2><small>${TF[S.ttf]}</small></div>
     <div class="board">${tiles.map(x=>{ const w=Math.abs(x.r||0)/mx*50, st=(x.r||0)>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row" style="grid-template-columns:110px 1fr 70px"><b style="font-size:12px">${x.n}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(x.r)}">${fmtP(x.r)}</span></div>`; }).join("")}</div>
     <p class="hint">Growth sectors: tech, semis, consumer discretionary, financials, industrials, communication. Defensive: staples, utilities, health care, real estate.</p>`;
 }

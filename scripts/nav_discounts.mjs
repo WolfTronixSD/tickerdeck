@@ -37,16 +37,29 @@ async function getOne(API) {
   }
   throw new Error(errs.join(" | "));
 }
-// share of funds that came back with fund size and volume
-const rich = a => Array.isArray(a) && a.length ? a.filter(f => f && f.MarketCapUSDm != null && f.AvgDailyVolume != null).length / a.length : 0;
+// share of funds that came back with fund size and volume (a 0 volume means the field was blank)
+const has = v => v != null && v !== "" && v !== 0 && v !== "0";
+const rich = a => Array.isArray(a) && a.length ? a.filter(f => f && has(f.MarketCapUSDm) && has(f.AvgDailyVolume)).length / a.length : 0;
+// The endpoints don't always fill the same fields (one day volume is blank, another the z-score),
+// so ask all of them and, fund by fund, take the first real value for each field.
 async function get() {
-  let best = null, errs = [];
+  const got = [], errs = [];
   for (const API of APIS) {
-    try { const a = await getOne(API); if (Array.isArray(a) && a.length >= 100 && (!best || rich(a) > rich(best))) best = a; if (rich(best) > .5) break; }
+    try { const a = await getOne(API); if (Array.isArray(a) && a.length >= 100) got.push(a); else errs.push(`${API}: ${Array.isArray(a) ? a.length + " funds" : "not a list"}`); }
     catch (e) { errs.push(e.message); }
   }
-  if (!best) throw new Error(errs.join(" || "));
-  console.log(`Using ${best.length} funds, ${Math.round(rich(best) * 100)}% with size and volume`);
+  if (!got.length) throw new Error(errs.join(" || "));
+  // newest prices first, then the answer with the most fields filled
+  const newest = a => a.reduce((m, f) => (f && f.LastUpdated && String(f.LastUpdated) > m ? String(f.LastUpdated) : m), "").slice(0, 10);
+  got.sort((a, b) => newest(b).localeCompare(newest(a)) || rich(b) - rich(a));
+  const byT = new Map();
+  for (const a of got) for (const f of a) {
+    const t = f && String(f.Ticker || "").trim().toUpperCase(); if (!t) continue;
+    const o = byT.get(t); if (!o) { if (a === got[0]) byT.set(t, { ...f }); continue; } // the newest answer decides which funds are listed
+    for (const k in f) if (!has(o[k]) && has(f[k])) o[k] = f[k];
+  }
+  const best = [...byT.values()];
+  console.log(`Using ${best.length} funds from ${got.length} answers, ${Math.round(rich(best) * 100)}% with size and volume`);
   return best;
 }
 
@@ -68,7 +81,7 @@ const funds = raw.map(f => {
     p: r2(price), nav: r2(nav), d: r2(disc),
     d52: r2(num(f.Discount52WkAvg)), z: r2(num(f.ZScore1Yr)),
     y: r2(num(f.DistributionRatePrice)), fq: f.DistributionFrequency || null,
-    mc: r2(num(f.MarketCapUSDm)), v: num(f.AvgDailyVolume),
+    mc: r2(num(f.MarketCapUSDm)), v: has(f.AvgDailyVolume) ? num(f.AvgDailyVolume) : null,
     er: r2(num(f.ExpenseRatio)), lev: f.IsLeveraged === true,
     at: f.LastUpdated ? String(f.LastUpdated).slice(0, 10) : null,
   };
@@ -77,10 +90,16 @@ const funds = raw.map(f => {
 
 if (funds.length < 100) throw new Error(`Only ${funds.length} usable funds; keeping the previous file`);
 
-const dates = funds.map(f => f.at).filter(Boolean).sort();
-const out = { asOf: dates[dates.length - 1] || null, made: new Date().toISOString(), source: "CEFConnect", count: funds.length, funds };
 const path = new URL("../nav_discounts.json", import.meta.url);
 const prev = existsSync(path) ? readFileSync(path, "utf8") : "";
+// Average daily volume moves slowly, so when the source leaves it blank, keep the last known figure.
+// Funds with no volume at all show as unknown (null), never as 0 shares a day.
+{ let old = {}; try { for (const f of JSON.parse(prev).funds || []) if (f.v > 0) old[f.s] = f.v; } catch {}
+  let kept = 0; for (const f of funds) if (f.v == null && old[f.s]) { f.v = old[f.s]; kept++; }
+  if (kept) console.log(`Volume missing for ${kept} funds; kept the last known figure`); }
+
+const dates = funds.map(f => f.at).filter(Boolean).sort();
+const out = { asOf: dates[dates.length - 1] || null, made: new Date().toISOString(), source: "CEFConnect", count: funds.length, funds };
 const next = JSON.stringify(out);
 // only rewrite when the fund data changed (ignore the "made" stamp), so quiet days make no commit
 const strip = s => { try { const j = JSON.parse(s); delete j.made; return JSON.stringify(j); } catch { return ""; } };
