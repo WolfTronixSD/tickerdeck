@@ -151,10 +151,11 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .ptr{transition:transform .2s,opacity .2s}
 .ptr.show{transform:translate(-50%,0);opacity:1}
 /* tabs */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,1fr);padding:6px max(8px,calc((100% - 560px)/2)) calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
 .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;color:var(--faint);font-size:10.5px;font-weight:600;letter-spacing:.02em;transition:color .2s}
 .tabbar svg{width:22px;height:22px}
 .tabbar button[aria-selected="true"]{color:var(--text)}
+@media (hover:hover){.tabbar button:hover{color:var(--text)}}
 .tabbar button[aria-selected="true"] svg{color:var(--accent);filter:drop-shadow(0 0 8px rgba(255,181,71,.45))}
 .tab{display:flex;flex-direction:column;gap:16px;animation:tabin .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes tabin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -2029,8 +2030,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.29";
+const APP_VERSION="3.31";
 const CHANGELOG=[
+  {v:"3.31",date:"2026-10-22",title:"Tab bar fits wide screens",items:["On a computer or wide window, the bottom tabs (Home, Sectors, AI, Space, Picks, Trends) now line up under the main column instead of spreading across the whole screen","Tabs light up when you hover over them with a mouse","Phones look the same as before"]},
   {v:"3.29",date:"2026-10-22",title:"Listen & watch links checked",items:["Every link in Listen & watch was checked by hand","Apple buttons now open each podcast's own page instead of a search","Motley Fool Money was renamed by the Fool; it now shows as Motley Fool Hidden Gems with its current page","Fixed Odd Lots, Animal Spirits and Bloomberg Radio links, and CNBC and Fox Business now open their TuneIn stations directly"]},
   {v:"3.28",date:"2026-10-21",title:"Timeframe bar moved up",items:["The 1D–5Y timeframe bar now sits near the top of Home, right under the index tiles and above the watchlist summary it controls","It still sticks to the top of the screen as you scroll"]},
   {v:"3.27",date:"2026-10-21",title:"Stock wisdom",items:["New 🦉 Stock wisdom button on Home: 20 lessons from market history, as 10 traps to avoid, 6 habits that work and 4 signals to watch, each with what history shows and what to do","Wisdom of the day, plus a mind map: tap any box to jump to that lesson","Before you buy: an 8-point checklist to go through before any new purchase","Crash plan: write down what you'll do in a 20% or 30% drop; it saves on this device as you type"]},
