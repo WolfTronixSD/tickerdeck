@@ -196,6 +196,32 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pmon i{font-style:normal;font-family:var(--mono);color:#fff;border-radius:3px;padding:5px 0;font-size:8.5px;overflow:hidden}
 .pmon i.na{background:var(--panel2)}
 .stats .num small{display:block;font-size:10px;color:var(--faint);font-family:inherit}
+.pmal{margin-top:-2px}
+.racebox{overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom;border-radius:var(--r);background:var(--panel)}
+.racebox svg{width:100%;height:auto;display:block}
+#raceZl,#raceNl{white-space:nowrap;align-self:center}
+.pidea{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;line-height:1.4}
+.pidea>span{font-size:16px}
+.pidea p{margin:2px 0 0;font-size:12px;color:#AEB9C7}
+.pai{background:linear-gradient(150deg,rgba(212,175,55,.10),rgba(110,168,255,.06));border-color:rgba(212,175,55,.25);display:flex;flex-wrap:wrap;gap:8px}
+.pai a{flex:1 1 140px;text-align:center;text-decoration:none}
+.pai p{flex-basis:100%}
+.prepbtns>div{display:flex;flex-wrap:wrap;gap:8px}
+.prepbtns button{flex:1 1 70px}
+.prep-hero{text-align:center;gap:6px}
+.prep-hero .big{font-size:34px;font-weight:800;letter-spacing:-.02em}
+.prep-hero .kv{text-align:left}
+.prep2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prep2>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pev{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+.pev b{display:block;font-weight:600}
+.pev small{color:var(--faint);font-size:10.5px}
+.ptrade-row{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px}
+.ptrade-row .field{min-width:0}
+.pchk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.pchk .field{width:auto;padding:6px 8px}
+.ptx{display:grid;grid-template-columns:1fr auto 32px;align-items:center;gap:8px}
+.ptx .iconbtn{width:28px;height:28px;font-size:12px}
 /* StockPlotter */
 .tabbar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tabbar button[data-tab="plot"] span{font-size:9px;letter-spacing:-.01em}
@@ -678,7 +704,7 @@ function mirrorKeys(){ try{ IDB.set("keys",{key:LS.get("key",""),tdkey:LS.get("t
 async function restoreKeys(){ try{ const k=await IDB.get("keys"); if(!k||typeof k!=="object") return; if(k.key&&!LS.get("key","")){ try{ localStorage.setItem("tdl.key",JSON.stringify(k.key)); }catch(e){} S.key=k.key; } if(k.tdkey&&!LS.get("tdkey","")){ try{ localStorage.setItem("tdl.tdkey",JSON.stringify(k.tdkey)); }catch(e){} S.tdKey=k.tdkey; } }catch(e){} }
 // Setup link (#setup=...): copies keys and lists from GoldRabbit on one screen (home-screen app, Safari, the hub)
 // to another, since iPhone gives each of them its own storage. Lives only in the address after #, never sent to a server.
-const SETUP_KEYS=["key","tdkey","list","hold","cost","alerts","targets","divs","plot"];
+const SETUP_KEYS=["key","tdkey","list","hold","cost","alerts","targets","divs","plot","ptx"];
 (function importSetup(){
   const m=location.hash.match(/setup=([A-Za-z0-9_-]+)/); if(!m) return;
   history.replaceState(null,"",location.pathname+location.search);
@@ -1647,7 +1673,7 @@ function summaryText(){
 /* ---------- look ahead: next week / month / quarter ---------- */
 const AHEAD={w:{name:"Next week",days:7,tdays:5,span:"week"},m:{name:"Next month",days:31,tdays:21,span:"month"},q:{name:"Next quarter",days:92,tdays:63,span:"quarter"}};
 // Fed decision days (2nd day of each 2026 meeting, 2:00 PM ET); "proj" = with economic projections / dot plot
-const FOMC={"2026-01-28":0,"2026-03-18":1,"2026-04-29":0,"2026-06-17":1,"2026-07-29":0,"2026-09-16":1,"2026-10-28":0,"2026-12-09":1};
+const FOMC={"2025-01-29":0,"2025-03-19":1,"2025-05-07":0,"2025-06-18":1,"2025-07-30":0,"2025-09-17":1,"2025-10-29":0,"2025-12-10":1,"2026-01-28":0,"2026-03-18":1,"2026-04-29":0,"2026-06-17":1,"2026-07-29":0,"2026-09-16":1,"2026-10-28":0,"2026-12-09":1};
 // release dates published by the BLS (others are estimated from the usual pattern)
 const KNOWN_MACRO={"2026-10-02":"Jobs report (Sep)","2026-12-04":"Jobs report (Nov)","2026-12-10":"CPI inflation (Nov)"};
 const MOVERS=["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","AVGO","JPM","BAC","GS","WFC","NFLX","LLY","UNH","XOM","WMT","COST","ORCL","TSM","V","MA"];
@@ -2109,8 +2135,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.36";
+const APP_VERSION="3.37";
 const CHANGELOG=[
+  {v:"3.37",date:"2026-10-22",title:"StockPlotter reports, AI and trade history",items:["Record buys and sells with their date (or paste new totals and have the changes counted as trades). The chart now uses the shares you actually held each day, and returns ignore money you added or took out","Weekly, monthly, 6-month and yearly reports: a written summary, you vs the four indexes, best and worst stocks, who made or cost you money, your trades and the Fed, inflation, jobs and earnings events of the period, with Copy and Share","Ask Claude: one tap opens Claude with your holdings, weights and returns filled in, to analyze the portfolio, suggest rebalancing, explain the period or say what to watch next","Ideas to consider: flags a stock that's too big a share, leveraged funds, index funds overlapping your stocks, overheated or broken charts and upcoming earnings","Horse race is taller with bigger labels, plus a full-screen view you can zoom (+/−) and scroll, with up to all horses labeled","The range and index buttons now also sit above the heat map, so you don't have to scroll back up","50-day and 200-day moving average lines on the chart, with whether you're above or below each","Analyze this chart: you vs the index you picked over the range you picked, explained in plain English (beta, correlation, up and down capture, drawdown, trend), with Ask Claude for more","Buys and sells show as green and red dots on the chart. Everything stays on this device"]},
   {v:"3.36",date:"2026-10-22",title:"StockPlotter pro charts",items:["1W and 2W ranges, and the chart now marks the range high and low, with how far you are from each","Compare against the S&P 500, Nasdaq, Nasdaq 100 or Dow on every chart, plus a vs the indexes card showing how you did against all four","Then vs now: your value 1W, 2W, 3W, 4W, 1M, 3M, 6M, YTD and 1Y ago, the change since, and the index over the same stretch","Horse race: every holding from the same start line, the fastest horse in color, a replay animation and a full leaderboard","Who made you money, a heat map sized by position, a drawdown chart, monthly returns and risk stats (best and worst day, volatility, beta)","What the chart says: plain-English takeaways for the range you pick"]},
   {v:"3.35",date:"2026-10-22",title:"Mutual funds in StockPlotter",items:["Mutual funds like VFTAX and VIGIX now show a price, value and chart in StockPlotter","Their daily closing prices (NAV) come from a list of about 40 popular Vanguard, Fidelity, Schwab, T. Rowe Price and American Funds funds, refreshed each weekday evening","Mutual funds price once a day, so they move after the close rather than live"]},
   {v:"3.34",date:"2026-10-22",title:"Smoother while prices stream",items:["Fixed the app freezing or feeling unresponsive on iPhone during market hours with a large watchlist","Live prices now update the screen 4 times a second instead of on every trade, and the price flash no longer forces the whole page to re-layout","Sections that refresh every few seconds skip the redraw when nothing changed"]},
@@ -2936,7 +2963,7 @@ function opticsExtraHTML(){
     </ul><p class="hint">Not investment advice.</p></details>`;
 }
 /* ---------- StockPlotter: your holdings plotted from daily closes. Holdings are typed or pasted in and stay on this device. ---------- */
-S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pIdx=null; S.pSym=null; S.pBusy=0;
+S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pma=LS.get("pma",true); S.pIdx=null; S.pSym=null; S.pBusy=0;
 const PRANGES=[["1w","1W",5],["2w","2W",10],["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
 if(!PRANGES.some(r=>r[0]===S.prange)) S.prange="1y";
 // indexes to compare against, through the ETFs that track them
@@ -2945,6 +2972,12 @@ if(S.pbm&&!BMS.some(b=>b[0]===S.pbm)) S.pbm="SPY";
 const bmSym=()=>S.pbm||"SPY", bmName=x=>esc((BMS.find(b=>b[0]===(x||bmSym()))||BMS[0])[1]);
 function bmAt(x,t){ const c=S.daily[x]&&S.daily[x].c; if(!c) return null; let v=null; for(const b of c){ if(b[0]>t+864e5/2) break; v=b[1]; } return v; }
 const plotSyms=()=>Object.keys(S.plot).filter(x=>S.plot[x]>0);
+// buys and sells, newest last: {d:"YYYY-MM-DD", s:"AAPL", q:+10 or -5}. Kept only on this device, like the holdings.
+S.ptx=LS.get("ptx",[]); if(!Array.isArray(S.ptx)) S.ptx=[];
+const saveTx=()=>{ S.ptx.sort((a,b)=>a.d.localeCompare(b.d)); LS.set("ptx",S.ptx); };
+// everything held at some point: today's holdings plus anything bought or sold since
+const histSyms=()=>[...new Set(plotSyms().concat(S.ptx.map(t=>t.s)))];
+const pxOn=(x,day)=>{ const c=S.daily[x]&&S.daily[x].c; if(!c) return null; let v=null; for(const b of c){ if(etISO(new Date(b[0]))>day) break; v=b[1]; } return v; };
 const lastClose=x=>{ const d=S.daily[x]; return d&&d.c&&d.c.length?d.c[d.c.length-1][1]:null; };
 const pxNow=x=>price(x)??lastClose(x);
 const fmtQ=n=>Number(n).toLocaleString("en-US",{maximumFractionDigits:3});
@@ -2958,9 +2991,11 @@ function parseHoldings(txt){
   return {out,bad};
 }
 const holdingsText=()=>plotSyms().sort().map(x=>`${x} ${S.plot[x]}`).join("\n");
-// the value of today's shares on each trading day; a stock listed later than the rest is held flat at its first close
+// each trading day's value using the shares held that day (today's shares when there are no recorded trades).
+// g is a growth index that ignores money moved in or out by buys and sells, so returns aren't bent by them.
+// A stock listed later than the rest is held flat at its first close.
 function plotSeries(){
-  const syms=plotSyms(), have=syms.filter(x=>S.daily[x]&&S.daily[x].c&&S.daily[x].c.length>5), miss=syms.filter(x=>!have.includes(x));
+  const syms=histSyms(), have=syms.filter(x=>S.daily[x]&&S.daily[x].c&&S.daily[x].c.length>5), miss=plotSyms().filter(x=>!have.includes(x));
   if(!have.length) return {days:[],have,miss,flat:[]};
   const map={}; have.forEach(x=>S.daily[x].c.forEach(b=>{ const k=new Date(b[0]).toDateString(); (map[k]=map[k]||{t:b[0],px:{}}).px[x]=b[1]; }));
   const first=x=>S.daily[x].c[0][0], longs=have.filter(x=>S.daily[x].c.length>=120);
@@ -2972,7 +3007,12 @@ function plotSeries(){
   const tail=days[days.length-1];
   if(tail&&new Date(tail.t).toDateString()!==new Date().toDateString()&&have.some(x=>price(x)!=null)&&dayInfoNow().open&&marketState().m>=570){
     const px={}; have.forEach(x=>{ px[x]=price(x)??tail.px[x]; }); days.push({t:Date.now(),px,live:1}); }
-  days.forEach(o=>{ o.v=have.reduce((a,x)=>a+o.px[x]*S.plot[x],0); });
+  days.forEach(o=>{ o.day=o.live?today():etISO(new Date(o.t)); o.q={}; });
+  // walk back from today's shares, undoing each trade dated after the day
+  have.forEach(x=>{ const tr=S.ptx.filter(t=>t.s===x).sort((a,b)=>b.d.localeCompare(a.d)); let q=S.plot[x]||0, j=0;
+    for(let i=days.length-1;i>=0;i--){ while(j<tr.length&&tr[j].d>days[i].day){ q-=tr[j].q; j++; } days[i].q[x]=q>1e-9?q:0; } });
+  let g=1; days.forEach((o,i)=>{ o.v=have.reduce((a,x)=>a+o.px[x]*o.q[x],0);
+    if(i){ const pr=days[i-1], base=have.reduce((a,x)=>a+pr.q[x]*pr.px[x],0), cur=have.reduce((a,x)=>a+pr.q[x]*o.px[x],0); if(base>0) g*=cur/base; } o.g=g; });
   return {days,have,miss,flat};
 }
 function dayInfoNow(){ const p=etParts(new Date()); return dayInfo(p.y,p.mo,p.d); }
@@ -3001,7 +3041,7 @@ async function loadFunds(syms){
   try{ LS.set("daily",S.daily); }catch(e){} scheduleTab();
 }
 async function loadPlot(gen){
-  const syms=plotSyms(); if(!syms.length) return; const live=()=>gen===S.gen;
+  const syms=histSyms(); if(!syms.length) return; const live=()=>gen===S.gen;
   await loadSavedDaily(); scheduleTab();
   for(const x of syms.concat(BMS.map(b=>b[0]))){ if(!live()) return; const q=S.quotes[x]; if(!q||(!q.bad&&(!q.at||Date.now()-q.at>120000))){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } }
   await loadFunds(syms); if(!live()) return;
@@ -3009,9 +3049,9 @@ async function loadPlot(gen){
     for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) S.tdFail[x]=Date.now(); else S.daily[x]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{ LS.set("daily",S.daily); }catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
   if(live()) ensureData(syms,{gen});
 }
-function plotChart(pts,idx,bench){
+function plotChart(pts,idx,bench,marks,mas){
   const W=340,H=190,T=12,B=22; if(pts.length<2) return `<p class="hint">Not enough price history yet.</p>`;
-  const t0=pts[0][0], t1=pts[pts.length-1][0], all=pts.map(q=>q[1]).concat(bench?bench.map(q=>q[1]):[]);
+  const t0=pts[0][0], t1=pts[pts.length-1][0], all=pts.map(q=>q[1]).concat(bench?bench.map(q=>q[1]):[],...(mas||[]).map(m=>m.pts.map(q=>q[1])));
   let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*.08||1; lo-=pad; hi+=pad;
   const X=t=>4+(t-t0)/(t1-t0||1)*(W-8), Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B), path=a=>a.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ");
   const up=pts[pts.length-1][1]>=pts[0][1], col=up?"#2BD99A":"#FF5C72", sel=pts[idx];
@@ -3021,10 +3061,23 @@ function plotChart(pts,idx,bench){
   const hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0), hideV=S.priv&&!S.pSym;
   const mark=(i,up)=>{ const x=X(pts[i][0]), y=Y(pts[i][1]), tx=Math.min(W-70,Math.max(4,x-30)); return `<path d="M${x-4} ${up?y-7:y+7} L${x+4} ${up?y-7:y+7} L${x} ${up?y-2:y+2}Z" fill="${up?"#2BD99A":"#FF5C72"}"/><text x="${tx}" y="${up?y-10:y+17}" font-size="8.5" font-weight="600" fill="${up?"#7FF0C6":"#FF9AA8"}" font-family="JetBrains Mono">${up?"High":"Low"}${hideV?"":" "+fmt$(pts[i][1],pts[i][1]>=1000?0:2)}</text>`; };
   const hl=pts.length>4?mark(hiI,true)+(loI!==hiI?mark(loI,false):""):"";
+  // buys (green) and sells (red) along the bottom
+  const tm=(marks||[]).filter(m=>m.t>=t0-864e5/2&&m.t<=t1+864e5/2).map(m=>`<circle cx="${X(Math.min(t1,Math.max(t0,m.t))).toFixed(1)}" cy="${H-B-3}" r="3" fill="${m.q>0?"#2BD99A":"#FF5C72"}" stroke="#070B10" stroke-width="1"><title>${m.q>0?"Bought":"Sold"} ${esc(fmtQ(Math.abs(m.q)))} ${esc(m.s)} · ${esc(m.d)}</title></circle>`).join("");
   return `<svg class="chart" id="pSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Value over time" style="touch-action:pan-y">${grid}<defs><linearGradient id="plg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".26"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
-    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>${hl}
+    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}${(mas||[]).filter(m=>m.pts.length>1).map(m=>`<path d="${path(m.pts)}" fill="none" stroke="${m.c}" stroke-width="1.2" opacity=".9"/>`).join("")}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>${hl}${tm}
     <line x1="${X(sel[0])}" x2="${X(sel[0])}" y1="${T-4}" y2="${H-B}" stroke="#FFB547" stroke-dasharray="2 3"/><circle cx="${X(sel[0])}" cy="${Y(sel[1])}" r="4.5" fill="#FFB547" stroke="#070B10" stroke-width="2"/>
     <text x="6" y="${H-6}" font-size="9.5" fill="#8392A6" font-family="Sora">${dl(t0)}</text><text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">${pts[pts.length-1]===sel&&new Date(t1).toDateString()===new Date().toDateString()?"Today":dl(t1)}</text></svg>`;
+}
+// 50- and 200-day moving averages over the whole history, drawn for the days in range.
+// The portfolio uses the growth index, so a buy or sell doesn't bend the average; it's shown in today's dollars.
+const MAS=[[50,"#B48CFF"],[200,"#FF9F43"]];
+function plotMAs(P,R,x){
+  const D=P.days, f=x?o=>o.px[x]:o=>o.g, pos=new Map(D.map((o,i)=>[o,i])), out=[];
+  MAS.forEach(([n,c])=>{ if(D.length<n) return; const pts=[]; let sum=0; const avg=[];
+    D.forEach((o,i)=>{ sum+=f(o); if(i>=n) sum-=f(D[i-n]); avg[i]=i>=n-1?sum/n:null; });
+    R.forEach(o=>{ const i=pos.get(o), a=avg[i]; if(a!=null) pts.push([o.t,x?a:o.v*a/o.g]); });
+    const last=R[R.length-1], la=avg[pos.get(last)]; out.push({n,c,pts,now:la!=null?(f(last)/la-1)*100:null}); });
+  return out;
 }
 // everything that follows the slider: chart, readout and the holdings table for the chosen day
 function plotSel(){
@@ -3038,21 +3091,24 @@ function plotSel(){
   } else {
     pts=R.map(o=>[o.t,o.v]);
     if(S.pbm){ const s0=spyAt(R[0].t); if(s0) bench=R.map(o=>{ const s=o.live?(price(S.pbm)??spyAt(o.t)):spyAt(o.t); return [o.t,s?R[0].v*s/s0:R[0].v]; }); }
-    const ch=isNow?d.v-R[0].v:now.v-d.v, base=isNow?R[0].v:d.v;
-    read=`<div class="prd"><div><b>Value on ${dateL}</b><span class="num">${money(fmt$(d.v,0))}</span></div><div><b>${isNow?"Since range start":"From then to now"}</b><span class="num ${tcls(ch)}">${money((ch>=0?"+":"−")+fmt$(Math.abs(ch),0))}</span></div><div><b>Change</b><span class="num ${tcls(ch)}">${fmtP(base?ch/base*100:null)}</span></div></div>`;
+    const a0=isNow?R[0]:d, a1=isNow?d:now, ch=marketGain(a0,a1), pc=a0.g?(a1.g/a0.g-1)*100:null;
+    read=`<div class="prd"><div><b>Value on ${dateL}</b><span class="num">${money(fmt$(d.v,0))}</span></div><div><b>${isNow?"Gain since range start":"Gain from then to now"}</b><span class="num ${tcls(ch)}">${money((ch>=0?"+":"−")+fmt$(Math.abs(ch),0))}</span></div><div><b>Return</b><span class="num ${tcls(pc)}">${fmtP(pc)}</span></div></div>`;
   }
   if(pts.length>4){ const hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0), last=pts[pts.length-1][1], f=v=>S.pSym?fmt$(v):money(fmt$(v,0));
     read+=`<div class="phl"><span><i class="tup">▲</i> High ${f(pts[hiI][1])} <small>${pdL(pts[hiI][0])}</small></span><span><i class="tdown">▼</i> Low ${f(pts[loI][1])} <small>${pdL(pts[loI][0])}</small></span><span>Now <b class="${last>=pts[hiI][1]-1e-9?"tup":"tdown"}">${last>=pts[hiI][1]-1e-9?"at the high":(last/pts[hiI][1]*100-100).toFixed(1)+"% from high"}</b>, ${fmtP((last/pts[loI][1]-1)*100)} from low</span></div>`; }
-  $("pChart").innerHTML=plotChart(pts,idx,bench); $("pRead").innerHTML=read;
+  const marks=S.ptx.filter(t=>!S.pSym||t.s===S.pSym).map(t=>({...t,t:parseET(t.d)})), xs=S.pSym&&P.have.includes(S.pSym)?S.pSym:null, mas=S.pma?plotMAs(P,R,xs):[];
+  if(mas.length) read+=`<div class="phl pmal">${mas.map(m=>`<span><i style="color:${m.c}">━</i> ${m.n}-day avg${m.now!=null?` <b class="${m.now>=0?"tup":"tdown"}">${m.now>=0?"above":"below"} by ${Math.abs(m.now).toFixed(1)}%</b>`:""}</span>`).join("")}${mas.length>1&&mas[0].pts.length&&mas[1].pts.length?`<span>${mas[0].pts[mas[0].pts.length-1][1]>=mas[1].pts[mas[1].pts.length-1][1]?"50 over 200: uptrend":"50 under 200: downtrend"}</span>`:""}</div>`;
+  $("pChart").innerHTML=plotChart(pts,idx,bench,marks,mas); $("pRead").innerHTML=read;
   const sl=$("pSlide"); if(sl&&+sl.value!==idx) sl.value=idx;
   const dt=$("pDate"); if(dt) dt.value=ymdLocal(d.t);
   // table: each holding's price and value on the chosen day, and how it has done since
-  const rows=P.syms.map(x=>{ const has=P.have.includes(x), p=has?d.px[x]:pxNow(x), pn=pxNow(x)??(has?now.px[x]:null), q=S.quotes[x];
+  const shares=x=>d.q&&d.q[x]!=null?d.q[x]:(S.plot[x]||0), list=isNow?P.syms:[...new Set(P.syms.concat(P.have))].filter(x=>shares(x)>0);
+  const rows=list.map(x=>{ const has=P.have.includes(x), p=has?d.px[x]:pxNow(x), pn=pxNow(x)??(has?now.px[x]:null), n=isNow?S.plot[x]:shares(x);
     const r=isNow?(r1d(x)??(has&&idx>0&&!d.live?(d.px[x]/R[idx-1].px[x]-1)*100:null)):(p&&pn?(pn/p-1)*100:null);
-    return {x,p,v:p!=null?p*S.plot[x]:null,r}; }).sort((a,b)=>(b.v??-1)-(a.v??-1));
+    return {x,p,n,v:p!=null?p*n:null,r}; }).sort((a,b)=>(b.v??-1)-(a.v??-1));
   const tot=rows.reduce((a,o)=>a+(o.v||0),0);
   $("pTable").innerHTML=`<div class="section-h"><h2>${isNow?"Your holdings today":"Holdings on "+dateL}</h2><small>${isNow?"day change":"change since then"}</small></div>
-    <div class="list">${rows.map(o=>`<button class="prow${S.pSym===o.x?" on":""}" data-psym="${esc(o.x)}">${logo(o.x)}<div class="who"><b>${esc(o.x)}</b><span>${money(fmtQ(S.plot[o.x]))} sh · ${fmt$(o.p)}</span></div><div class="px"><span class="num">${money(fmt$(o.v,0))}</span><small>${tot&&o.v?(o.v/tot*100).toFixed(1)+"%":""}</small></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></button>`).join("")}</div>
+    <div class="list">${rows.map(o=>`<button class="prow${S.pSym===o.x?" on":""}" data-psym="${esc(o.x)}">${logo(o.x)}<div class="who"><b>${esc(o.x)}</b><span>${money(fmtQ(o.n))} sh · ${fmt$(o.p)}</span></div><div class="px"><span class="num">${money(fmt$(o.v,0))}</span><small>${tot&&o.v?(o.v/tot*100).toFixed(1)+"%":""}</small></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></button>`).join("")}</div>
     <p class="hint">Tap a stock to plot its price with the same slider; tap it again to go back to the whole portfolio.</p>`;
 }
 /* ---------- StockPlotter pro: then-vs-now, horse race, contributions, heat map, drawdown, monthly returns, risk ---------- */
@@ -3062,52 +3118,78 @@ const sgn$=(v,d=0)=>money((v>=0?"+":"−")+fmt$(Math.abs(v),d));
 // the chosen index (S&P 500 when comparing is off)
 const spyAt=t=>bmAt(bmSym(),t);
 // the value series being plotted: the whole portfolio, or one stock's price
-const proSeries=(rows,x)=>rows.map(o=>[o.t,x?o.px[x]:o.v]);
+// portfolio: the growth index scaled to the last value, so % moves ignore money added or taken out
+const proSeries=(rows,x)=>{ const z=rows[rows.length-1]; return rows.map(o=>[o.t,x?o.px[x]:(z&&z.g?o.g/z.g*z.v:o.v)]); };
+// money put in (buys) minus taken out (sells) after day a, up to and including day b
+const netFlow=(a,b)=>S.ptx.filter(t=>t.d>a.day&&t.d<=b.day).reduce((s,t)=>s+t.q*(pxOn(t.s,t.d)??pxNow(t.s)??0),0);
+// what the market made or lost you between two days, not counting buys and sells
+const marketGain=(a,b)=>b.v-a.v-netFlow(a,b);
+// each holding's dollar gain over a stretch of days, using the shares held each day
+function contribs(P,R){ return P.have.map(x=>{ let d=0; for(let i=1;i<R.length;i++) d+=R[i-1].q[x]*(R[i].px[x]-R[i-1].px[x]); return {x,d,r:R[0].px[x]?(R[R.length-1].px[x]/R[0].px[x]-1)*100:null}; }); }
 // value on or before each look-back date, against now
 const AGO=[["1W",7],["2W",14],["3W",21],["4W",28],["1M","m1"],["3M","m3"],["6M","m6"],["YTD","ytd"],["1Y","y1"]];
 function agoDate(k){ const d=new Date(); if(typeof k==="number") return +d-k*864e5; if(k==="ytd") return +new Date(d.getFullYear()-1,11,31,23,59);
   const m={m1:1,m3:3,m6:6,y1:12}[k]; const o=new Date(d); o.setMonth(o.getMonth()-m); return +o; }
-function agoHTML(all,x){
-  if(all.length<6) return ""; const now=all[all.length-1], spyN=price(bmSym())??spyAt(now[0]);
-  const rows=AGO.map(([l,k])=>{ const t=agoDate(k); let p=null; for(const q of all){ if(q[0]>t+864e5/2) break; p=q; } if(!p||p===now) return null;
-    const s0=spyAt(p[0]), r=(now[1]/p[1]-1)*100, sr=s0&&spyN?(spyN/s0-1)*100:null; return {l,p,r,d:now[1]-p[1],sr}; }).filter(Boolean);
+function agoHTML(days,x){
+  if(days.length<6) return ""; const now=days[days.length-1], bN=price(bmSym())??spyAt(now.t);
+  const rows=AGO.map(([l,k])=>{ const t=agoDate(k); let p=null; for(const o of days){ if(o.t>t+864e5/2) break; p=o; } if(!p||p===now) return null;
+    const s0=spyAt(p.t), r=x?(now.px[x]/p.px[x]-1)*100:(now.g/p.g-1)*100, sr=s0&&bN?(bN/s0-1)*100:null; return {l,p,r,then:x?p.px[x]:p.v,d:x?null:marketGain(p,now),sr}; }).filter(Boolean);
   if(!rows.length) return "";
   const mx=Math.max(...rows.map(o=>Math.abs(o.r)))||1;
   return `<div class="section-h"><h2>Then vs now</h2><small>${x?esc(x)+" price":"portfolio value"} · vs ${bmName()}</small></div>
     <div class="card ptbl" style="background:var(--panel)"><div class="pago pago-h"><span></span><span>Then</span><span>Change</span><span></span><span>${bmName()}</span></div>${rows.map(o=>{ const w=Math.abs(o.r)/mx*100, beat=o.sr!=null?o.r-o.sr:null;
-      return `<div class="pago"><b>${o.l}<small>${pdS(o.p[0])}</small></b><span class="num">${x?fmt$(o.p[1]):money(fmt$(o.p[1],0))}</span><span class="num ${tcls(o.r)}">${fmtP(o.r)}<small>${x?"":sgn$(o.d)}</small></span><span class="pbar"><i class="${o.r>=0?"up":"dn"}" style="width:${w}%"></i></span><span class="num ${beat==null?"":beat>=0?"tup":"tdown"}" title="${beat!=null?(beat>=0?"beat":"lagged")+" the "+bmName()+" by "+Math.abs(beat).toFixed(1)+" pts":""}">${fmtP(o.sr)}</span></div>`; }).join("")}
-    <p class="hint" style="font-size:11.5px">The ${bmName()} column turns green when ${x?esc(x):"your portfolio"} beat it over that stretch, red when it lagged.</p></div>`;
+      return `<div class="pago"><b>${o.l}<small>${pdS(o.p.t)}</small></b><span class="num">${x?fmt$(o.then):money(fmt$(o.then,0))}</span><span class="num ${tcls(o.r)}">${fmtP(o.r)}<small>${x?"":sgn$(o.d)}</small></span><span class="pbar"><i class="${o.r>=0?"up":"dn"}" style="width:${w}%"></i></span><span class="num ${beat==null?"":beat>=0?"tup":"tdown"}" title="${beat!=null?(beat>=0?"beat":"lagged")+" the "+bmName()+" by "+Math.abs(beat).toFixed(1)+" pts":""}">${fmtP(o.sr)}</span></div>`; }).join("")}
+    <p class="hint" style="font-size:11.5px">The ${bmName()} column turns green when ${x?esc(x):"your portfolio"} beat it over that stretch, red when it lagged.${!x&&S.ptx.length?" Changes count market moves only, not money you added or took out with buys and sells.":""}</p></div>`;
 }
 // the horse race: every holding rebased to 100 at the start of the range
-function raceHTML(P,R){
-  const xs=P.have.filter(x=>R[0].px[x]>0), t0=R[0].t, t1=R[R.length-1].t; if(xs.length<2||R.length<3) return "";
-  const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r), top=new Set(ranked.slice(0,5).map(o=>o.x));
-  const step=Math.max(1,Math.floor(R.length/120)), idx=[]; for(let i=0;i<R.length;i+=step) idx.push(i); if(idx[idx.length-1]!==R.length-1) idx.push(R.length-1);
+// the race chart itself; used inline and, bigger, in the full-screen view
+function raceSVG(P,R,o){
+  const {W,H,nl,id,fs}=o, xs=P.have.filter(x=>R[0].px[x]>0), t0=R[0].t, t1=R[R.length-1].t;
+  const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r), top=new Set(ranked.slice(0,nl).map(o=>o.x)), lead=ranked[0];
+  const step=Math.max(1,Math.floor(R.length/(W>400?240:120))), idx=[]; for(let i=0;i<R.length;i+=step) idx.push(i); if(idx[idx.length-1]!==R.length-1) idx.push(R.length-1);
   const spy0=spyAt(t0), spyLine=spy0?idx.map(i=>[R[i].t,((R[i].live?price(bmSym()):spyAt(R[i].t))||spy0)/spy0*100]):null;
   let lo=100,hi=100; xs.forEach(x=>idx.forEach(i=>{ const v=R[i].px[x]/R[0].px[x]*100; if(v<lo) lo=v; if(v>hi) hi=v; })); if(spyLine) spyLine.forEach(q=>{ lo=Math.min(lo,q[1]); hi=Math.max(hi,q[1]); });
-  const W=340,H=220,T=10,B=18,RP=68, X=t=>4+(t-t0)/(t1-t0||1)*(W-RP-8), Y=v=>T+(1-(v-lo)/(hi-lo||1))*(H-T-B);
+  const T=10,B=18,RP=Math.round(fs*7.4), lh=fs+3, X=t=>4+(t-t0)/(t1-t0||1)*(W-RP-8), Y=v=>T+(1-(v-lo)/(hi-lo||1))*(H-T-B);
   const path=x=>idx.map((i,k)=>(k?"L":"M")+X(R[i].t).toFixed(1)+" "+Y(R[i].px[x]/R[0].px[x]*100).toFixed(1)).join(" ");
-  // labels for the top five, nudged apart so they don't overlap
-  const labs=ranked.slice(0,5).map(o=>({x:o.x,r:o.r,y:Y(100+o.r)})).sort((a,b)=>a.y-b.y); for(let i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<11) labs[i].y=labs[i-1].y+11;
+  // labels for the leaders, nudged apart so they don't overlap
+  const labs=ranked.slice(0,nl).map(o=>({x:o.x,r:o.r,y:Y(100+o.r)})).sort((a,b)=>a.y-b.y); for(let i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<lh) labs[i].y=labs[i-1].y+lh;
+  let grid=""; if(W>400) for(let k=1;k<4;k++){ const v=hi-(k/4)*(hi-lo), y=Y(v); grid+=`<line x1="0" x2="${W-RP}" y1="${y}" y2="${y}" stroke="#1A2430"/><text x="4" y="${y-3}" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">${v>=100?"+":""}${(v-100).toFixed(0)}%</text>`; }
+  return `<svg class="chart" id="${id}Svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Horse race of your holdings"><defs><clipPath id="${id}Clip"><rect id="${id}Rect" x="0" y="0" width="${W}" height="${H}"/></clipPath></defs>${grid}
+        <line x1="0" x2="${W-RP}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><text x="${W-RP-2}" y="${Y(100)-3}" text-anchor="end" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">start</text>
+        <g clip-path="url(#${id}Clip)">${xs.filter(x=>!top.has(x)).map(x=>`<path d="${path(x)}" fill="none" stroke="#3A4757" stroke-width=".8" opacity=".55"/>`).join("")}
+        ${spyLine?`<path d="${spyLine.map((q,k)=>(k?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="#E6EDF5" stroke-width="1.2" stroke-dasharray="4 3"/>`:""}
+        ${ranked.slice(0,nl).reverse().map(o=>`<path d="${path(o.x)}" fill="none" stroke="${hue(o.x)}" stroke-width="${o===lead?2.6:1.7}"/>`).join("")}</g>
+        <g id="${id}Labs">${labs.map(o=>`<text x="${W-RP+4}" y="${o.y+fs/3}" font-size="${fs}" font-weight="700" fill="${hue(o.x)}" font-family="Sora">${esc(o.x)} ${o.r>=0?"+":""}${o.r.toFixed(0)}%</text>`).join("")}${spyLine?`<text x="${W-RP+4}" y="${Math.min(H-B,Math.max(T+8,Y(spyLine[spyLine.length-1][1])))+fs/3}" font-size="${fs-.5}" fill="#AEB9C7" font-family="Sora">${bmName()}</text>`:""}</g>
+        <text x="4" y="${H-4}" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdL(t0)}</text><text x="${W-RP}" y="${H-4}" text-anchor="end" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdS(t1)}</text></svg>`;
+}
+function raceHTML(P,R){
+  const xs=P.have.filter(x=>R[0].px[x]>0); if(xs.length<2||R.length<3) return "";
+  const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r);
   const lead=ranked[0], last=ranked[ranked.length-1], rng=(PRANGES.find(r=>r[0]===S.prange)||[])[1]||"";
   return `<div class="section-h"><h2>🏇 Horse race</h2><small>every holding from the same start, ${esc(rng)}</small></div>
     <div class="card" style="background:var(--panel);gap:8px">
       <p class="hint" style="margin:0">Fastest horse: <b style="color:${hue(lead.x)}">${esc(lead.x)}</b> <span class="tup">${fmtP(lead.r)}</span>. Slowest: <b>${esc(last.x)}</b> <span class="${tcls(last.r)}">${fmtP(last.r)}</span>.</p>
-      <svg class="chart" id="raceSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Horse race of your holdings"><defs><clipPath id="raceClip"><rect id="raceRect" x="0" y="0" width="${W}" height="${H}"/></clipPath></defs>
-        <line x1="0" x2="${W-RP}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><text x="${W-RP-2}" y="${Y(100)-3}" text-anchor="end" font-size="8" fill="#566377" font-family="JetBrains Mono">start</text>
-        <g clip-path="url(#raceClip)">${xs.filter(x=>!top.has(x)).map(x=>`<path d="${path(x)}" fill="none" stroke="#3A4757" stroke-width=".8" opacity=".55"/>`).join("")}
-        ${spyLine?`<path d="${spyLine.map((q,k)=>(k?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="#E6EDF5" stroke-width="1.2" stroke-dasharray="4 3"/>`:""}
-        ${ranked.slice(0,5).reverse().map(o=>`<path d="${path(o.x)}" fill="none" stroke="${hue(o.x)}" stroke-width="${o===lead?2.6:1.7}"/>`).join("")}</g>
-        <g id="raceLabs">${labs.map(o=>`<text x="${W-RP+4}" y="${o.y+3}" font-size="9" font-weight="700" fill="${hue(o.x)}" font-family="Sora">${esc(o.x)} ${o.r>=0?"+":""}${o.r.toFixed(0)}%</text>`).join("")}${spyLine?`<text x="${W-RP+4}" y="${Math.min(H-B,Math.max(T+8,Y(spyLine[spyLine.length-1][1])))+3}" font-size="8.5" fill="#AEB9C7" font-family="Sora">${bmName()}</text>`:""}</g>
-        <text x="4" y="${H-4}" font-size="9" fill="#8392A6" font-family="Sora">${pdL(t0)}</text><text x="${W-RP}" y="${H-4}" text-anchor="end" font-size="9" fill="#8392A6" font-family="Sora">${pdS(t1)}</text></svg>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="ghost" data-prace>▶ Replay the race</button><span class="hint" style="font-size:11.5px">Top 5 in color, the rest in gray, ${bmName()} dashed.</span></div>
+      ${raceSVG(P,R,{W:340,H:300,nl:5,id:"race",fs:10.5})}
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="ghost" data-prace>▶ Replay the race</button><button class="ghost" data-pracebig>⛶ Full screen</button><span class="hint" style="font-size:11.5px">Top 5 in color, the rest in gray, ${bmName()} dashed.</span></div>
       <div class="pboard">${(S.pRaceAll?ranked:ranked.slice(0,8).concat(ranked.length>13?[null]:[],ranked.length>8?ranked.slice(Math.max(8,ranked.length-5)):[])).map((o,i)=>o?`<button class="pbrow" data-psym="${esc(o.x)}"><span class="rk">${ranked.indexOf(o)+1}</span><b>${esc(o.x)}</b><span class="pbar"><i class="${o.r>=0?"up":"dn"}" style="width:${Math.min(100,Math.abs(o.r)/Math.max(Math.abs(lead.r),Math.abs(last.r),1)*100)}%"></i></span><span class="num ${tcls(o.r)}">${fmtP(o.r)}</span></button>`:`<div class="pbgap">⋯</div>`).join("")}</div>
       ${ranked.length>13?`<button class="ghost" data-praceall style="align-self:flex-start">${S.pRaceAll?"Show top and bottom":"Show all "+ranked.length}</button>`:""}
     </div>`;
 }
+// full-screen race: tall, more horses labeled, and zoomable (pinch, or the + and − buttons)
+function openRaceBig(){
+  const P=S.plotP; if(!P||!P.rng) return; const R=P.rng; S.open="__prace"; S.raceZ=S.raceZ||1; S.raceN=S.raceN||10;
+  const draw=()=>{ const n=Math.min(S.raceN,P.have.length); $("raceBox").innerHTML=`<div style="width:${S.raceZ*100}%">${raceSVG(P,R,{W:520,H:Math.round(Math.max(560,window.innerHeight*1.1)),nl:n,id:"raceZ",fs:13})}</div>`;
+    $("raceZl").textContent=S.raceZ===1?"Fit":S.raceZ+"×"; $("raceNl").textContent=`Label top ${n}`; };
+  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>🏇 Horse race</h3><p>${esc((PRANGES.find(r=>r[0]===S.prange)||[])[1]||"")} · ${pdS(R[0].t)} – ${pdS(R[R.length-1].t)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="chipbar"><button class="ghost" data-rz="-1" aria-label="Zoom out">−</button><span class="hint" id="raceZl"></span><button class="ghost" data-rz="1" aria-label="Zoom in">+</button><button class="ghost" data-rn="-5">−5</button><span class="hint" id="raceNl"></span><button class="ghost" data-rn="5">+5</button><button class="ghost" data-rplay>▶ Replay</button></div>
+    <div id="raceBox" class="racebox"></div><p class="hint" style="font-size:11.5px">Zoom in and scroll sideways to read crowded stretches. ${bmName()} dashed.</p>`;
+  $("sheetIn").querySelector(".chipbar").addEventListener("click",e=>{ const z=e.target.closest("[data-rz]"), n=e.target.closest("[data-rn]");
+    if(z){ S.raceZ=Math.max(1,Math.min(4,S.raceZ+ +z.dataset.rz)); draw(); } else if(n){ S.raceN=Math.max(5,Math.min(P.have.length,S.raceN+ +n.dataset.rn)); draw(); } else if(e.target.closest("[data-rplay]")) replayRace("raceZ"); });
+  draw(); showSheet();
+}
 // who made (or cost) you money over the range, in dollars
 function contribHTML(P,R){
-  const a=R[0], z=R[R.length-1], rows=P.have.map(x=>({x,d:(z.px[x]-a.px[x])*S.plot[x]})).filter(o=>Math.abs(o.d)>=0.5).sort((p,q)=>q.d-p.d); if(!rows.length) return "";
+  const rows=contribs(P,R).filter(o=>Math.abs(o.d)>=0.5).sort((p,q)=>q.d-p.d); if(!rows.length) return "";
   const show=rows.length>12?rows.slice(0,7).concat([null],rows.slice(-5)):rows, mx=Math.max(...rows.map(o=>Math.abs(o.d)))||1, tot=rows.reduce((s,o)=>s+o.d,0);
   return `<div class="section-h"><h2>💰 Who made you money</h2><small>dollar gain or loss over the range</small></div>
     <div class="card" style="background:var(--panel);gap:6px">${show.map(o=>o?`<div class="pctr" data-psym="${esc(o.x)}" role="button" tabindex="0"><b>${esc(o.x)}</b><div class="pctr-t"><i style="${o.d>=0?`left:50%;width:${o.d/mx*50}%;background:var(--gain)`:`right:50%;width:${-o.d/mx*50}%;background:var(--loss)`}"></i></div><span class="num ${tcls(o.d)}">${sgn$(o.d)}</span></div>`:`<div class="pbgap">⋯</div>`).join("")}
@@ -3115,10 +3197,10 @@ function contribHTML(P,R){
 }
 // heat map: tile size is position value today, color is the move over the range
 function heatHTML(P,R){
-  const a=R[0], z=R[R.length-1], tiles=P.have.map(x=>({x,v:z.px[x]*S.plot[x],r:(z.px[x]/a.px[x]-1)*100})).sort((p,q)=>q.v-p.v); if(tiles.length<2) return "";
+  const a=R[0], z=R[R.length-1], tiles=P.have.map(x=>({x,v:z.px[x]*z.q[x],r:(z.px[x]/a.px[x]-1)*100})).filter(o=>o.v>0).sort((p,q)=>q.v-p.v); if(tiles.length<2) return "";
   const tot=tiles.reduce((s,o)=>s+o.v,0), mx=Math.max(...tiles.map(o=>Math.abs(o.r)))||1;
   const col=r=>{ const k=Math.min(1,Math.abs(r)/mx), a=.18+.7*Math.sqrt(k); return r>=0?`rgba(43,217,154,${a.toFixed(2)})`:`rgba(255,92,114,${a.toFixed(2)})`; };
-  return `<div class="section-h"><h2>🗺️ Heat map</h2><small>size = position value, color = move over the range</small></div>
+  return `${plotChips()}<div class="section-h"><h2>🗺️ Heat map</h2><small>size = position value, color = move over the range</small></div>
     <div class="pheat">${tiles.map(o=>{ const sh=o.v/tot*100; return `<button data-psym="${esc(o.x)}" style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?78:sh>2.5?56:40}px;background:${col(o.r)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span>${sh>2.5?`<small>${sh.toFixed(1)}%</small>`:""}</button>`; }).join("")}</div>`;
 }
 // underwater chart: how far below its previous high the value was on each day
@@ -3164,14 +3246,14 @@ function takeawaysHTML(P,R,pts,risk){
   if(sr!=null) out.push(`${S.pSym?esc(S.pSym):"Your portfolio"} is ${r>=0?"up":"down"} <b class="${tcls(r)}">${fmtP(r)}</b> over ${esc(rng)}, ${r>=sr?"beating":"trailing"} the ${bmName()} (${fmtP(sr)}) by <b>${Math.abs(r-sr).toFixed(1)} pts</b>.`);
   out.push(off>-0.05?`It's at the high for this range right now.`:`It's <b class="tdown">${off.toFixed(1)}%</b> below the range high of ${S.pSym?fmt$(pts[hiI][1]):money(fmt$(pts[hiI][1],0))} on ${pdL(pts[hiI][0])}; the low was ${S.pSym?fmt$(pts[loI][1]):money(fmt$(pts[loI][1],0))} on ${pdL(pts[loI][0])}.`);
   if(!S.pSym&&P.have.length>1){
-    const rk=P.have.map(x=>({x,r:(z.px[x]/a.px[x]-1)*100,d:(z.px[x]-a.px[x])*S.plot[x]})), f=rk.reduce((p,q)=>q.r>p.r?q:p), mm=rk.reduce((p,q)=>q.d>p.d?q:p), ll=rk.reduce((p,q)=>q.d<p.d?q:p);
+    const rk=contribs(P,R), f=rk.reduce((p,q)=>q.r>p.r?q:p), mm=rk.reduce((p,q)=>q.d>p.d?q:p), ll=rk.reduce((p,q)=>q.d<p.d?q:p);
     out.push(`Fastest horse: <b>${esc(f.x)}</b> (${fmtP(f.r)}). Biggest dollar gain: <b>${esc(mm.x)}</b> (${sgn$(mm.d)})${ll.d<0?`; biggest drag: <b>${esc(ll.x)}</b> (${sgn$(ll.d)})`:""}.`);
     const vals=P.syms.map(x=>(pxNow(x)||0)*S.plot[x]).sort((p,q)=>q-p), tot=vals.reduce((s,v)=>s+v,0); if(tot){ const top=P.syms.map(x=>({x,v:(pxNow(x)||0)*S.plot[x]})).sort((p,q)=>q.v-p.v)[0], t5=vals.slice(0,5).reduce((s,v)=>s+v,0)/tot*100;
       out.push(`<b>${esc(top.x)}</b> is ${(top.v/tot*100).toFixed(0)}% of the portfolio and the top 5 are ${t5.toFixed(0)}%${top.v/tot>.3?", so one stock drives most of the moves":""}.`); }
     const vs=P.have.map(x=>({x,v:stdev(R.slice(1).map((o,i)=>(o.px[x]/R[i].px[x]-1)*100))})).sort((p,q)=>q.v-p.v)[0]; if(vs&&vs.v) out.push(`Wildest ride: <b>${esc(vs.x)}</b>, typically moving about ${vs.v.toFixed(1)}% a day.`);
   }
   if(risk.beta!=null) out.push(risk.beta>1.15?`With a beta of ${risk.beta.toFixed(2)}, it tends to swing harder than the market both ways.`:risk.beta<0.85?`With a beta of ${risk.beta.toFixed(2)}, it has moved less than the market.`:`It has moved roughly in step with the market (beta ${risk.beta.toFixed(2)}).`);
-  return `<div class="card pinsight"><h4>💡 What the chart says</h4><ul>${out.map(s=>`<li>${s}</li>`).join("")}</ul><p class="hint" style="font-size:11px;margin:0">Based on today's share counts applied to past prices. Not investment advice.</p></div>`;
+  return `<div class="card pinsight"><h4>💡 What the chart says</h4><ul>${out.map(s=>`<li>${s}</li>`).join("")}</ul><p class="hint" style="font-size:11px;margin:0">${S.ptx.length?"Uses the shares you held each day, from your buy and sell history.":"Based on today's share counts applied to past prices. Record buys and sells to track changes."} Not investment advice.</p></div>`;
 }
 // the portfolio (or stock) against all four indexes over the range
 function vsHTML(pts,R){
@@ -3182,20 +3264,181 @@ function vsHTML(pts,R){
     <div class="card" style="background:var(--panel);gap:6px">${rows.sort((p,q)=>q.r-p.r).map(o=>`<div class="pvs${o.me?" me":""}"${o.x?` data-pbm="${o.x}" role="button" tabindex="0"`:""}><b>${o.n}</b><div class="pctr-t"><i style="${o.r>=0?`left:50%;width:${o.r/mx*50}%;background:${o.me?"var(--accent)":"var(--gain)"}`:`right:50%;width:${-o.r/mx*50}%;background:${o.me?"var(--accent)":"var(--loss)"}`}"></i></div><span class="num ${tcls(o.r)}">${fmtP(o.r)}</span></div>`).join("")}
       <p class="hint" style="font-size:11.5px">Nasdaq is tracked with ONEQ, Nasdaq 100 with QQQ, the Dow with DIA and the S&amp;P 500 with SPY. Tap an index to compare against it on the charts.</p></div>`;
 }
+// range and index chips, shown under the hero and again above the heat map
+function plotChips(){ return `<div class="chipbar">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}</div>
+    <div class="chipbar pbmbar"><span class="hint">Compare</span>${BMS.map(([x,n])=>`<button data-pbm="${x}" aria-pressed="${S.pbm===x}">${esc(n)}</button>`).join("")}<button data-pbm="" aria-pressed="${!S.pbm}">Off</button></div>
+    <div class="chipbar pbmbar"><button data-pma aria-pressed="${!!S.pma}">50d / 200d avg</button><button data-pcmp>🔎 Analyze this chart</button></div>`; }
+const reportBtnsHTML=()=>`<div class="card prepbtns"><h4>📄 Reports</h4><div>${Object.entries(PREP).map(([k,v])=>`<button class="ghost" data-preport="${k}">${v[0]}</button>`).join("")}</div><p class="hint" style="font-size:11.5px;margin:0">Summary, best and worst stocks, who made you money, your trades and the market events of the period.</p></div>`;
+/* ---------- ideas to consider: simple rules over the holdings, worked out on this device ---------- */
+const LEVERAGED=new Set(["TQQQ","SQQQ","SOXL","SOXS","UPRO","SPXL","SPXU","TNA","TZA","FAS","LABU","TECL","FNGU","NVDL","NVDU","TSLL","TSLT","MSTU","MSTX","CONL","QLD","SSO","USD","ROM","BITX","ETHU"]);
+const INDEXF=new Set(["SPY","VOO","IVV","QQQ","QQQM","VTI","ONEQ","DIA","RSP","VUG","SCHG","VGT","XLK","TQQQ","QLD","UPRO","SPXL","SSO","VFIAX","VTSAX","VFTAX","VIGIX","VIGAX","VIIIX","VINIX","FXAIX","FSKAX","FZROX","SWPPX","SWTSX","FSPGX"]);
+const MEGA=["NVDA","MSFT","AAPL","AMZN","GOOG","GOOGL","META","AVGO","TSLA"];
+function ideasPlotHTML(P){
+  const vals=P.syms.map(x=>({x,v:(pxNow(x)||0)*S.plot[x]})).sort((a,b)=>b.v-a.v), tot=vals.reduce((s,o)=>s+o.v,0); if(!tot) return "";
+  const w=x=>(vals.find(o=>o.x===x)||{v:0}).v/tot*100, list=a=>a.slice(0,5).map(esc).join(", ")+(a.length>5?` and ${a.length-5} more`:""), out=[];
+  const top=vals[0]; if(top.v/tot>.25) out.push(["⚖️",`${esc(top.x)} is ${(top.v/tot*100).toFixed(0)}% of your money`,"One stock this big drives most of your ups and downs. Many investors cap a single stock at 10–20% and point new money elsewhere."]);
+  const lev=vals.filter(o=>LEVERAGED.has(o.x)), levW=lev.reduce((s,o)=>s+o.v,0)/tot*100;
+  if(levW>=5) out.push(["⚠️",`Leveraged funds are ${levW.toFixed(0)}% (${list(lev.map(o=>o.x))})`,"They reset every day, so in choppy markets they can lose even when the index ends flat. They're usually meant for short holds."]);
+  const idx=vals.filter(o=>INDEXF.has(o.x)), ov=MEGA.filter(x=>w(x)>=2);
+  if(idx.length&&ov.length) out.push(["🔁",`Your index funds already own ${list(ov)}`,`${list(idx.map(o=>o.x))} hold the same mega-caps, so you own more of them than the holdings list suggests.`]);
+  const hot=[], cold=[]; P.syms.forEach(x=>{ const A=analytics(x); if(!A) return; const c=S.daily[x].c.slice(-252).map(b=>b[1]), hi=Math.max(...c);
+    if(A.R>=75||(A.s200&&A.p/A.s200>1.35)) hot.push(x); else if(A.s200&&A.p<A.s200&&A.p/hi<.75) cold.push(x); });
+  if(hot.length) out.push(["🔥",`Running hot: ${list(hot)}`,"Far above their 200-day average or RSI over 75. Big runs often pause; some investors trim winners back to their target size."]);
+  if(cold.length) out.push(["🧊",`Down hard: ${list(cold)}`,"More than 25% under their 1-year high and below the 200-day average. Worth re-checking why you own each one."]);
+  const days=P.days, z=days[days.length-1], t=agoDate("y1"); let a=null; for(const o of days){ if(o.t>t+864e5/2) break; a=o; }
+  if(a&&a!==z){ const me=(z.g/a.g-1)*100, s0=bmAt("SPY",a.t), s1=price("SPY")??bmAt("SPY",z.t); if(s0&&s1){ const sp=(s1/s0-1)*100; if(me<sp-5) out.push(["🐢",`Trailing the S&P 500 by ${(sp-me).toFixed(0)} pts over the past year`,`You're ${fmtP(me)} against the S&P's ${fmtP(sp)}. A low-cost index fund as the core, with stock picks around it, is a common fix.`]); } }
+  const map=(S.earnings&&S.earnings.map)||{}, soon=etISO(new Date(Date.now()+8*864e5)), er=P.syms.filter(x=>map[x]&&map[x].date>=today()&&map[x].date<=soon).sort((p,q)=>map[p].date.localeCompare(map[q].date));
+  if(er.length) out.push(["📣",`Earnings this week: ${er.slice(0,6).map(x=>`${esc(x)} ${pdS(parseET(map[x].date))}`).join(", ")}`,"Expect bigger moves around each report."]);
+  const tiny=vals.filter(o=>o.v/tot<.005); if(tiny.length>=4) out.push(["🧹",`${tiny.length} tiny positions under 0.5% each`,`${list(tiny.map(o=>o.x))} barely move your total. Combining them can make the portfolio easier to follow.`]);
+  if(!out.length) out.push(["✅","Nothing stands out","No outsized position, leveraged funds, overheated or broken charts right now."]);
+  return `<div class="section-h"><h2>🧭 Ideas to consider</h2><small>rules of thumb, not advice</small></div>
+    <div class="card" style="background:var(--panel);gap:10px">${out.map(([i,t,d])=>`<div class="pidea"><span>${i}</span><div><b>${t}</b><p>${d}</p></div></div>`).join("")}</div>`;
+}
+/* ---------- Ask Claude: opens claude.ai with the numbers filled in; nothing is sent until you press send there ---------- */
+function aiContext(P,R,pts){
+  const z=R[R.length-1], a=R[0], rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"").replace("Max","full history"), me=(pts[pts.length-1][1]/pts[0][1]-1)*100, hideV=S.priv;
+  const vals=P.syms.map(x=>({x,v:(pxNow(x)||0)*S.plot[x]})).sort((p,q)=>q.v-p.v), tot=vals.reduce((s,o)=>s+o.v,0), cs={}; contribs(P,R).forEach(o=>{ cs[o.x]=o; });
+  const yr=x=>{ const c=S.daily[x]&&S.daily[x].c; if(!c||c.length<200) return null; const t=agoDate("y1"); let p=null; for(const b of c){ if(b[0]>t) break; p=b[1]; } return p&&pxNow(x)?(pxNow(x)/p-1)*100:null; };
+  const L=[`My stock portfolio as of ${new Date().toLocaleDateString([], {month:"long",day:"numeric",year:"numeric"})}${hideV?"":`, worth about ${fmt$(tot,0)}`}.`,
+    `Over ${rng}: my portfolio ${fmtP(me)}; `+BMS.map(([x,n])=>{ const s0=bmAt(x,a.t), s1=z.live?price(x)??bmAt(x,z.t):bmAt(x,z.t); return `${n} ${s0&&s1?fmtP((s1/s0-1)*100):"n/a"}`; }).join(", ")+".",
+    "", "Holdings (weight, return over the range, 1-year return, RSI, distance from 200-day average):"];
+  vals.forEach(o=>{ const A=analytics(o.x), c=cs[o.x]; L.push(`- ${o.x}: ${hideV?"":fmtQ(S.plot[o.x])+" sh, "}${tot?(o.v/tot*100).toFixed(1):0}%, range ${c&&c.r!=null?fmtP(c.r):"n/a"}, 1Y ${fmtP(yr(o.x))}${A?`, RSI ${A.R.toFixed(0)}${A.s200?`, ${fmtP((A.p/A.s200-1)*100)} vs 200d`:""}`:""}`); });
+  if(S.ptx.length){ L.push("","Recent buys and sells:"); S.ptx.slice(-12).forEach(t=>L.push(`- ${t.d} ${t.q>0?"bought":"sold"} ${fmtQ(Math.abs(t.q))} ${t.s}`)); }
+  const map=(S.earnings&&S.earnings.map)||{}, to=etISO(new Date(Date.now()+31*864e5)), ev=marketEvents(today(),to).filter(e=>e.kind==="fed"||e.kind==="macro").slice(0,8), er=P.syms.filter(x=>map[x]&&map[x].date>=today()&&map[x].date<=to);
+  if(ev.length||er.length){ L.push("","Coming up in the next month:"); ev.forEach(e=>L.push(`- ${e.date} ${e.title}`)); if(er.length) L.push(`- Earnings: ${er.map(x=>`${x} ${map[x].date}`).join(", ")}`); }
+  return L.join("\n");
+}
+function aiHTML(P,R,pts){
+  if(S.pSym) return ""; const ctx=aiContext(P,R,pts), rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"");
+  const asks=[["🔍 Analyze my portfolio","Analyze this portfolio: diversification, concentration, sector and theme exposure, overlap between funds and stocks, what has driven performance, and the biggest risks. Be specific to these holdings and keep it practical."],
+    ["⚖️ Rebalancing ideas","Suggest concrete rebalancing ideas for this portfolio with example target weights, what to trim or add and why, and the tradeoffs (taxes, risk, conviction). I know this isn't personal financial advice."],
+    ["📰 Explain this period",`Explain what drove this portfolio over the ${rng} period: which holdings and which market events (Fed, inflation, earnings, sector rotation) mattered most, and how it compares with the indexes.`],
+    ["🔭 What to watch next","What should I watch over the next month for these holdings: earnings dates, Fed and economic releases, key price levels, and the scenarios that would hurt or help the most?"]];
+  return `<div class="section-h"><h2>🤖 Ask Claude</h2><small>AI analysis with your numbers filled in</small></div>
+    <div class="card pai">${asks.map(([l,q])=>`<a class="ghost" href="${esc(claudeURL(ctx+"\n\n"+q))}" target="_blank" rel="noopener">${l}</a>`).join("")}
+      <p class="hint" style="font-size:11.5px;margin:0">Opens Claude in a new tab with your holdings, weights and returns in the message${S.priv?" (share counts and dollar amounts left out while Hide $ is on)":""}. Nothing is sent until you press send there.</p></div>`;
+}
+/* ---------- reports: week, month, 6 months, year ---------- */
+const PREP={w:["Weekly","m0",7],m:["Monthly","m1"],"6m":["6-month","m6"],"1y":["Yearly","y1"]};
+const prepFrom=k=>k==="w"?agoDate(7):agoDate(PREP[k][1]);
+function spyMoveOn(day){ const c=S.daily.SPY&&S.daily.SPY.c; if(!c) return null; for(let i=1;i<c.length;i++) if(etISO(new Date(c[i][0]))===day) return (c[i][1]/c[i-1][1]-1)*100; return null; }
+function plotReportData(k){
+  const P=S.plotP; if(!P||P.days.length<3) return null; const days=P.days, t=prepFrom(k); let i0=0; days.forEach((o,i)=>{ if(o.t<=t+864e5/2) i0=i; });
+  const R=days.slice(i0); if(R.length<2) return null; const a=R[0], z=R[R.length-1], ret=(z.g/a.g-1)*100, gain=marketGain(a,z), flow=netFlow(a,z);
+  const bms=BMS.map(([x,n])=>{ const s0=bmAt(x,a.t), s1=z.live?price(x)??bmAt(x,z.t):bmAt(x,z.t); return {x,n,r:s0&&s1?(s1/s0-1)*100:null}; });
+  const cs=contribs(P,R).filter(o=>o.r!=null&&(R[0].q[o.x]>0||z.q[o.x]>0)), byR=cs.slice().sort((p,q)=>q.r-p.r), byD=cs.slice().sort((p,q)=>q.d-p.d);
+  const ch=R.slice(1).map((o,i)=>({t:o.t,day:o.day,r:(o.g/R[i].g-1)*100})), best=ch.length?ch.reduce((p,q)=>q.r>p.r?q:p):null, worst=ch.length?ch.reduce((p,q)=>q.r<p.r?q:p):null;
+  const pts=proSeries(R), hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0);
+  const tx=S.ptx.filter(x=>x.d>a.day&&x.d<=z.day);
+  const events=marketEvents(etISO(new Date(a.t+864e5)),z.day).filter(e=>e.kind==="fed"||e.kind==="macro"||e.kind==="earn"||/Quad/.test(e.title)).map(e=>({...e,m:spyMoveOn(e.date)}));
+  const sc=S.daily.SPY&&S.daily.SPY.c, big=[]; if(sc) for(let i=1;i<sc.length;i++){ const d=etISO(new Date(sc[i][0])); if(d>a.day&&d<=z.day) big.push({day:d,r:(sc[i][1]/sc[i-1][1]-1)*100}); }
+  big.sort((p,q)=>Math.abs(q.r)-Math.abs(p.r));
+  const sp=bms[0].r, beat=bms.filter(b=>b.r!=null&&ret>=b.r).length, nb=bms.filter(b=>b.r!=null).length;
+  return {k,name:PREP[k][0],a,z,ret,gain,flow,bms,byR,byD,best,worst,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb};
+}
+function reportSummary(D){
+  const f=(v,d=0)=>S.priv?"":` (${(v>=0?"+":"−")+fmt$(Math.abs(v),d)})`, s=[];
+  s.push(`Your portfolio ${D.ret>=0?"gained":"lost"} ${Math.abs(D.ret).toFixed(2)}%${f(D.gain)} from ${pdL(D.a.t)} to ${pdL(D.z.t)}${D.sp!=null?`, ${D.ret>=D.sp?"ahead of":"behind"} the S&P 500 (${fmtP(D.sp)})`:""}${D.nb?` and beating ${D.beat} of the ${D.nb} major indexes`:""}.`);
+  if(D.byD.length){ const t=D.byD[0], b=D.byD[D.byD.length-1]; s.push(t.d>0?`${t.x} did the most for you${f(t.d)}${b.d<0?`, while ${b.x} hurt the most${f(b.d)}`:""}.`:`Every holding lost ground; ${b.x} hurt the most${f(b.d)} and ${t.x} held up best${f(t.d)}.`); }
+  if(D.byR.length>1) s.push(`The fastest horse was ${D.byR[0].x} (${fmtP(D.byR[0].r)}); the slowest was ${D.byR[D.byR.length-1].x} (${fmtP(D.byR[D.byR.length-1].r)}).`);
+  if(D.best&&D.worst&&D.best!==D.worst) s.push(`Best day ${pdS(D.best.t)} (${fmtP(D.best.r)}), worst day ${pdS(D.worst.t)} (${fmtP(D.worst.r)}).`);
+  const fed=D.events.filter(e=>e.kind==="fed"&&!e.est); if(fed.length) s.push(`The Fed met ${fed.length===1?"once":fed.length+" times"} in this period${fed[0].m!=null?`; the S&P moved ${fmtP(fed[fed.length-1].m)} on the last decision day`:""}.`);
+  if(D.tx.length) s.push(`You made ${D.tx.length} trade${D.tx.length>1?"s":""}${D.flow&&!S.priv?`, adding a net ${(D.flow>=0?"":"−")+fmt$(Math.abs(D.flow),0)}`:""}.`);
+  return s.join(" ");
+}
+function reportText(D){
+  const L=[`📄 ${D.name} portfolio report · ${pdL(D.a.t)} – ${pdL(D.z.t)}`,"",reportSummary(D),"","vs the indexes: "+D.bms.map(b=>`${b.n} ${fmtP(b.r)}`).join(" · ")];
+  if(D.byR.length) L.push("","Best: "+D.byR.slice(0,3).map(o=>`${o.x} ${fmtP(o.r)}`).join(", "),"Worst: "+D.byR.slice(-3).reverse().map(o=>`${o.x} ${fmtP(o.r)}`).join(", "));
+  if(D.tx.length) L.push("","Trades: "+D.tx.map(t=>`${t.d} ${t.q>0?"bought":"sold"} ${fmtQ(Math.abs(t.q))} ${t.s}`).join("; "));
+  if(D.events.length) L.push("","Market events:",...D.events.slice(-14).map(e=>`- ${e.date} ${e.title}${e.m!=null?` (S&P ${fmtP(e.m)})`:""}`));
+  return L.join("\n");
+}
+function openPlotReport(k){
+  S.open="__preport"; const D=plotReportData(k), si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
+  const head=`<div class="d-head"><div><h3>📄 ${D?D.name:"Portfolio"} report</h3><p>${D?`${pdL(D.a.t)} – ${pdL(D.z.t)}`:"Not enough price history yet"}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="chipbar">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${v[0]}</button>`).join("")}</div>`;
+  if(!D){ si.innerHTML=`<div id="prep">${head}<p class="hint">Reports need price history. Add the free Twelve Data key in Settings and give it a few minutes.</p></div>`; wireReport(null); showSheet(); return; }
+  const mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
+  const mv=(o,d)=>`<div class="kv" data-psym="${esc(o.x)}"><span>${esc(o.x)}</span><b class="num ${tcls(d?o.d:o.r)}">${d?sgn$(o.d):fmtP(o.r)}</b></div>`;
+  const evIcon={fed:"🏛️",macro:"📊",earn:"📣",options:"🎯"};
+  si.innerHTML=`<div id="prep">${head}
+    <div class="card prep-hero"><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div>
+      ${li("Value at start",money(fmt$(D.a.v,0)))}${li("Value now",money(fmt$(D.z.v,0)))}${li("High",money(fmt$(D.hi[1],0))+` <small>${pdS(D.hi[0])}</small>`)}${li("Low",money(fmt$(D.lo[1],0))+` <small>${pdS(D.lo[0])}</small>`)}</div>
+    <div class="card pinsight"><h4>💡 Summary</h4><p style="margin:0;font-size:13.5px;line-height:1.5;color:#C9D3DF">${esc(reportSummary(D)).replace(/\(([+−][^)]*)\)/g,(m)=>S.priv?"":m)}</p></div>
+    <div class="card" style="gap:6px"><h4>🏁 vs the indexes</h4>${bar("You",D.ret,1)}${D.bms.filter(b=>b.r!=null).map(b=>bar(esc(b.n),b.r)).join("")}</div>
+    ${D.byR.length?`<div class="card prep2"><div><h4>🚀 Best</h4>${D.byR.slice(0,3).map(o=>mv(o)).join("")}</div><div><h4>🐌 Worst</h4>${D.byR.slice(-3).reverse().map(o=>mv(o)).join("")}</div></div>
+    <div class="card prep2"><div><h4>💰 Made you money</h4>${D.byD.slice(0,3).filter(o=>o.d>0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing gained</p>`}</div><div><h4>💸 Cost you</h4>${D.byD.slice(-3).reverse().filter(o=>o.d<0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing lost</p>`}</div></div>`:""}
+    ${D.best?`<div class="card">${li("Best day · "+pdS(D.best.t),fmtP(D.best.r),"tup")}${li("Worst day · "+pdS(D.worst.t),fmtP(D.worst.r),"tdown")}</div>`:""}
+    ${D.tx.length?`<div class="card"><h4>🧾 Your trades</h4>${D.tx.map(t=>li(`${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} ${esc(t.s)}`,money(fmtQ(Math.abs(t.q)))+" sh",t.q>0?"tup":"tdown")).join("")}</div>`:""}
+    ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4>${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
+    ${D.big.length?`<div class="card"><h4>⚡ Biggest S&amp;P 500 days</h4>${D.big.map(b=>li(pdL(parseET(b.day)),fmtP(b.r),tcls(b.r))).join("")}</div>`:""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<a class="primary" href="${esc(claudeURL(reportText(D)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
+    <p class="hint" style="font-size:11px">Returns ignore money added or taken out with buys and sells. Event dates marked estimated follow the usual schedule. Not investment advice.</p></div>`;
+  wireReport(D); showSheet();
+}
+function wireReport(D){
+  $("prep").addEventListener("click",e=>{ const r=e.target.closest("[data-preport]"); if(r){ openPlotReport(r.dataset.preport); return; }
+    if(D&&e.target.closest("[data-prepcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(reportText(D)).then(()=>toast("Report copied"),()=>toast("Couldn't copy")); return; }
+    if(D&&e.target.closest("[data-prepshare]")){ navigator.share({title:`${D.name} portfolio report`,text:reportText(D)}).catch(()=>{}); return; } });
+}
+/* ---------- analyze this chart: you vs the chosen index over the chosen range, in plain English ---------- */
+function plotCompareData(){
+  const P=S.plotP; if(!P||!P.rng||P.rng.length<6) return null; const R=P.rng, x=S.pSym&&P.have.includes(S.pSym)?S.pSym:null, bs=S.pbm||"SPY", bn=(BMS.find(b=>b[0]===bs)||[,bs])[1];
+  const me=R.map(o=>x?o.px[x]:o.g), ix=R.map(o=>o.live?(price(bs)??bmAt(bs,o.t)):bmAt(bs,o.t)); if(ix.some(v=>!v)) return null;
+  const rets=a=>a.slice(1).map((v,i)=>v/a[i]-1), rm=rets(me), ri=rets(ix), n=rm.length, mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
+  const mm=mean(rm), mi=mean(ri); let cov=0; for(let i=0;i<n;i++) cov+=(rm[i]-mm)*(ri[i]-mi); cov/=Math.max(1,n-1);
+  const sm=stdev(rm), si=stdev(ri), beta=si?cov/si**2:null, corr=sm&&si?cov/(sm*si):null;
+  const dd=a=>{ let pk=a[0], w=0; a.forEach(v=>{ pk=Math.max(pk,v); w=Math.min(w,v/pk-1); }); return w*100; };
+  const upD=ri.map((v,i)=>[v,rm[i]]).filter(q=>q[0]>0), dnD=ri.map((v,i)=>[v,rm[i]]).filter(q=>q[0]<0), cap=a=>a.length&&mean(a.map(q=>q[0]))?mean(a.map(q=>q[1]))/mean(a.map(q=>q[0]))*100:null;
+  const rMe=(me[me.length-1]/me[0]-1)*100, rIx=(ix[ix.length-1]/ix[0]-1)*100;
+  // the stretch where the gap between you and the index widened or narrowed the most
+  let gi=0, gb=0, gw=0, wi=0; const gap=me.map((v,i)=>(v/me[0])/(ix[i]/ix[0]));
+  for(let i=1;i<gap.length;i++){ if(gap[i]<gap[gi]) gi=i; if(gap[i]/gap[gi]-1>gb){ gb=gap[i]/gap[gi]-1; gw=i; wi=gi; } }
+  return {x,bs,bn,R,rMe,rIx,beta,corr,volMe:sm*Math.sqrt(252)*100,volIx:si*Math.sqrt(252)*100,ddMe:dd(me),ddIx:dd(ix),upCap:cap(upD),dnCap:cap(dnD),
+    beatDays:rm.filter((v,i)=>v>ri[i]).length,n,run:gb>0.02?{a:R[wi].t,b:R[gw].t,r:gb*100}:null,mas:plotMAs(P,R,x),rng:((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"")};
+}
+function plotCompareText(C){
+  const who=C.x||"Your portfolio", L=[], d=C.rMe-C.rIx;
+  L.push(`${who} ${C.rMe>=0?"rose":"fell"} ${Math.abs(C.rMe).toFixed(2)}% over ${C.rng} while the ${C.bn} ${C.rIx>=0?"rose":"fell"} ${Math.abs(C.rIx).toFixed(2)}%, so ${Math.abs(d)<1?"you basically matched it":d>0?`you beat it by ${d.toFixed(1)} points`:`you lagged it by ${(-d).toFixed(1)} points`}.`);
+  if(C.beta!=null) L.push(`Beta ${C.beta.toFixed(2)}: when the ${C.bn} moves 1%, ${C.x?C.x:"you"} tend${C.x?"s":""} to move about ${C.beta.toFixed(2)}%. ${C.beta>1.2?"That's more aggressive than the index, so expect bigger swings both ways.":C.beta<0.8?"That's calmer than the index.":"That's close to the index."}`);
+  if(C.corr!=null) L.push(`Correlation ${C.corr.toFixed(2)}: ${C.corr>0.85?"you move almost in lockstep with the index, so most of your result is the market itself.":C.corr>0.6?"you mostly follow the index but your own picks matter too.":"you move fairly independently of the index, so your picks drive the result."}`);
+  if(C.upCap!=null&&C.dnCap!=null) L.push(`On the index's up days you captured ${C.upCap.toFixed(0)}% of its gain; on its down days you took ${C.dnCap.toFixed(0)}% of its loss. ${C.upCap>C.dnCap+5?"Gaining more on up days than you lose on down days is the healthy pattern.":C.dnCap>C.upCap+5?"Losing more on down days than you gain on up days is a warning sign.":"Those are roughly even."}`);
+  L.push(`Worst drop from a peak: ${C.ddMe.toFixed(1)}% for ${C.x?C.x:"you"} vs ${C.ddIx.toFixed(1)}% for the index. Yearly volatility ${C.volMe.toFixed(0)}% vs ${C.volIx.toFixed(0)}%.`);
+  L.push(`${C.x?C.x:"You"} beat the index on ${C.beatDays} of ${C.n} days (${(C.beatDays/C.n*100).toFixed(0)}%).`);
+  if(C.run) L.push(`The biggest pull-ahead was ${pdS(C.run.a)} to ${pdS(C.run.b)}, when ${C.x?C.x:"you"} gained ${C.run.r.toFixed(1)} points on the index.`);
+  const m50=C.mas.find(m=>m.n===50), m200=C.mas.find(m=>m.n===200);
+  if(m50&&m200&&m50.now!=null&&m200.now!=null) L.push(`Trend: ${m50.now>=0?"above":"below"} the 50-day average (${fmtP(m50.now)}) and ${m200.now>=0?"above":"below"} the 200-day (${fmtP(m200.now)}). ${m50.now>=0&&m200.now>=0?"Both point up, the classic uptrend.":m50.now<0&&m200.now<0?"Both point down, a downtrend until it climbs back over them.":m200.now>=0?"A dip within a longer uptrend.":"A bounce, but still under the long-term trend."}`);
+  return L;
+}
+function openPlotCompare(){
+  const C=plotCompareData(); S.open="__pcmp"; const si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
+  const head=`<div class="d-head"><div><h3>🔎 ${C?esc(C.x||"Portfolio")+" vs "+esc(C.bn):"Analyze this chart"}</h3><p>${C?esc(C.rng)+" · "+pdS(C.R[0].t)+" – "+pdS(C.R[C.R.length-1].t):"Not enough history yet"}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>`;
+  if(!C){ si.innerHTML=head+`<p class="hint">Pick a longer range, or wait for the index history to load.</p>`; showSheet(); return; }
+  const t=plotCompareText(C), f=v=>v==null?"—":v.toFixed(2);
+  const ctx=[`I'm looking at a chart of ${C.x||"my stock portfolio"} vs the ${C.bn} over ${C.rng} (${pdL(C.R[0].t)} to ${pdL(C.R[C.R.length-1].t)}).`,`Return: ${fmtP(C.rMe)} vs ${fmtP(C.rIx)}. Beta ${f(C.beta)}, correlation ${f(C.corr)}, up-capture ${C.upCap!=null?C.upCap.toFixed(0)+"%":"n/a"}, down-capture ${C.dnCap!=null?C.dnCap.toFixed(0)+"%":"n/a"}.`,`Max drawdown ${C.ddMe.toFixed(1)}% vs ${C.ddIx.toFixed(1)}%. Volatility ${C.volMe.toFixed(0)}% vs ${C.volIx.toFixed(0)}%.`,...C.mas.filter(m=>m.now!=null).map(m=>`${fmtP(m.now)} vs its ${m.n}-day moving average.`)].join("\n");
+  si.innerHTML=`${head}
+    <div class="card prep-hero"><div class="pvs me"><b>${esc(C.x||"You")}</b><span></span><span class="num ${tcls(C.rMe)}">${fmtP(C.rMe)}</span></div><div class="pvs"><b>${esc(C.bn)}</b><span></span><span class="num ${tcls(C.rIx)}">${fmtP(C.rIx)}</span></div>
+      <div class="big num ${tcls(C.rMe-C.rIx)}" style="font-size:26px">${C.rMe>=C.rIx?"+":"−"}${Math.abs(C.rMe-C.rIx).toFixed(1)} pts</div><div class="hint">${C.rMe>=C.rIx?"ahead of":"behind"} the ${esc(C.bn)}</div></div>
+    <div class="card pinsight"><h4>💡 What it means</h4><ul>${t.map(l=>`<li>${esc(l)}</li>`).join("")}</ul></div>
+    <div class="card"><h4>📐 The numbers</h4>${li("Beta",f(C.beta))}${li("Correlation",f(C.corr))}${li("Up-day capture",C.upCap!=null?C.upCap.toFixed(0)+"%":"—")}${li("Down-day capture",C.dnCap!=null?C.dnCap.toFixed(0)+"%":"—")}${li("Max drawdown",`${C.ddMe.toFixed(1)}% <small>vs ${C.ddIx.toFixed(1)}%</small>`,"tdown")}${li("Volatility (yearly)",`${C.volMe.toFixed(0)}% <small>vs ${C.volIx.toFixed(0)}%</small>`)}${li("Days ahead of the index",`${C.beatDays} of ${C.n}`)}${C.mas.filter(m=>m.now!=null).map(m=>li(`vs ${m.n}-day average`,fmtP(m.now),tcls(m.now))).join("")}</div>
+    <a class="primary" style="text-align:center;text-decoration:none" href="${esc(claudeURL(ctx+"\n\nExplain what this comparison means for me in plain English: how much of the result was the market vs my own picks, whether the risk I took was worth it, what the moving averages say about the trend, and what I could do about it."))}" target="_blank" rel="noopener">🤖 Ask Claude for a deeper read</a>
+    <p class="hint" style="font-size:11px">Change the range or the index on the chart, then tap Analyze again. Not investment advice.</p>`;
+  showSheet();
+}
 let proKey="", proHTML="";
 function renderPlotPro(){
   const el=$("plotPro"), P=S.plotP; if(!el||!P) return; const R=P.rng||[];
   if(R.length<3){ setHTML(el,""); return; }
   const x=S.pSym&&P.have.includes(S.pSym)?S.pSym:null, z=R[R.length-1];
-  const key=[S.prange,S.pbm,x,R.length,R[0].t,z.live?Math.floor(Date.now()/60000):z.t,P.have.length,S.priv,S.pRaceAll,BMS.map(b=>S.daily[b[0]]?S.daily[b[0]].c.length:0).join(",")].join("|");
+  const key=[S.pVer||0,S.ptx.length,S.prange,S.pbm,x,R.length,R[0].t,z.live?Math.floor(Date.now()/60000):z.t,P.have.length,S.priv,S.pRaceAll,BMS.map(b=>S.daily[b[0]]?S.daily[b[0]].c.length:0).join(",")].join("|");
   if(key!==proKey){ proKey=key;
     const pts=proSeries(R,x), all=proSeries(P.days,x), risk=riskHTML(pts,R,P);
-    proHTML=takeawaysHTML(P,R,pts,risk)+vsHTML(pts,R)+agoHTML(all,x)+(x?"":raceHTML(P,R)+contribHTML(P,R)+heatHTML(P,R))+ddHTML(pts)+monthsHTML(all)+risk.html; }
+    proHTML=reportBtnsHTML()+takeawaysHTML(P,R,pts,risk)+(x?"":ideasPlotHTML(P,R,pts))+aiHTML(P,R,pts,risk)+vsHTML(pts,R)+agoHTML(P.days,x)+(x?"":raceHTML(P,R)+contribHTML(P,R)+heatHTML(P,R))+ddHTML(pts)+monthsHTML(all)+risk.html; }
   setHTML(el,proHTML);
 }
 // replay: sweep the race lines in from left to right
-function replayRace(){
-  const r=$("raceRect"), labs=$("raceLabs"); if(!r) return; const W=+r.getAttribute("width"), t0=performance.now(), dur=3200; S.pRacing=1; if(labs) labs.style.opacity=0;
+function replayRace(id="race"){
+  const r=$(id+"Rect"), labs=$(id+"Labs"); if(!r) return; const W=+r.getAttribute("width"), t0=performance.now(), dur=3200; S.pRacing=1; if(labs) labs.style.opacity=0;
   const step=now=>{ const k=Math.min(1,(now-t0)/dur); r.setAttribute("width",(W*k).toFixed(1)); S.pBusy=Date.now(); if(k<1) requestAnimationFrame(step); else { S.pRacing=0; if(labs){ labs.style.transition="opacity .4s"; labs.style.opacity=1; } } };
   r.setAttribute("width",0); requestAnimationFrame(step);
 }
@@ -3221,8 +3464,7 @@ function renderPlot(force){
       <div class="palloc">${top.map(o=>`<i style="flex:${o.v||0.0001};background:${hue(o.x)}" title="${esc(o.x)}"></i>`).join("")}${other?`<i style="flex:${other};background:#2A3646"></i>`:""}</div>
       <div class="plegend">${top.map(o=>`<span><i style="background:${hue(o.x)}"></i>${esc(o.x)} ${val?(o.v/val*100).toFixed(0):0}%</span>`).join("")}${other?`<span><i style="background:#2A3646"></i>Other ${(other/val*100).toFixed(0)}%</span>`:""}</div>
     </section>
-    <div class="chipbar">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}</div>
-    <div class="chipbar pbmbar"><span class="hint">Compare</span>${BMS.map(([x,n])=>`<button data-pbm="${x}" aria-pressed="${S.pbm===x}">${esc(n)}</button>`).join("")}<button data-pbm="" aria-pressed="${!S.pbm}">Off</button></div>
+    ${plotChips()}
     <div class="card" style="background:var(--panel);gap:10px">
       ${S.pSym?`<div class="section-h"><h2 style="font-size:16px">${esc(S.pSym)} price</h2><div style="display:flex;gap:6px"><button class="ghost" data-pdetail="${esc(S.pSym)}">Details</button><button class="ghost" data-pall>All holdings</button></div></div>`:""}
       <div id="pChart"></div><div id="pRead"></div>
@@ -3242,29 +3484,57 @@ function renderPlot(force){
 }
 // no history yet: the table still lists today's values
 function plotSelNoHist(){ const P=S.plotP; P.rng=[{t:Date.now(),px:{},v:0,live:1}]; P.have=[]; plotSel(); $("pChart").innerHTML=""; $("pRead").innerHTML=""; }
+// a buy or sell changes today's shares and is kept with its date, so past days use the shares held then
+function addTrade(sym,q,d){ S.ptx.push({d,s:sym,q:+q.toFixed(6)}); const n=+((S.plot[sym]||0)+q).toFixed(6); if(n>1e-9) S.plot[sym]=n; else delete S.plot[sym]; }
+const plotSaved=()=>{ LS.set("plot",S.plot); saveTx(); S.pVer=(S.pVer||0)+1; S.pIdx=null; if(S.pSym&&!S.plot[S.pSym]&&!S.ptx.some(t=>t.s===S.pSym)) S.pSym=null; };
 function openPlotEdit(){
-  S.open="__plot";
+  S.open="__plot"; const has=plotSyms().length>0, td=ymdLocal(Date.now());
+  const hist=S.ptx.map((t,i)=>({...t,i})).reverse();
   $("sheetIn").innerHTML=`<div class="d-head"><div><h3>Your holdings</h3><p>Saved only on this device</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    ${has?`<div class="card ptrade"><h4>🧾 Record a buy or sell</h4>
+      <div class="chipbar" id="tSide"><button data-tside="1" aria-pressed="true">Buy</button><button data-tside="-1" aria-pressed="false">Sell</button></div>
+      <div class="ptrade-row"><input class="field" id="tSym" placeholder="Ticker" list="tSyms" autocapitalize="characters" autocomplete="off" spellcheck="false"><datalist id="tSyms">${plotSyms().sort().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+        <input class="field num" id="tQty" placeholder="Shares" inputmode="decimal"><input class="field" id="tDate" type="date" value="${td}" max="${td}"></div>
+      <button class="primary" id="tAdd" style="align-self:flex-start">Record</button>
+      <p class="hint" style="font-size:11.5px;margin:0">Your share count updates, and the chart uses the shares you held on each day, so a sale isn't counted as a loss.</p></div>`:""}
     <div class="card"><p class="hint">One stock per line: ticker, then number of shares, like <span class="num">AAPL 820.301</span>. Commas or tabs work too, so you can paste straight from a spreadsheet. Header lines are skipped and repeated tickers are added up.</p>
       <textarea class="field" id="pText" rows="12" spellcheck="false" autocapitalize="characters" autocomplete="off" style="font-family:var(--mono);font-size:13px;resize:vertical;min-height:200px">${esc(holdingsText())}</textarea>
       <p class="hint" id="pParse"></p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="pSave">Save</button>${Object.keys(S.holdings).length?`<button class="ghost" id="pWatch">Add my watchlist shares</button>`:""}${plotSyms().length?`<button class="ghost" id="pClear" style="color:var(--loss)">Remove all</button>`:""}</div></div>`;
+      ${has?`<label class="pchk"><input type="checkbox" id="pAsTx" checked> Count changes as buys and sells on <input class="field" id="pTxDate" type="date" value="${td}" max="${td}"></label>
+      <p class="hint" style="font-size:11.5px;margin:0">Untick it to fix a typo, so past days aren't changed.</p>`:""}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="pSave">Save</button>${Object.keys(S.holdings).length?`<button class="ghost" id="pWatch">Add my watchlist shares</button>`:""}${has||S.ptx.length?`<button class="ghost" id="pClear" style="color:var(--loss)">Remove all</button>`:""}</div></div>
+    ${hist.length?`<div class="card"><h4>📜 Buy and sell history</h4>${hist.map(t=>`<div class="kv ptx"><span>${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} <b>${esc(t.s)}</b></span><b class="num ${t.q>0?"tup":"tdown"}">${t.q>0?"+":"−"}${esc(fmtQ(Math.abs(t.q)))}</b><button class="iconbtn" data-txdel="${t.i}" aria-label="Delete">✕</button></div>`).join("")}
+      <p class="hint" style="font-size:11.5px;margin:0">Deleting a trade also undoes its change to today's shares.</p></div>`:""}`;
   const upd=()=>{ const {out,bad}=parseHoldings($("pText").value), k=Object.keys(out).length; $("pParse").innerHTML=`${k} stock${k===1?"":"s"} found${bad.length?` · <span class="tdown">couldn't read: ${bad.slice(0,4).map(esc).join(", ")}${bad.length>4?"…":""}</span>`:""}`; };
   $("pText").addEventListener("input",upd); upd();
-  $("pSave").addEventListener("click",()=>{ const {out}=parseHoldings($("pText").value); S.plot=out; LS.set("plot",S.plot); S.pIdx=null; if(S.pSym&&!out[S.pSym]) S.pSym=null; closeSheet(); setTab("plot"); toast(`Saved ${Object.keys(out).length} holdings on this device`); });
+  const done=msg=>{ plotSaved(); closeSheet(); setTab("plot"); renderPlot(true); toast(msg); };
+  let side=1; const sb=$("tSide"); if(sb) sb.addEventListener("click",e=>{ const b=e.target.closest("[data-tside]"); if(!b) return; side=+b.dataset.tside; sb.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); });
+  const ta=$("tAdd"); if(ta) ta.addEventListener("click",()=>{ const x=$("tSym").value.trim().toUpperCase(), q=parseFloat($("tQty").value.replace(/,/g,"")), d=$("tDate").value||td;
+    if(!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(x)){ toast("Enter a ticker"); return; } if(!(q>0)){ toast("Enter the number of shares"); return; } if(d>td){ toast("Pick today or an earlier day"); return; }
+    if(side<0&&q>(S.plot[x]||0)+1e-9){ toast(`You only have ${fmtQ(S.plot[x]||0)} ${x}`); return; }
+    addTrade(x,side*q,d); done(`${side>0?"Bought":"Sold"} ${fmtQ(q)} ${x} · saved on this device`); });
+  $("pSave").addEventListener("click",()=>{ const {out}=parseHoldings($("pText").value), asTx=$("pAsTx")&&$("pAsTx").checked, d=($("pTxDate")&&$("pTxDate").value)||td; let n=0;
+    if(asTx) new Set(plotSyms().concat(Object.keys(out))).forEach(x=>{ const ch=+((out[x]||0)-(S.plot[x]||0)).toFixed(6); if(Math.abs(ch)>1e-9){ S.ptx.push({d,s:x,q:ch}); n++; } });
+    S.plot=out; done(`Saved ${Object.keys(out).length} holdings on this device${n?` · ${n} change${n>1?"s":""} recorded`:""}`); });
   const w=$("pWatch"); if(w) w.addEventListener("click",()=>{ const t=$("pText"); t.value=(t.value.trim()?t.value.trim()+"\n":"")+Object.entries(S.holdings).filter(([,n])=>n>0).map(([s,n])=>`${s} ${n}`).join("\n"); upd(); });
-  const c=$("pClear"); if(c) c.addEventListener("click",()=>{ if(!confirm("Remove all StockPlotter holdings from this device?")) return; S.plot={}; S.ptrack={}; LS.set("plot",S.plot); LS.set("ptrack",S.ptrack); S.pSym=null; closeSheet(); renderPlot(true); toast("Holdings removed"); });
+  $("sheetIn").querySelectorAll("[data-txdel]").forEach(b=>b.addEventListener("click",()=>{ const t=S.ptx[+b.dataset.txdel]; if(!t||!confirm(`Delete this trade and undo its ${fmtQ(Math.abs(t.q))} ${t.s} share change?`)) return;
+    S.ptx.splice(+b.dataset.txdel,1); const n=+((S.plot[t.s]||0)-t.q).toFixed(6); if(n>1e-9) S.plot[t.s]=n; else delete S.plot[t.s]; plotSaved(); openPlotEdit(); renderPlot(true); }));
+  const c=$("pClear"); if(c) c.addEventListener("click",()=>{ if(!confirm("Remove all StockPlotter holdings and buy/sell history from this device?")) return; S.plot={}; S.ptrack={}; S.ptx=[]; LS.set("ptrack",S.ptrack); plotSaved(); closeSheet(); renderPlot(true); toast("Holdings removed"); });
   showSheet();
 }
 function wirePlot(){
   const el=$("tab-plot");
   el.addEventListener("click",e=>{
     if(e.target.closest("[data-pedit]")){ openPlotEdit(); return; }
+    const rp=e.target.closest("[data-preport]"); if(rp){ openPlotReport(rp.dataset.preport); return; }
+    if(e.target.closest("[data-pma]")){ S.pma=!S.pma; LS.set("pma",S.pma); renderPlot(true); return; }
+    if(e.target.closest("[data-pcmp]")){ openPlotCompare(); return; }
     const rg=e.target.closest("[data-prange]"); if(rg){ S.prange=rg.dataset.prange; LS.set("prange",S.prange); S.pIdx=null; renderPlot(true); return; }
     const bm=e.target.closest("[data-pbm]"); if(bm){ S.pbm=bm.dataset.pbm||null; LS.set("pbm",S.pbm); renderPlot(true); return; }
     if(e.target.closest("[data-ppriv]")){ S.priv=!S.priv; LS.set("priv",S.priv); render(); renderPlot(true); return; }
     if(e.target.closest("[data-pcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(holdingsText()).then(()=>toast("Holdings copied"),()=>toast("Couldn't copy")); return; }
     if(e.target.closest("[data-prace]")){ replayRace(); return; }
+    if(e.target.closest("[data-pracebig]")){ openRaceBig(); return; }
     if(e.target.closest("[data-praceall]")){ S.pRaceAll=!S.pRaceAll; renderPlotPro(); return; }
     if(e.target.closest("[data-pnow]")){ S.pIdx=null; plotSel(); return; }
     if(e.target.closest("[data-pall]")){ S.pSym=null; renderPlot(true); return; }
