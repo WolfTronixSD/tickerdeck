@@ -157,8 +157,22 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .tabbar button[aria-selected="true"]{color:var(--text)}
 @media (hover:hover){.tabbar button:hover{color:var(--text)}}
 .tabbar button[aria-selected="true"] svg{color:var(--accent);filter:drop-shadow(0 0 8px rgba(255,181,71,.45))}
-.pbmbar{align-items:center;margin-top:-8px}
-.pbmbar .hint{flex:none;font-size:11.5px}
+/* chart controls: range, compare, averages */
+.pkit{display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px}
+.pkit button{height:30px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.pkit button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
+.pkit-rng{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px}
+.pkit-rng button{padding:0;font-size:12px;min-width:0}
+.pkit-row{display:grid;grid-template-columns:28px 1fr;align-items:center;gap:4px}
+.pkit-row>span{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.pkit-row>div{display:flex;flex-wrap:wrap;gap:4px}
+.pkit-row button{padding:0 6px;font-size:12px;flex:auto;justify-content:center;background:var(--panel2);border:1px solid var(--line);display:inline-flex;align-items:center;gap:5px}
+.pkit-row button[aria-pressed="true"]{border-color:var(--text)}
+.pkit-row button i{width:8px;height:8px;border-radius:50%;flex:none}
+.pkit-go{display:grid;grid-template-columns:auto 1fr;gap:6px}
+.pkit-go button{height:34px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--panel2);font-size:12.5px}
+.pkit-go button[aria-pressed="true"]{border-color:var(--text)}
+@media (max-width:380px){.pkit-rng button{font-size:11px}.pkit-row button{padding:0 7px;font-size:12px}}
 .pvs{display:grid;grid-template-columns:76px 1fr 64px;align-items:center;gap:8px;font-size:12.5px;cursor:pointer}
 .pvs.me b{color:var(--accent)}
 .pvs>.num{text-align:right}
@@ -269,17 +283,22 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .print-only{display:none}
 /* printed reports: white paper, dark ink, nothing split across pages */
 @media print{
-  @page{margin:0}
-  html.printing{background:#fff!important}
+  @page{margin:12mm 11mm}
+  html.printing{background:#fff!important;color-scheme:light!important}
   body.printing{--ink:#fff;--panel:#fff;--panel2:#F2F4F7;--line:#D5DAE1;--text:#111820;--muted:#4A5563;--faint:#6B7684;--gain:#0B8A5C;--loss:#C8243C;--accent:#B7791F;background:#fff!important;color:#111820;padding:0;font-size:12px}
   body.printing>*:not(#sheet){display:none!important}
-  body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0;background:#fff;padding:12mm}
+  body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0;background:#fff;padding:0}
   body.printing .sheet-in{max-width:none;gap:10px}
   body.printing [data-close],body.printing .prep-actions{display:none!important}
   body.printing .print-only{display:block}
   body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none!important;text-shadow:none!important}
-  body.printing .card,body.printing .paward,body.printing .pev,body.printing .kv{break-inside:avoid}
-  body.printing .card,body.printing .paward{background:#fff!important;border:1px solid var(--line)!important}
+  body.printing .card,body.printing .paward,body.printing .pev,body.printing .kv,body.printing tr,body.printing .pmon{break-inside:avoid}
+  body.printing .card.pbreak{break-inside:auto}
+  body.printing h4,body.printing .prep-refh{break-after:avoid}
+  body.printing .card,body.printing .paward{background:#fff!important;border:1px solid var(--line)!important;border-radius:8px}
+  body.printing .pmon i{color:#111820;font-size:9px}
+  body.printing .pmon i.na{background:#F2F4F7}
+  body.printing .prep-tab tbody tr:nth-child(even){background:#F6F7F9}
   body.printing .prep-hero.up{border-color:var(--gain)!important;background:#F2FBF7!important}
   body.printing .prep-hero.dn{border-color:var(--loss)!important;background:#FDF3F5!important}
   body.printing .pinsight p{color:#111820!important}
@@ -288,6 +307,13 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .d-head h3{color:#111820}
 }
 .prep-hero{text-align:center;gap:6px}
+.prep-refh{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.prep-tab{width:100%;border-collapse:collapse;font-size:12.5px}
+.prep-tab th{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line)}
+.prep-tab th:first-child,.prep-tab td:first-child{text-align:left;font-weight:700}
+.prep-tab td{text-align:right;padding:5px 6px;border-bottom:1px solid var(--line)}
+.prep-tab tr:last-child td{border-bottom:0}
+.prep-tab tbody tr:nth-child(even){background:var(--panel2)}
 .prep-hero .big{font-size:34px;font-weight:800;letter-spacing:-.02em}
 .prep-hero .kv{text-align:left}
 .prep2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -372,6 +398,14 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .movers h2{margin:0;font-size:18px;letter-spacing:-.01em}
 .movers .mvtop small{color:var(--muted);font-size:12px}
 .mvchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+/* mouse screens can't swipe: wrap the swipe rows instead of scrolling them sideways */
+@media (hover:hover) and (pointer:fine){
+  .chipbar,.mvchips{flex-wrap:wrap;overflow-x:visible;margin-inline:0;padding-inline:0}
+  .actions{scrollbar-width:thin;padding-bottom:6px}
+  .actions::-webkit-scrollbar{display:block;height:6px}
+  .actions::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  .racebox{scrollbar-width:thin}
+}
 .mvchips button{padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--muted)}
 .mvchips button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#0B0F14}
 .mvcol{border-radius:14px;background:rgba(0,0,0,.28);border:1px solid var(--line);overflow:hidden}
@@ -1662,6 +1696,8 @@ function wire(){
   $("aheadBtn").addEventListener("click",()=>openAhead(LS.get("aheadP","w")));
   $("mediaBtn").addEventListener("click",openMedia);
   $("opticsBtn").addEventListener("click",()=>openTrend("optics"));
+  // a mouse wheel scrolls the Home button rows sideways (no touchscreen to swipe with)
+  $("actions").addEventListener("wheel",e=>{ const el=e.currentTarget; if(el.scrollWidth<=el.clientWidth||Math.abs(e.deltaX)>Math.abs(e.deltaY)) return; const L=el.scrollLeft; el.scrollLeft+=e.deltaY; if(el.scrollLeft!==L) e.preventDefault(); },{passive:false});
   $("energyBtn").addEventListener("click",()=>{ S.trend="energy"; LS.set("trend","energy"); setTab("trends"); requestAnimationFrame(()=>{ const c=document.querySelector("#tab-trends .chipbar"); if(c) window.scrollTo({top:c.getBoundingClientRect().top+scrollY-70,behavior:"instant"}); }); });
   $("repBtn").addEventListener("click",()=>openReport(LS.get("repP","1w")));
   $("coilBtn").addEventListener("click",()=>openCoil());
@@ -2214,8 +2250,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.41";
+const APP_VERSION="3.42";
 const CHANGELOG=[
+  {v:"3.42",date:"2026-10-22",title:"Cleaner chart buttons, fuller reports",items:["Range, compare and average buttons sit together in one compact panel, with a colored dot for each average","Reports end with reference tables: every holding with weight, return and gain, monthly returns in % and $, and risk stats (the $ grid is left out when amounts are hidden)","Save PDF now has white margins on every page and lets long lists flow across pages without gaps","On a computer with a mouse, button rows wrap instead of needing a swipe, and the mouse wheel scrolls the Home buttons"]},
   {v:"3.41",date:"2026-10-22",title:"Tidier horse race labels",items:["The index label (S&P 500, Nasdaq…) on the horse race no longer overlaps the stock labels","The start marker moved to the left edge, out of the way of the finish"]},
   {v:"3.40",date:"2026-10-22",title:"Printer-friendly reports, pony race",items:["Save PDF now prints on white paper with dark text and keeps cards from splitting across pages","Fixed the MVP's dollar amount showing in a huge font","Sort and view buttons no longer overlap the holdings heading","Horse race: switch between 🏇 Fast horses and 🐴 Lame ponies (your best or worst 5 or 10), with a real gallop, a whinny and a cheering crowd, confetti for the winners, and a sad trombone with falling carrots for the ponies"]},
   {v:"3.39",date:"2026-10-22",title:"StockPlotter gets playful",items:["⭐ Golden and 💀 death crosses marked on your chart when the 50-day average crosses the 200-day","Holdings: sort by value, day change or A–Z, and switch between list, bars and bubbles","Horse race with real horses, medals, a finish line and gallop sounds (mute with 🔇); the full-screen view now fits the screen","Reports: a mood, a grade vs the S&P 500, awards (MVP, fastest horse, slowpoke, wildest ride, win streak), a growth chart, and Save PDF","Ask Claude and reports never include dollar amounts or share counts, only percentages","A 1D range: yesterday's close to today, live while the market is open","Heat map: show the top 10, top 20 or all. Monthly returns in % or $","Drawdown explained, compared with the index, with your biggest dips and how long each took to recover","Ideas: Show all for long lists, and Hide this tip"]},
@@ -3361,22 +3398,24 @@ function ddHTML(pts){
       ${eps.length?`<div class="pdd"><h4 style="margin:4px 0">Biggest dips</h4>${eps.slice(0,3).map((o,i)=>`<div class="kv"><span>${["🥇","🥈","🥉"][i]} ${pdS(o.s)} → bottom ${pdS(o.b)}<small>${o.e?`recovered ${pdS(o.e)} · ${days(o.s,o.e)} days`:`not recovered yet · ${days(o.s)} days so far`}</small></span><b class="num tdown">${o.d.toFixed(1)}%</b></div>`).join("")}</div>`:""}</div>`;
 }
 // month-by-month returns across all the history on file, as % or as dollars gained
-function monthsHTML(all,P,x){
+function monthsHTML(all,P,x,rep){
   if(all.length<40) return ""; const end={}; all.forEach(q=>{ const d=new Date(q[0]); end[d.getFullYear()*12+d.getMonth()]=q[1]; });
   const ks=Object.keys(end).map(Number).sort((a,b)=>a-b), ret={}; for(let i=1;i<ks.length;i++) if(ks[i]-ks[i-1]===1) ret[ks[i]]=(end[ks[i]]/end[ks[i-1]]-1)*100;
   // dollars: each day's market move on the shares held that day, added up per month
   const usd={}; if(P){ const D=P.days, xs=x?[x]:P.have; for(let i=1;i<D.length;i++){ const a=D[i-1], o=D[i], d=new Date(o.t), k=d.getFullYear()*12+d.getMonth(); if(ret[k]==null) continue; usd[k]=(usd[k]||0)+xs.reduce((s,y)=>s+(a.q[y]||0)*((o.px[y]??0)-(a.px[y]??0)),0); } }
-  const useD=S.pmonD&&P, val=useD?usd:ret, yrs=[...new Set(Object.keys(ret).map(k=>Math.floor(k/12)))].sort(); if(!yrs.length) return "";
+  const useD=rep?rep==="$"&&P:S.pmonD&&P, val=useD?usd:ret, yrs=[...new Set(Object.keys(ret).map(k=>Math.floor(k/12)))].sort(); if(!yrs.length) return "";
   const mx=Math.max(...Object.values(val).map(Math.abs))||1, M="JFMAMJJASOND", kf=v=>{ const a=Math.abs(v); return (v<0?"−":"")+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e4?(a/1e3).toFixed(0)+"k":a>=1e3?(a/1e3).toFixed(1)+"k":a.toFixed(0)); };
   const cell=v=>v==null?`<i class="na"></i>`:`<i style="background:${v>=0?`rgba(43,217,154,${(.15+.75*Math.min(1,v/mx)).toFixed(2)})`:`rgba(255,92,114,${(.15+.75*Math.min(1,-v/mx)).toFixed(2)})`}" title="${useD?(v>=0?"+":"−")+fmt$(Math.abs(v),0):v.toFixed(1)+"%"}">${useD?(S.priv?"•":kf(v)):Math.abs(v)>=10?v.toFixed(0):v.toFixed(1)}</i>`;
   const vals=Object.entries(val).sort((a,b)=>b[1]-a[1]), best=vals[0], worst=vals[vals.length-1], mn=k=>new Date(Math.floor(k/12),k%12,1).toLocaleDateString([], {month:"short",year:"numeric"}), f=v=>useD?sgn$(v):fmtP(v), tot=useD?Object.values(usd).reduce((s,v)=>s+v,0):null;
+  const note=`${useD?"Dollars gained or lost each month from price moves (buys and sells not counted). ":""}Best month ${mn(+best[0])} <span class="tup">${f(best[1])}</span>, worst ${mn(+worst[0])} <span class="tdown">${f(worst[1])}</span>. Up in ${vals.filter(v=>v[1]>0).length} of ${vals.length} months.${useD?` Total ${sgn$(tot)}.`:""}`, grid=`<div class="pmon"><span></span>${[...M].map(c=>`<span>${c}</span>`).join("")}${yrs.map(y=>`<span>${String(y).slice(2)}</span>${[...Array(12).keys()].map(m=>cell(val[y*12+m])).join("")}`).join("")}</div>`;
+  if(rep) return `<div class="card" style="gap:6px"><h4>📅 Monthly returns${useD?" in $":" in %"}</h4>${grid}<p class="hint" style="font-size:11.5px;margin:0">${note}</p></div>`;
   return `<div class="section-h"><h2>📅 Monthly returns</h2>${P?`<div class="pseg"><button data-pmond="0" aria-pressed="${!useD}">%</button><button data-pmond="1" aria-pressed="${!!useD}">$</button></div>`:""}</div>
-    <div class="card" style="background:var(--panel);gap:6px"><div class="pmon"><span></span>${[...M].map(c=>`<span>${c}</span>`).join("")}${yrs.map(y=>`<span>${String(y).slice(2)}</span>${[...Array(12).keys()].map(m=>cell(val[y*12+m])).join("")}`).join("")}</div>
-      <p class="hint" style="font-size:11.5px">${useD?"Dollars gained or lost each month from price moves (buys and sells not counted). ":""}Best month ${mn(+best[0])} <span class="tup">${f(best[1])}</span>, worst ${mn(+worst[0])} <span class="tdown">${f(worst[1])}</span>. Up in ${vals.filter(v=>v[1]>0).length} of ${vals.length} months.${useD?` Total ${sgn$(tot)}.`:""}</p></div>`;
+    <div class="card" style="background:var(--panel);gap:6px">${grid}
+      <p class="hint" style="font-size:11.5px">${note}</p></div>`;
 }
 const stdev=a=>{ if(a.length<2) return 0; const m=a.reduce((s,v)=>s+v,0)/a.length; return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1)); };
 // risk and return stats for the range, from daily moves
-function riskHTML(pts,R,P){
+function riskHTML(pts,R,P,rep){
   const ch=[]; for(let i=1;i<pts.length;i++) if(pts[i-1][1]) ch.push({t:pts[i][0],r:(pts[i][1]/pts[i-1][1]-1)*100}); if(ch.length<5) return {html:"",vol:null};
   const best=ch.reduce((a,b)=>b.r>a.r?b:a), worst=ch.reduce((a,b)=>b.r<a.r?b:a), up=ch.filter(o=>o.r>0).length, vol=stdev(ch.map(o=>o.r))*Math.sqrt(252);
   const days=(pts[pts.length-1][0]-pts[0][0])/864e5, tr=(pts[pts.length-1][1]/pts[0][1]-1), ann=days>=60?(Math.pow(1+tr,365/days)-1)*100:null;
@@ -3384,8 +3423,8 @@ function riskHTML(pts,R,P){
   let beta=null; const sp=[]; for(let i=1;i<pts.length;i++){ const a=spyAt(pts[i-1][0]), b=spyAt(pts[i][0]); if(a&&b&&a!==b) sp.push([(b/a-1)*100,(pts[i][1]/pts[i-1][1]-1)*100]); }
   if(sp.length>20){ const mx=sp.reduce((s,q)=>s+q[0],0)/sp.length, my=sp.reduce((s,q)=>s+q[1],0)/sp.length; let cv=0,vx=0; sp.forEach(q=>{ cv+=(q[0]-mx)*(q[1]-my); vx+=(q[0]-mx)**2; }); beta=vx?cv/vx:null; }
   const tile=(l,v,c="")=>`<div>${l}<span class="num ${c}">${v}</span></div>`;
-  return {vol,beta,html:`<div class="section-h"><h2>📐 Risk &amp; return</h2><small>daily moves over the range</small></div>
-    <div class="card" style="background:var(--panel);gap:8px"><div class="stats">${tile("Best day",fmtP(best.r)+`<small>${pdS(best.t)}</small>`,"tup")}${tile("Worst day",fmtP(worst.r)+`<small>${pdS(worst.t)}</small>`,"tdown")}${tile("Up days",Math.round(up/ch.length*100)+"%")}</div>
+  return {vol,beta,html:`${rep?"":`<div class="section-h"><h2>📐 Risk &amp; return</h2><small>daily moves over the range</small></div>`}
+    <div class="card" style="${rep?"":"background:var(--panel);"}gap:8px">${rep?"<h4>📐 Risk &amp; return</h4>":""}<div class="stats">${tile("Best day",fmtP(best.r)+`<small>${pdS(best.t)}</small>`,"tup")}${tile("Worst day",fmtP(worst.r)+`<small>${pdS(worst.t)}</small>`,"tdown")}${tile("Up days",Math.round(up/ch.length*100)+"%")}</div>
       <div class="stats">${tile("Volatility / yr",vol.toFixed(0)+"%")}${tile("Beta vs "+bmName(),beta==null?"—":beta.toFixed(2))}${tile("Yearly pace",ann==null?"—":fmtP(ann),tcls(ann))}</div>
       <p class="hint" style="font-size:11.5px">Volatility is how much the value typically swings in a year (the S&amp;P is usually 15–20%). Beta 1.3 means it has tended to move about 1.3× as much as the ${bmName()}. Yearly pace is the range's return stretched to a full year.</p></div>`};
 }
@@ -3415,10 +3454,11 @@ function vsHTML(pts,R){
       <p class="hint" style="font-size:11.5px">Nasdaq is tracked with ONEQ, Nasdaq 100 with QQQ, the Dow with DIA and the S&amp;P 500 with SPY. Tap an index to compare against it on the charts.</p></div>`;
 }
 // range and index chips, shown under the hero and again above the heat map
-function plotChips(){ return `<div class="chipbar">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}</div>
-    <div class="chipbar pbmbar"><span class="hint">Compare</span>${BMS.map(([x,n])=>`<button data-pbm="${x}" aria-pressed="${S.pbm===x}">${esc(n)}</button>`).join("")}<button data-pbm="" aria-pressed="${!S.pbm}">Off</button></div>
-    <div class="chipbar pbmbar"><span class="hint">Avg</span>${MAS.map(([n,c])=>`<button data-pma="${n}" aria-pressed="${S.pmas.includes(n)}" style="${S.pmas.includes(n)?`box-shadow:inset 0 -3px 0 ${c}`:""}">${n}d</button>`).join("")}<button data-pcross aria-pressed="${!!S.pcross}" title="Golden and death crosses">⭐💀 Crosses</button></div>
-    <div class="chipbar pbmbar"><button class="pcta" data-pcmp>🔎 Analyze this chart</button></div>`; }
+function plotChips(){ return `<div class="pkit">
+    <div class="pkit-rng">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}</div>
+    <div class="pkit-row"><span>vs</span><div>${BMS.map(([x,n])=>`<button data-pbm="${x}" aria-pressed="${S.pbm===x}">${esc(n)}</button>`).join("")}<button data-pbm="" aria-pressed="${!S.pbm}">Off</button></div></div>
+    <div class="pkit-row"><span>Avg</span><div>${MAS.map(([n,c])=>`<button data-pma="${n}" aria-pressed="${S.pmas.includes(n)}"><i style="background:${c}"></i>${n}d</button>`).join("")}</div></div>
+    <div class="pkit-go"><button data-pcross aria-pressed="${!!S.pcross}" title="Golden and death crosses">⭐💀 Crosses</button><button class="pcta" data-pcmp>🔎 Analyze this chart</button></div></div>`; }
 const PREPI={w:["🗓️","last 7 days"],m:["📆","last month"],"6m":["🌗","last 6 months"],"1y":["🎆","last 12 months"]};
 const reportBtnsHTML=()=>`<div class="card prepbtns"><h4>📄 Reports</h4><div class="prepgrid">${Object.entries(PREP).map(([k,v])=>`<button data-preport="${k}"><span>${PREPI[k][0]}</span><b>${v[0]}</b><small>${PREPI[k][1]}</small></button>`).join("")}</div><p class="hint" style="font-size:11.5px;margin:0">A grade, awards, your best and worst stocks, your trades and the market events of the period. Save as PDF or share.</p></div>`;
 /* ---------- ideas to consider: simple rules over the holdings, worked out on this device ---------- */
@@ -3492,7 +3532,7 @@ function plotReportData(k){
   let st=0, streak=0; ch.forEach(c=>{ st=c.r>0?st+1:0; streak=Math.max(streak,st); });
   const wild=cs.map(o=>{ const r=[]; for(let i=1;i<R.length;i++) if(R[i-1].px[o.x]) r.push(R[i].px[o.x]/R[i-1].px[o.x]-1); return {x:o.x,v:stdev(r)*Math.sqrt(252)*100}; }).sort((p,q)=>q.v-p.v)[0]||null;
   const bsym=S.pbm||"SPY", b0=bmAt(bsym,a.t), spark=R.map(o=>[o.t,o.g/a.g*100]), bspark=b0?R.map(o=>{ const b=o.live?(price(bsym)??bmAt(bsym,o.t)):bmAt(bsym,o.t); return [o.t,b?b/b0*100:100]; }):null;
-  return {k,name:PREP[k][0],a,z,ret,gain,flow,bms,byR,byD,best,worst,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb,green:ch.filter(c=>c.r>0).length,ndays:ch.length,streak,wild,spark,bspark,bname:bmName(bsym)};
+  return {k,name:PREP[k][0],R,a,z,ret,gain,flow,bms,byR,byD,best,worst,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb,green:ch.filter(c=>c.r>0).length,ndays:ch.length,streak,wild,spark,bspark,bname:bmName(bsym)};
 }
 // hide: leave out dollar amounts and share counts (always on for anything sent to Claude)
 function reportSummary(D,hide){
@@ -3512,6 +3552,13 @@ function reportText(D,hide){
   if(D.tx.length) L.push("","Trades: "+D.tx.map(t=>`${t.d} ${t.q>0?"bought":"sold"} ${hide?"":fmtQ(Math.abs(t.q))+" "}${t.s}`).join("; "));
   if(D.events.length) L.push("","Market events:",...D.events.slice(-14).map(e=>`- ${e.date} ${e.title}${e.m!=null?` (S&P ${fmtP(e.m)})`:""}`));
   return L.join("\n");
+}
+// reference tables at the end of a report: every holding, monthly returns, risk stats
+function reportRefHTML(D){
+  const P=S.plotP, z=D.z, rows=D.byR.map(o=>({...o,w:z.v?(z.q[o.x]||0)*(z.px[o.x]||0)/z.v*100:0})).sort((p,q)=>q.w-p.w);
+  const tab=rows.length?`<div class="card pbreak"><h4>📋 Your holdings this period</h4><table class="prep-tab"><thead><tr><th>Stock</th><th>Weight</th><th>Return</th><th>Gain</th></tr></thead><tbody>${rows.map(o=>`<tr><td>${esc(o.x)}</td><td class="num">${o.w<0.1?o.w.toFixed(2):o.w.toFixed(1)}%</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table></div>`:"";
+  const all=proSeries(P.days,null), pts=proSeries(D.R,null);
+  return `<div class="prep-refh">📎 Reference</div>${tab}${monthsHTML(all,P,null,"%")}${S.priv?"":monthsHTML(all,P,null,"$")}${riskHTML(pts,D.R,P,1).html}`;
 }
 // a school grade from how you did against the S&P 500, and a weather mood from the return
 function reportGrade(D){
@@ -3546,8 +3593,9 @@ function openPlotReport(k){
     <div class="card prep2"><div><h4>💰 Made you money</h4>${D.byD.slice(0,3).filter(o=>o.d>0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing gained</p>`}</div><div><h4>💸 Cost you</h4>${D.byD.slice(-3).reverse().filter(o=>o.d<0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing lost</p>`}</div></div>`:""}
     ${D.best?`<div class="card">${li("😄 Best day · "+pdS(D.best.t),fmtP(D.best.r),"tup")}${li("😬 Worst day · "+pdS(D.worst.t),fmtP(D.worst.r),"tdown")}</div>`:""}
     ${D.tx.length?`<div class="card"><h4>🧾 Your trades</h4>${D.tx.map(t=>li(`${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} ${esc(t.s)}`,money(fmtQ(Math.abs(t.q)))+" sh",t.q>0?"tup":"tdown")).join("")}</div>`:""}
-    ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4>${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
+    ${D.events.length?`<div class="card pbreak"><h4>🗓️ Market events</h4>${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
     ${D.big.length?`<div class="card"><h4>⚡ Biggest S&amp;P 500 days</h4>${D.big.map(b=>li(pdL(parseET(b.day)),fmtP(b.r),tcls(b.r))).join("")}</div>`:""}
+    ${reportRefHTML(D)}
     <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(reportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
     <p class="hint" style="font-size:11px">Returns ignore money added or taken out with buys and sells. Ask Claude gets percentages only, never dollar amounts or share counts. Event dates marked estimated follow the usual schedule. Not investment advice.</p></div>`;
   wireReport(D); showSheet();
