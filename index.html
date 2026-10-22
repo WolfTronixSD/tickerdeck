@@ -298,6 +298,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pmon2 i{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:7px 0;line-height:1.15;border-radius:5px}
 .pmon2 i b{font-size:12px;font-weight:700}
 .pmon2 i small{font-size:10px;opacity:.9}
+.pwarn{border:1px solid rgba(255,181,71,.6);background:rgba(255,181,71,.10);font-size:13px;line-height:1.5}
+.pwarn h4{color:#FFB547}
 .pbig h5,.pexec h5{margin:0 0 4px;font-size:12.5px;font-weight:700}
 .pbul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5}
 .pbul li{padding-left:2px}
@@ -332,7 +334,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .sheet-in>*+*,body.printing #prep>*+*{margin-top:9px}
   body.printing [data-close],body.printing .prep-actions,body.printing #prep>.d-head,body.printing .sheet-in>a.primary{display:none!important}
   body.printing .print-only{display:flex}
-  body.printing .print-head{justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid #111820;padding:0 0 7px;color:#111820}
+  body.printing .print-head{justify-content:space-between;align-items:flex-end;gap:12px;border-top:2px solid #111820;border-bottom:2px solid #111820;padding:7px 0;color:#111820}
   body.printing .print-head b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em}
   body.printing .print-head small{display:block;font-size:10.5px;color:#4A5563;margin-top:2px}
   body.printing .print-head .ph-r{text-align:right;font-size:10px;color:#6B7684;line-height:1.5}
@@ -389,6 +391,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .stats div{background:#fff;border-color:#DDE1E6}
   body.printing .chart{background:#fff;border-color:var(--line)}
   body.printing .d-head h3{color:#111820}
+  body.printing .pwarn{background:#FFF6E5!important;border:1.5px solid #E0A030!important}
+  body.printing .pwarn h4{color:#8A5A00}
   body.printing .pbul{font-size:11px;gap:3px;line-height:1.4}
   body.printing .pexec .pbul{font-size:12.5px;gap:5px;line-height:1.5}
   body.printing .pexec h4{font-size:11px}
@@ -2369,8 +2373,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.48";
+const APP_VERSION="3.49";
 const CHANGELOG=[
+  {v:"3.49",date:"2026-10-22",title:"Safer reports",items:["Reports wait until every stock's price history has loaded, so they never show wrong numbers, and warn when a stock has no or only partial history","The month-by-month chart shows the dollars made or lost under each month's %","Lines above and below the report title, and under the header and over the footer on every page"]},
   {v:"3.48",date:"2026-10-22",title:"Easier to read monthly returns",items:["Reports: the monthly % and $ grid, the month-by-month bar chart and the executive summary are bigger and easier to read"]},
   {v:"3.47",date:"2026-10-22",title:"Report finishing touches",items:["PDF reports have a header and footer on every page, with page numbers","🌎 The big picture: what the Fed, inflation, jobs and growth reports did to the market and to you, which part of the market led, political and policy headlines from the news feed, and an outlook for the next five weeks","🤠 A short, funny executive summary closes each report","Wolf tracks label each column with its week of the year"]},
   {v:"3.46",date:"2026-10-22",title:"Wild West reports",items:["Reports: monthly returns show % and $ together in one grid, plus a new month-by-month bar chart with 🏆 and 🌵 for the best and worst months","Western and wolf theme: a desert skyline and full moon on the chart, 🐺 at the high and 🌵 at the low, a trail rank next to your grade, new awards (Top gun, Pack leader, Howl day, Bucking bronco, Campfire streak), a Hero of the trail poster and a WANTED poster","🐾 Wolf tracks: every trading day as a green or red paw print","Biggest Nasdaq 100 days next to the biggest S&P 500 days, with your own move those days","Pick a calendar week, month or year for reports and for the StockPlotter chart","Line thickness for the StockPlotter and report charts: thin, normal, bold or extra bold","Ask Claude buttons sit two per row"]},
@@ -3317,7 +3322,11 @@ async function loadFunds(syms){
   try{ LS.set("daily",S.daily); }catch(e){} scheduleTab();
 }
 async function loadPlot(gen){
-  const syms=histSyms(); if(!syms.length) return; const live=()=>gen===S.gen;
+  const syms=histSyms(); if(!syms.length) return; S.plotBusy=(S.plotBusy||0)+1;
+  try{ await loadPlot0(gen,syms); } finally{ S.plotBusy--; }
+}
+async function loadPlot0(gen,syms){
+  const live=()=>gen===S.gen;
   await loadSavedDaily(); scheduleTab();
   for(const x of syms.concat(BMS.map(b=>b[0]))){ if(!live()) return; const q=S.quotes[x]; if(!q||(!q.bad&&(!q.at||Date.now()-q.at>120000))){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } }
   await loadFunds(syms); if(!live()) return;
@@ -3574,16 +3583,17 @@ function monthsBothHTML(all,P){
 // report: the same months as a bar chart, with the best month's trophy and the worst month's cactus
 function monthBarsHTML(all,P){
   const M0=monthData(all,P,null); if(!M0) return ""; const ks=Object.keys(M0.ret).map(Number).sort((a,b)=>a-b).slice(-24), v=ks.map(k=>M0.ret[k]); if(ks.length<2) return "";
-  const W=620,H=250,L=40,Rt=8,T=34,B=36, mx=Math.max(...v.map(Math.abs))*1.1||1, lo=Math.min(0,...v)<0?-mx:0, hi=Math.max(0,...v)>0?mx:0, Y=x=>T+(hi-x)/(hi-lo||1)*(H-T-B), bw=(W-L-Rt)/ks.length, y0=Y(0);
+  const W=620,H=270,L=40,Rt=8,T=48,B=36, showD=!S.priv, mx=Math.max(...v.map(Math.abs))*(showD?1.4:1.15)||1, lo=Math.min(0,...v)<0?-mx:0, hi=Math.max(0,...v)>0?mx:0, Y=x=>T+(hi-x)/(hi-lo||1)*(H-T-B), bw=(W-L-Rt)/ks.length, y0=Y(0);
   const bi=v.indexOf(Math.max(...v)), wi=v.indexOf(Math.min(...v)), lab=x=>(x>0?"+":"")+(Math.abs(x)>=10?x.toFixed(0):x.toFixed(1));
   const grid=[hi,hi/2,0,lo/2,lo].filter((q,i,a)=>a.indexOf(q)===i).map(q=>`<line x1="${L}" x2="${W-Rt}" y1="${Y(q).toFixed(1)}" y2="${Y(q).toFixed(1)}" stroke="#8392A6" stroke-opacity="${q===0?.6:.15}"/><text x="${L-4}" y="${(Y(q)+3.5).toFixed(1)}" text-anchor="end" font-size="11.5" fill="#6B7684" font-family="Sora,system-ui,sans-serif">${q.toFixed(0)}%</text>`).join("");
   const bars=ks.map((k,i)=>{ const x=L+i*bw+bw*.16, w=bw*.68, r=v[i], y=Y(Math.max(0,r)), h=Math.max(1,Math.abs(Y(r)-y0)), m=k%12, cx=x+w/2;
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="${r>=0?"#22B07D":"#E0475E"}"${i===bi||i===wi?"":` fill-opacity=".8"`}><title>${monName(k)} ${fmtP(r)}${S.priv||M0.usd[k]==null?"":" · "+(M0.usd[k]>=0?"+":"−")+fmt$(Math.abs(M0.usd[k]),0)}</title></rect>`
       +(ks.length<=24||i===bi||i===wi?`<text x="${cx.toFixed(1)}" y="${(r>=0?y-5:y+h+13).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="${r>=0?"#0B8A5C":"#C8243C"}" font-family="Sora,system-ui,sans-serif">${lab(r)}</text>`:"")
-      +(i===bi?`<text x="${cx.toFixed(1)}" y="${(y-20).toFixed(1)}" text-anchor="middle" font-size="17">🏆</text>`:i===wi&&r<0?`<text x="${cx.toFixed(1)}" y="${(y+h+31).toFixed(1)}" text-anchor="middle" font-size="17">🌵</text>`:"")
+      +(showD&&M0.usd[k]!=null?`<text x="${cx.toFixed(1)}" y="${(r>=0?y-17:y+h+24).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="#4A5563" font-family="Sora,system-ui,sans-serif">${(M0.usd[k]<0?"−":"+")+"$"+kfmt(Math.abs(M0.usd[k]))}</text>`:"")
+      +(i===bi?`<text x="${cx.toFixed(1)}" y="${(y-(showD?32:20)).toFixed(1)}" text-anchor="middle" font-size="17">🏆</text>`:i===wi&&r<0?`<text x="${cx.toFixed(1)}" y="${(y+h+(showD?43:31)).toFixed(1)}" text-anchor="middle" font-size="17">🌵</text>`:"")
       +`<text x="${cx.toFixed(1)}" y="${H-17}" text-anchor="middle" font-size="11.5" fill="#6B7684" font-family="Sora,system-ui,sans-serif">${"JFMAMJJASOND"[m]}</text>`+(m===0||i===0?`<text x="${(x-bw*.16).toFixed(1)}" y="${H-2}" font-size="11.5" font-weight="700" fill="#4A5563" font-family="Sora,system-ui,sans-serif">${Math.floor(k/12)}</text>`:""); }).join("");
   const up=v.filter(q=>q>0).length, avg=v.reduce((a,b)=>a+b,0)/v.length;
-  return `<div class="card" style="gap:6px"><h4>📊 Month by month</h4><svg class="chart pspark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly returns as bars">${grid}${bars}</svg>
+  return `<div class="card" style="gap:6px"><h4>📊 Month by month${S.priv?"":" · % and $"}</h4><svg class="chart pspark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly returns as bars">${grid}${bars}</svg>
     <p class="hint" style="font-size:11.5px;margin:0">🏆 best month ${monName(ks[bi])} ${fmtP(v[bi])}${v[wi]<0?` · 🌵 worst ${monName(ks[wi])} ${fmtP(v[wi])}`:""} · ${up} green month${up===1?"":"s"} of ${v.length} · average ${fmtP(avg)} a month.</p></div>`;
 }
 function monthsHTML(all,P,x,rep){
@@ -3850,6 +3860,10 @@ function openPlotReport(k){
   const head=`<div class="d-head"><div><h3>📄 ${D?D.name:"Portfolio"} report</h3><p>${D?`${pdL(D.from)} – ${pdL(D.z.t)}`:"Not enough price history yet"}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
     <div class="chipbar prep-actions">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${PREPI[key][0]} ${v[0]}</button>`).join("")}</div>
     ${S.plotP?`<div class="prep-actions">${calPickHTML(S.plotP.days,k,"data-prepcal")}</div>`:""}`;
+  // a report with missing prices would be wrong: block it while prices are still loading, warn about any that never came
+  const P0=S.plotP, syms0=plotSyms(), val0=x=>(pxNow(x)||0)*(S.plot[x]||0), tot0=syms0.reduce((a,x)=>a+val0(x),0)||1, pct0=l=>(l.reduce((a,x)=>a+val0(x),0)/tot0*100).toFixed(0)+"%";
+  const loading0=P0&&S.tdKey&&S.plotBusy?P0.miss.filter(x=>!failedRecently(x)):[], noHist0=P0?P0.miss.filter(x=>!loading0.includes(x)):[], part0=D&&P0?P0.have.filter(x=>(D.z.q[x]||D.a.q[x])&&S.daily[x].c[0][0]>D.a.t+3*864e5):[];
+  if(D&&loading0.length){ si.innerHTML=`<div id="prep">${head}<div class="card pwarn"><h4>⏳ Prices still loading</h4><p style="margin:0">Price history is still loading for <b>${loading0.length} of ${syms0.length}</b> stocks (${pct0(loading0)} of your portfolio): ${loading0.slice(0,12).map(esc).join(", ")}${loading0.length>12?"…":""}. A report now would show wrong numbers, so it waits until they're in. That takes about ${Math.ceil(loading0.length/8)} min.</p><button class="primary" data-preport="${esc(String(k))}" style="align-self:flex-start">Try again</button></div></div>`; wireReport(null); showSheet(); return; }
   if(!D){ si.innerHTML=`<div id="prep">${head}<p class="hint">Reports need price history. Add the free Twelve Data key in Settings and give it a few minutes.</p></div>`; wireReport(null); showSheet(); return; }
   S.prepHead=`${D.name} portfolio report · ${pdL(D.from)} – ${pdL(D.z.t)}`;
   const G=reportGrade(D), mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
@@ -3861,6 +3875,7 @@ function openPlotReport(k){
   const award=(i,t,x,v)=>`<div class="paward"><span>${i}</span><small>${t}</small><b>${esc(x)}</b><em class="num">${v}</em></div>`;
   si.innerHTML=`<div id="prep">${head}
     <div class="print-only print-head"><div><b>📄 ${D.name} portfolio report</b><small>${pdL(D.from)} – ${pdL(D.z.t)}</small></div><div class="ph-r">🐰 GoldRabbit v${APP_VERSION}<br>created ${pdL(Date.now())}</div></div>
+    ${noHist0.length||part0.length?`<div class="card pwarn"><h4>⚠️ Incomplete data</h4>${noHist0.length?`<p style="margin:0">No price history for <b>${noHist0.map(esc).join(", ")}</b> (${pct0(noHist0)} of your portfolio). ${noHist0.length>1?"They're":"It's"} left out of this report, so the results are off by that much.</p>`:""}${part0.length?`<p style="margin:0">Price history starts after ${pdS(D.a.t)} for <b>${part0.map(esc).join(", ")}</b>, so ${part0.length>1?"they count":"it counts"} as flat before that.</p>`:""}</div>`:""}
     <div class="card prep-hero ${G.cls}"><div class="prep-mood">${G.mood}</div>
       <div class="prep-top"><div><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div></div><div class="prep-gradebox"><div class="prep-grade ${G.cls}" title="Grade vs the S&P 500"><b>${G.g}</b><small>vs S&amp;P</small></div><div class="prep-rank" title="Trail rank from your grade">${G.rank[0]} ${G.rank[1]}</div></div></div>
       <div id="prepChart">${prepChart(D)}</div>${prepLwHTML()}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
@@ -3894,7 +3909,8 @@ function printSheet(title){
 function pageBoxes(){
   let st=$("pgStyle"); if(!st){ st=document.createElement("style"); st.id="pgStyle"; document.head.appendChild(st); }
   const q=t=>JSON.stringify(String(t)), title=S.open==="__preport"&&S.prepHead?S.prepHead:document.title, f="font-family:Sora,system-ui,sans-serif;font-size:8.5px;color:#6B7684";
-  st.textContent=`@media print{@page{@top-left{content:${q("GoldRabbit v"+APP_VERSION)};${f};font-weight:700}@top-right{content:${q(title)};${f}}@bottom-left{content:${q("Private · made on your device "+pdL(Date.now())+" · not investment advice")};${f}}@bottom-right{content:"Page " counter(page) " of " counter(pages);${f};font-weight:700}}@page:first{@top-left{content:none}@top-right{content:none}}}`;
+  const tl="border-bottom:1px solid #9AA4B1;vertical-align:bottom;padding-bottom:3px", bl="border-top:1px solid #9AA4B1;vertical-align:top;padding-top:3px";
+  st.textContent=`@media print{@page{@top-left{content:${q("GoldRabbit v"+APP_VERSION)};${f};font-weight:700;${tl}}@top-center{content:"";${tl}}@top-right{content:${q(title)};${f};${tl}}@bottom-left{content:${q("Private · made on your device "+pdL(Date.now())+" · not investment advice")};${f};${bl}}@bottom-center{content:"";${bl}}@bottom-right{content:"Page " counter(page) " of " counter(pages);${f};font-weight:700;${bl}}}@page:first{@top-left{content:none;border:0}@top-center{content:none;border:0}@top-right{content:none;border:0}}}`;
 }
 window.addEventListener("beforeprint",()=>{ pageBoxes(); if(!$("sheet").hidden&&!document.body.classList.contains("printing")){ document.body.classList.add("printing","printing-auto"); document.documentElement.classList.add("printing"); } });
 window.addEventListener("afterprint",()=>{ if(document.body.classList.contains("printing-auto")){ document.body.classList.remove("printing","printing-auto"); document.documentElement.classList.remove("printing"); } });
