@@ -2046,6 +2046,7 @@ coinsStart();
 const APP_VERSION="3.32";
 const CHANGELOG=[
   {v:"3.32",date:"2026-10-22",title:"Smoother while prices stream",items:["Fixed the app freezing or feeling unresponsive on iPhone during market hours with a large watchlist","Live prices now update the screen 4 times a second instead of on every trade, and the price flash no longer forces the whole page to re-layout","Sections that refresh every few seconds skip the redraw when nothing changed"]},
+  {v:"3.29",date:"2026-10-22",title:"Listen & watch links checked",items:["Every link in Listen & watch was checked by hand","Apple buttons now open each podcast's own page instead of a search","Motley Fool Money was renamed by the Fool; it now shows as Motley Fool Hidden Gems with its current page","Fixed Odd Lots, Animal Spirits and Bloomberg Radio links, and CNBC and Fox Business now open their TuneIn stations directly"]},
   {v:"3.28",date:"2026-10-21",title:"Timeframe bar moved up",items:["The 1D–5Y timeframe bar now sits near the top of Home, right under the index tiles and above the watchlist summary it controls","It still sticks to the top of the screen as you scroll"]},
   {v:"3.27",date:"2026-10-21",title:"Stock wisdom",items:["New 🦉 Stock wisdom button on Home: 20 lessons from market history, as 10 traps to avoid, 6 habits that work and 4 signals to watch, each with what history shows and what to do","Wisdom of the day, plus a mind map: tap any box to jump to that lesson","Before you buy: an 8-point checklist to go through before any new purchase","Crash plan: write down what you'll do in a 20% or 30% drop; it saves on this device as you type"]},
   {v:"3.26",date:"2026-10-20",title:"Fiber & Photonics section",items:["Fiber & Photonics is now its own section: tap 💡 Fiber & Photonics on Home, or pick it on the Trends tab","Live prices grouped by role: lasers & transceivers, optical chips & interconnects, fiber & connectors, and links between data centers","After the close, the group's after-hours and pre-market moves, refreshed every 30 minutes overnight","\"Why optics matter for AI\" explains who makes what, co-packaged optics, and what moves these stocks","Removed the optics row from the Tomorrow card"]},
@@ -2094,15 +2095,15 @@ const CHANGELOG=[
 // ---- Listen & watch ----
 const MEDIA={
   pod:{t:"🎙 Podcasts",sub:"Top 5 for markets and money. Tap the name for the show, Apple for Apple Podcasts.",items:[
-    ["📰","The Journal (WSJ)","Daily deep dive on the biggest business story","https://www.wsj.com/podcasts/the-journal","The Journal WSJ"],
-    ["📊","Odd Lots (Bloomberg)","Markets, macro and how finance really works","https://www.bloomberg.com/oddlots","Odd Lots"],
-    ["💸","Planet Money (NPR)","The economy explained, in plain English","https://www.npr.org/podcasts/510289/planet-money","Planet Money"],
-    ["🃏","Motley Fool Money","Stocks, earnings and investing ideas","https://www.fool.com/podcasts/motley-fool-money/","Motley Fool Money"],
-    ["🐂","Animal Spirits","Markets, investing and life, twice a week","https://www.animalspiritspod.com/","Animal Spirits"]]},
+    ["📰","The Journal (WSJ)","Daily deep dive on the biggest business story","https://www.wsj.com/podcasts/the-journal","https://podcasts.apple.com/us/podcast/the-journal/id1469394914"],
+    ["📊","Odd Lots (Bloomberg)","Markets, macro and how finance really works","https://www.bloomberg.com/podcasts/odd_lots","https://podcasts.apple.com/us/podcast/odd-lots/id1056200096"],
+    ["💸","Planet Money (NPR)","The economy explained, in plain English","https://www.npr.org/podcasts/510289/planet-money","https://podcasts.apple.com/us/podcast/planet-money/id290783428"],
+    ["🃏","Motley Fool Hidden Gems","Stocks, earnings and investing ideas (formerly Motley Fool Money)","https://www.fool.com/podcasts/hidden-gems/","https://podcasts.apple.com/us/podcast/motley-fool-hidden-gems-investing/id306106212"],
+    ["🐂","Animal Spirits","Markets, investing and life, twice a week","https://awealthofcommonsense.com/podcast/","https://podcasts.apple.com/us/podcast/animal-spirits-podcast/id1310192007"]]},
   radio:{t:"📻 Radio & live audio",sub:"Live business radio during market hours.",items:[
-    ["🔴","Bloomberg Radio","Live business news and interviews","https://www.bloomberg.com/audio"],
-    ["📺","CNBC live audio","CNBC's TV feed on TuneIn","https://tunein.com/search/?query=CNBC"],
-    ["🦊","Fox Business","Fox Business audio on TuneIn","https://tunein.com/search/?query=Fox%20Business"],
+    ["🔴","Bloomberg Radio","Live business news and interviews","https://www.bloombergradio.com/"],
+    ["📺","CNBC live audio","CNBC's TV feed on TuneIn","https://tunein.com/radio/CNBC-s110052/"],
+    ["🦊","Fox Business","Fox Business audio on TuneIn","https://tunein.com/radio/Fox-Business-Network-s20412/"],
     ["🏛","Marketplace (APM)","Daily economy and markets show","https://www.marketplace.org/"],
     ["🟦","Schwab Network","Live trading and markets stream","https://schwabnetwork.com/"]]},
   yt:{t:"▶️ YouTube",sub:"Tap the name for the channel, Live for the live stream.",items:[
@@ -2116,7 +2117,7 @@ function openMedia(){
   S.open="__media";
   const a=(ic,n,d,u,alt,altLbl)=>`<div class="media-row"><a class="media-a" href="${u}" target="_blank" rel="noopener"><span class="ic">${ic}</span><span class="tx"><b>${esc(n)}</b><small>${esc(d)}</small></span><span class="go">↗</span></a>${alt?`<a class="media-a media-alt" href="${alt}" target="_blank" rel="noopener">${altLbl}</a>`:""}</div>`;
   const sec=(k,f)=>{ const m=MEDIA[k]; return `<div class="card brief-sec" style="gap:8px"><h4>${m.t}</h4><p class="hint" style="margin-top:-4px">${m.sub}</p>${m.items.map(f).join("")}</div>`; };
-  const pod=sec("pod",x=>a(x[0],x[1],x[2],x[3],"https://podcasts.apple.com/us/search?term="+encodeURIComponent(x[4]),"🎧 Apple"));
+  const pod=sec("pod",x=>a(x[0],x[1],x[2],x[3],x[4],"🎧 Apple"));
   const radio=sec("radio",x=>a(x[0],x[1],x[2],x[3]));
   const yt=sec("yt",x=>a(x[0],x[1],x[2],x[3],x[4],x[4]?"🔴 Live":""));
   const syms=S.list.slice(0,12);

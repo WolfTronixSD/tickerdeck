@@ -26,7 +26,7 @@ jobs:
           REAL: "1"
           SYMS: ${{ github.event.inputs.syms }}
   screen:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.56.1 can't install Chromium on ubuntu-latest (26.04)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
