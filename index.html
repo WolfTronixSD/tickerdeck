@@ -203,11 +203,74 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pidea{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;line-height:1.4}
 .pidea>span{font-size:16px}
 .pidea p{margin:2px 0 0;font-size:12px;color:#AEB9C7}
-.pai{background:linear-gradient(150deg,rgba(212,175,55,.10),rgba(110,168,255,.06));border-color:rgba(212,175,55,.25);display:flex;flex-wrap:wrap;gap:8px}
-.pai a{flex:1 1 140px;text-align:center;text-decoration:none}
-.pai p{flex-basis:100%}
-.prepbtns>div{display:flex;flex-wrap:wrap;gap:8px}
-.prepbtns button{flex:1 1 70px}
+.pai{background:var(--panel);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.pai p{grid-column:1/-1}
+.paibtn{display:flex;flex-direction:column;gap:3px;padding:12px 12px 11px;border-radius:14px;text-decoration:none;color:var(--text);background:linear-gradient(150deg,rgba(212,175,55,.16),rgba(110,168,255,.08));border:1px solid rgba(212,175,55,.28);transition:transform .12s,border-color .12s}
+.paibtn:active{transform:scale(.97)}
+.paibtn:hover{border-color:rgba(212,175,55,.6)}
+.paibtn span{font-size:22px;line-height:1}
+.paibtn b{font-size:13.5px}
+.paibtn small{font-size:11px;color:var(--muted)}
+.pidea-act{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:6px}
+.pmore summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--accent);list-style:none}
+.pmore summary::-webkit-details-marker{display:none}
+.pmore summary::after{content:" ▾"}
+.pmore[open] summary::after{content:" ▴"}
+.pchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.pchips button{font-size:11.5px;font-weight:700;padding:4px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.pchips small{color:var(--faint);font-weight:500}
+.plink{font-size:12px;color:var(--faint);text-decoration:underline;text-underline-offset:2px;padding:2px 0}
+.pseg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px;flex:none}
+.pseg button{height:28px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--muted)}
+.pseg button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
+.pseg button[disabled]{color:var(--text);min-width:44px}
+.pctlbar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:-6px}
+.pbars{gap:4px}
+.pbr{display:grid;grid-template-columns:56px 1fr 62px;align-items:center;gap:8px;padding:4px 0;text-align:left;width:100%;font-size:12.5px}
+.pbr.on b{color:var(--accent)}
+.pbr>.num{text-align:right}
+.pbar2{position:relative;height:22px;background:var(--panel2);border-radius:6px;overflow:hidden}
+.pbar2 i{position:absolute;top:0;bottom:0;left:0;border-radius:6px;opacity:.75}
+.pbar2 em{position:absolute;left:6px;top:50%;transform:translateY(-50%);font-style:normal;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.pbar2 em small{color:#E6EDF5;opacity:.8}
+.pbub{max-height:520px}
+.pcta{background:linear-gradient(135deg,rgba(110,168,255,.28),rgba(43,217,154,.18))!important;border-color:rgba(110,168,255,.45)!important;color:var(--text)!important}
+.pcrs{font-size:12px}
+.pdd .kv span{display:flex;flex-direction:column}
+.pdd .kv small{color:var(--faint);font-size:10.5px}
+.prace-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.prace-ctl .ghost{height:34px}
+.prepgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px}
+.prepgrid button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:14px;background:linear-gradient(160deg,rgba(255,181,71,.16),rgba(255,92,114,.08));border:1px solid rgba(255,181,71,.3);transition:transform .12s}
+.prepgrid button:active{transform:scale(.96)}
+.prepgrid span{font-size:22px;line-height:1.1}
+.prepgrid b{font-size:13px}
+.prepgrid small{font-size:10px;color:var(--muted)}
+.prep-mood{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.prep-hero.up{background:linear-gradient(160deg,rgba(43,217,154,.16),rgba(110,168,255,.06));border-color:rgba(43,217,154,.3)}
+.prep-hero.dn{background:linear-gradient(160deg,rgba(255,92,114,.14),rgba(110,168,255,.06));border-color:rgba(255,92,114,.3)}
+.prep-top{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left}
+.prep-grade{width:64px;height:64px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;border:2px solid currentColor}
+.prep-grade.up{color:var(--gain)}
+.prep-grade.dn{color:var(--loss)}
+.prep-grade b{font-size:24px;line-height:1}
+.prep-grade small{font-size:9px;color:var(--muted)}
+.pawards{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
+.paward{display:flex;flex-direction:column;align-items:center;gap:1px;padding:10px 6px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);text-align:center}
+.paward span{font-size:24px}
+.paward small{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+.paward b{font-size:14px}
+.paward em{font-style:normal;font-size:11.5px;color:var(--muted)}
+.prep-btns{display:flex;gap:8px;flex-wrap:wrap}
+.prep-btns .primary{display:inline-flex;align-items:center;text-decoration:none}
+@media print{
+  body.printing{background:var(--ink);padding:0}
+  body.printing>*:not(#sheet){display:none!important}
+  body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0}
+  body.printing [data-close],body.printing .prep-actions{display:none!important}
+  body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.printing .card{break-inside:avoid}
+}
 .prep-hero{text-align:center;gap:6px}
 .prep-hero .big{font-size:34px;font-weight:800;letter-spacing:-.02em}
 .prep-hero .kv{text-align:left}
@@ -2135,8 +2198,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.38";
+const APP_VERSION="3.39";
 const CHANGELOG=[
+  {v:"3.39",date:"2026-10-22",title:"StockPlotter gets playful",items:["⭐ Golden and 💀 death crosses marked on your chart when the 50-day average crosses the 200-day","Holdings: sort by value, day change or A–Z, and switch between list, bars and bubbles","Horse race with real horses, medals, a finish line and gallop sounds (mute with 🔇); the full-screen view now fits the screen","Reports: a mood, a grade vs the S&P 500, awards (MVP, fastest horse, slowpoke, wildest ride, win streak), a growth chart, and Save PDF","Ask Claude and reports never include dollar amounts or share counts, only percentages","A 1D range: yesterday's close to today, live while the market is open","Heat map: show the top 10, top 20 or all. Monthly returns in % or $","Drawdown explained, compared with the index, with your biggest dips and how long each took to recover","Ideas: Show all for long lists, and Hide this tip"]},
   {v:"3.38",date:"2026-10-22",title:"Pick your moving averages",items:["Turn the 20, 50, 100 and 200-day averages on and off one by one","When comparing with the S&P 500, Nasdaq, Nasdaq 100 or Dow, the index's averages are drawn too (dotted), with whether it's above or below each","Comparing also works when you plot a single stock"]},
   {v:"3.37",date:"2026-10-22",title:"StockPlotter reports, AI and trade history",items:["Record buys and sells with their date (or paste new totals and have the changes counted as trades). The chart now uses the shares you actually held each day, and returns ignore money you added or took out","Weekly, monthly, 6-month and yearly reports: a written summary, you vs the four indexes, best and worst stocks, who made or cost you money, your trades and the Fed, inflation, jobs and earnings events of the period, with Copy and Share","Ask Claude: one tap opens Claude with your holdings, weights and returns filled in, to analyze the portfolio, suggest rebalancing, explain the period or say what to watch next","Ideas to consider: flags a stock that's too big a share, leveraged funds, index funds overlapping your stocks, overheated or broken charts and upcoming earnings","Horse race is taller with bigger labels, plus a full-screen view you can zoom (+/−) and scroll, with up to all horses labeled","The range and index buttons now also sit above the heat map, so you don't have to scroll back up","50-day and 200-day moving average lines on the chart, with whether you're above or below each","Analyze this chart: you vs the index you picked over the range you picked, explained in plain English (beta, correlation, up and down capture, drawdown, trend), with Ask Claude for more","Buys and sells show as green and red dots on the chart. Everything stays on this device"]},
   {v:"3.36",date:"2026-10-22",title:"StockPlotter pro charts",items:["1W and 2W ranges, and the chart now marks the range high and low, with how far you are from each","Compare against the S&P 500, Nasdaq, Nasdaq 100 or Dow on every chart, plus a vs the indexes card showing how you did against all four","Then vs now: your value 1W, 2W, 3W, 4W, 1M, 3M, 6M, YTD and 1Y ago, the change since, and the index over the same stretch","Horse race: every holding from the same start line, the fastest horse in color, a replay animation and a full leaderboard","Who made you money, a heat map sized by position, a drawdown chart, monthly returns and risk stats (best and worst day, volatility, beta)","What the chart says: plain-English takeaways for the range you pick"]},
@@ -2964,8 +3028,8 @@ function opticsExtraHTML(){
     </ul><p class="hint">Not investment advice.</p></details>`;
 }
 /* ---------- StockPlotter: your holdings plotted from daily closes. Holdings are typed or pasted in and stay on this device. ---------- */
-S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pIdx=null; S.pSym=null; S.pBusy=0;
-const PRANGES=[["1w","1W",5],["2w","2W",10],["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
+S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pcross=LS.get("pcross",true); S.psort=LS.get("psort","value"); S.pview=LS.get("pview","list"); S.pheatN=LS.get("pheatN",0); S.pmonD=LS.get("pmonD",false); S.pHideIdeas=LS.get("phideideas",[]); S.raceMute=LS.get("racemute",false); S.pOpen={}; S.pIdx=null; S.pSym=null; S.pBusy=0;
+const PRANGES=[["1d","1D",1],["1w","1W",5],["2w","2W",10],["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
 if(!PRANGES.some(r=>r[0]===S.prange)) S.prange="1y";
 // indexes to compare against, through the ETFs that track them
 const BMS=[["SPY","S&P 500"],["ONEQ","Nasdaq"],["QQQ","Nasdaq 100"],["DIA","Dow"]];
@@ -3018,7 +3082,7 @@ function plotSeries(){
 }
 function dayInfoNow(){ const p=etParts(new Date()); return dayInfo(p.y,p.mo,p.d); }
 function plotRange(days){
-  const r=PRANGES.find(x=>x[0]===S.prange)||PRANGES[4];
+  const r=PRANGES.find(x=>x[0]===S.prange)||PRANGES[7];
   if(r[0]==="ytd"){ const y=new Date().getFullYear(), i=days.findIndex(o=>new Date(o.t).getFullYear()===y); return days.slice(Math.max(0,i-1)); }
   return days.slice(Math.max(0,days.length-1-r[2]));
 }
@@ -3050,9 +3114,9 @@ async function loadPlot(gen){
     for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) S.tdFail[x]=Date.now(); else S.daily[x]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{ LS.set("daily",S.daily); }catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
   if(live()) ensureData(syms,{gen});
 }
-function plotChart(pts,idx,bench,marks,mas){
+function plotChart(pts,idx,bench,marks,mas,crosses){
   const W=340,H=190,T=12,B=22; if(pts.length<2) return `<p class="hint">Not enough price history yet.</p>`;
-  const t0=pts[0][0], t1=pts[pts.length-1][0], all=pts.map(q=>q[1]).concat(bench?bench.map(q=>q[1]):[],...(mas||[]).map(m=>m.pts.map(q=>q[1])));
+  const t0=pts[0][0], t1=pts[pts.length-1][0], all=pts.map(q=>q[1]).concat(bench?bench.map(q=>q[1]):[],...(mas||[]).map(m=>m.pts.map(q=>q[1])),(crosses||[]).map(c=>c.v));
   let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*.08||1; lo-=pad; hi+=pad;
   const X=t=>4+(t-t0)/(t1-t0||1)*(W-8), Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B), path=a=>a.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ");
   const up=pts[pts.length-1][1]>=pts[0][1], col=up?"#2BD99A":"#FF5C72", sel=pts[idx];
@@ -3065,7 +3129,7 @@ function plotChart(pts,idx,bench,marks,mas){
   // buys (green) and sells (red) along the bottom
   const tm=(marks||[]).filter(m=>m.t>=t0-864e5/2&&m.t<=t1+864e5/2).map(m=>`<circle cx="${X(Math.min(t1,Math.max(t0,m.t))).toFixed(1)}" cy="${H-B-3}" r="3" fill="${m.q>0?"#2BD99A":"#FF5C72"}" stroke="#070B10" stroke-width="1"><title>${m.q>0?"Bought":"Sold"} ${esc(fmtQ(Math.abs(m.q)))} ${esc(m.s)} · ${esc(m.d)}</title></circle>`).join("");
   return `<svg class="chart" id="pSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Value over time" style="touch-action:pan-y">${grid}<defs><linearGradient id="plg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".26"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
-    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}${(mas||[]).filter(m=>m.pts.length>1).map(m=>`<path d="${path(m.pts)}" fill="none" stroke="${m.c}" stroke-width="${m.dash?1:1.2}" opacity="${m.dash?.7:.9}"${m.dash?` stroke-dasharray="2 3"`:""}/>`).join("")}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>${hl}${tm}
+    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}${(mas||[]).filter(m=>m.pts.length>1).map(m=>`<path d="${path(m.pts)}" fill="none" stroke="${m.c}" stroke-width="${m.dash?1:1.2}" opacity="${m.dash?.7:.9}"${m.dash?` stroke-dasharray="2 3"`:""}/>`).join("")}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>${hl}${tm}${(crosses||[]).map(c=>`<g transform="translate(${X(c.t).toFixed(1)} ${Y(c.v).toFixed(1)})"><circle r="7" fill="${c.g?"rgba(255,213,74,.25)":"rgba(255,92,114,.25)"}" stroke="${c.g?"#FFD54A":"#FF5C72"}" stroke-width="1"/><text y="4" text-anchor="middle" font-size="10">${c.g?"⭐":"💀"}</text><title>${c.g?"Golden":"Death"} cross · ${pdL(c.t)}</title></g>`).join("")}
     <line x1="${X(sel[0])}" x2="${X(sel[0])}" y1="${T-4}" y2="${H-B}" stroke="#FFB547" stroke-dasharray="2 3"/><circle cx="${X(sel[0])}" cy="${Y(sel[1])}" r="4.5" fill="#FFB547" stroke="#070B10" stroke-width="2"/>
     <text x="6" y="${H-6}" font-size="9.5" fill="#8392A6" font-family="Sora">${dl(t0)}</text><text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">${pts[pts.length-1]===sel&&new Date(t1).toDateString()===new Date().toDateString()?"Today":dl(t1)}</text></svg>`;
 }
@@ -3078,6 +3142,12 @@ function plotMAs(P,R,x,want){
     D.forEach((o,i)=>{ sum+=f(o); if(i>=n) sum-=f(D[i-n]); avg[i]=i>=n-1?sum/n:null; });
     R.forEach(o=>{ const i=pos.get(o), a=avg[i]; if(a!=null) pts.push([o.t,x?a:o.v*a/o.g]); });
     const last=R[R.length-1], la=avg[pos.get(last)]; out.push({n,c,pts,now:la!=null?(f(last)/la-1)*100:null}); });
+  return out;
+}
+// golden (50-day rises through the 200-day) and death (falls through it) crosses inside the range
+function plotCrosses(P,R,x){
+  const m=plotMAs(P,R,x,[50,200]), f=m.find(o=>o.n===50), l=m.find(o=>o.n===200); if(!f||!l) return [];
+  const lm=new Map(l.pts), out=[]; let prev=null; f.pts.forEach(q=>{ const L=lm.get(q[0]); if(L==null) return; const up=q[1]>=L; if(prev!=null&&up!==prev) out.push({t:q[0],v:q[1],g:up}); prev=up; });
   return out;
 }
 // the same averages for the compare index, scaled like its dashed line (base = the chart's first value)
@@ -3112,18 +3182,37 @@ function plotSel(){
   const cross=a=>{ const f=a.find(m=>m.n===50), l=a.find(m=>m.n===200); return f&&l&&f.pts.length&&l.pts.length?(f.pts[f.pts.length-1][1]>=l.pts[l.pts.length-1][1]?`<span class="tup">50 over 200: uptrend</span>`:`<span class="tdown">50 under 200: downtrend</span>`):""; };
   if(mas.length) read+=`<div class="phl pmal"><span><b>${xs?esc(xs):"You"}</b></span>${mas.map(m=>`<span><i style="color:${m.c}">━</i> ${m.n}d${ab(m)}</span>`).join("")}${cross(mas)}</div>`;
   if(bmas.length) read+=`<div class="phl pmal"><span><b>${bmName()}</b></span>${bmas.map(m=>`<span><i style="color:${m.c}">┅</i> ${m.n}d${ab(m)}</span>`).join("")}${cross(bmas)}</div>`;
-  $("pChart").innerHTML=plotChart(pts,idx,bench,marks,mas.concat(bmas)); $("pRead").innerHTML=read;
+  const crs=S.pcross?plotCrosses(P,R,xs):[];
+  if(crs.length) read+=`<div class="phl pcrs">${crs.slice(-4).reverse().map(c=>`<span class="${c.g?"tup":"tdown"}">${c.g?"⭐ Golden cross":"💀 Death cross"} <small>${pdL(c.t)}</small></span>`).join("")}${crs.length>4?`<small>+${crs.length-4} earlier</small>`:""}</div>`;
+  $("pChart").innerHTML=plotChart(pts,idx,bench,marks,mas.concat(bmas),crs); $("pRead").innerHTML=read;
   const sl=$("pSlide"); if(sl&&+sl.value!==idx) sl.value=idx;
   const dt=$("pDate"); if(dt) dt.value=ymdLocal(d.t);
   // table: each holding's price and value on the chosen day, and how it has done since
   const shares=x=>d.q&&d.q[x]!=null?d.q[x]:(S.plot[x]||0), list=isNow?P.syms:[...new Set(P.syms.concat(P.have))].filter(x=>shares(x)>0);
   const rows=list.map(x=>{ const has=P.have.includes(x), p=has?d.px[x]:pxNow(x), pn=pxNow(x)??(has?now.px[x]:null), n=isNow?S.plot[x]:shares(x);
     const r=isNow?(r1d(x)??(has&&idx>0&&!d.live?(d.px[x]/R[idx-1].px[x]-1)*100:null)):(p&&pn?(pn/p-1)*100:null);
-    return {x,p,n,v:p!=null?p*n:null,r}; }).sort((a,b)=>(b.v??-1)-(a.v??-1));
-  const tot=rows.reduce((a,o)=>a+(o.v||0),0);
+    return {x,p,n,v:p!=null?p*n:null,r}; }).sort(S.psort==="az"?(a,b)=>a.x.localeCompare(b.x):S.psort==="day"?(a,b)=>(b.r??-1e9)-(a.r??-1e9):(a,b)=>(b.v??-1)-(a.v??-1));
+  const tot=rows.reduce((a,o)=>a+(o.v||0),0), seg=(attr,cur,opts)=>`<div class="pseg">${opts.map(([k,l])=>`<button ${attr}="${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`;
+  const body=S.pview==="bars"?holdBars(rows,tot):S.pview==="bubbles"?holdBubbles(rows,tot):`<div class="list">${rows.map(o=>`<button class="prow${S.pSym===o.x?" on":""}" data-psym="${esc(o.x)}">${logo(o.x)}<div class="who"><b>${esc(o.x)}</b><span>${money(fmtQ(o.n))} sh · ${fmt$(o.p)}</span></div><div class="px"><span class="num">${money(fmt$(o.v,0))}</span><small>${tot&&o.v?(o.v/tot*100).toFixed(1)+"%":""}</small></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></button>`).join("")}</div>`;
   $("pTable").innerHTML=`<div class="section-h"><h2>${isNow?"Your holdings today":"Holdings on "+dateL}</h2><small>${isNow?"day change":"change since then"}</small></div>
-    <div class="list">${rows.map(o=>`<button class="prow${S.pSym===o.x?" on":""}" data-psym="${esc(o.x)}">${logo(o.x)}<div class="who"><b>${esc(o.x)}</b><span>${money(fmtQ(o.n))} sh · ${fmt$(o.p)}</span></div><div class="px"><span class="num">${money(fmt$(o.v,0))}</span><small>${tot&&o.v?(o.v/tot*100).toFixed(1)+"%":""}</small></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></button>`).join("")}</div>
+    <div class="pctlbar">${seg("data-psort",S.psort,[["value","💰 Value"],["day",isNow?"📈 Day %":"📈 Change"],["az","🔤 A–Z"]])}${seg("data-pview",S.pview,[["list","☰"],["bars","▤"],["bubbles","◉"]])}</div>
+    ${body}
     <p class="hint">Tap a stock to plot its price with the same slider; tap it again to go back to the whole portfolio.</p>`;
+}
+// holdings as bars: length = value, color = change
+function holdBars(rows,tot){
+  const mx=Math.max(...rows.map(o=>o.v||0))||1;
+  return `<div class="card pbars" style="background:var(--panel)">${rows.map(o=>`<button class="pbr${S.pSym===o.x?" on":""}" data-psym="${esc(o.x)}"><b>${esc(o.x)}</b><span class="pbar2"><i style="width:${Math.max(1.5,(o.v||0)/mx*100).toFixed(1)}%;background:${o.r==null?"var(--muted)":o.r>=0?"var(--gain)":"var(--loss)"}"></i><em class="num">${S.priv?"":fmt$(o.v,0)} <small>${tot&&o.v?(o.v/tot*100).toFixed(1)+"%":""}</small></em></span><span class="num ${tcls(o.r)}">${fmtP(o.r)}</span></button>`).join("")}</div>`;
+}
+// holdings as bubbles: area = value, color = change; packed greedily around the middle
+function holdBubbles(rows,tot){
+  const it=rows.filter(o=>o.v>0).map(o=>({...o})); if(!it.length) return ""; const W=340, sum=it.reduce((s,o)=>s+o.v,0), k=Math.sqrt(W*W*.42/Math.PI/sum), mxR=Math.max(...it.map(o=>Math.abs(o.r||0)))||1;
+  it.sort((a,b)=>b.v-a.v).forEach(o=>{ o.rad=Math.max(6,Math.sqrt(o.v)*k); });
+  const placed=[]; it.forEach(o=>{ for(let s=0;s<6000;s++){ const a=s*.4, rr=s*.5, x=rr*Math.cos(a), y=rr*Math.sin(a)*.85; if(placed.every(q=>Math.hypot(q.cx-x,q.cy-y)>=q.rad+o.rad+1.5)){ o.cx=x; o.cy=y; break; } } if(o.cx==null){ o.cx=0; o.cy=0; } placed.push(o); });
+  const x0=Math.min(...it.map(o=>o.cx-o.rad)), x1=Math.max(...it.map(o=>o.cx+o.rad)), y0=Math.min(...it.map(o=>o.cy-o.rad)), y1=Math.max(...it.map(o=>o.cy+o.rad)), pad=4;
+  const col=r=>{ if(r==null) return "rgba(131,146,166,.35)"; const a=.25+.6*Math.sqrt(Math.min(1,Math.abs(r)/mxR)); return r>=0?`rgba(43,217,154,${a.toFixed(2)})`:`rgba(255,92,114,${a.toFixed(2)})`; };
+  return `<div class="card" style="background:var(--panel);padding:8px"><svg class="chart pbub" viewBox="${(x0-pad).toFixed(0)} ${(y0-pad).toFixed(0)} ${(x1-x0+2*pad).toFixed(0)} ${(y1-y0+2*pad).toFixed(0)}" role="img" aria-label="Holdings as bubbles">${it.map(o=>{ const fs=Math.min(15,o.rad*.5); return `<g data-psym="${esc(o.x)}" style="cursor:pointer"><circle cx="${o.cx.toFixed(1)}" cy="${o.cy.toFixed(1)}" r="${o.rad.toFixed(1)}" fill="${col(o.r)}" stroke="${S.pSym===o.x?"#FFB547":"rgba(255,255,255,.18)"}" stroke-width="${S.pSym===o.x?2:1}"/>${o.rad>=11?`<text x="${o.cx.toFixed(1)}" y="${(o.cy+(o.rad>=20?-1:fs/3)).toFixed(1)}" text-anchor="middle" font-size="${fs.toFixed(1)}" font-weight="700" fill="#fff" font-family="Sora">${esc(o.x)}</text>`:""}${o.rad>=20?`<text x="${o.cx.toFixed(1)}" y="${(o.cy+fs).toFixed(1)}" text-anchor="middle" font-size="${(fs*.75).toFixed(1)}" fill="#E6EDF5" font-family="JetBrains Mono">${fmtP(o.r)}</text>`:""}<title>${esc(o.x)} · ${tot?(o.v/tot*100).toFixed(1):0}% · ${fmtP(o.r)}</title></g>`; }).join("")}</svg>
+    <p class="hint" style="font-size:11px;margin:0">Bubble size = position value, color = ${S.pIdx==null?"today's":"the"} change. Tap a bubble to plot it.</p></div>`;
 }
 /* ---------- StockPlotter pro: then-vs-now, horse race, contributions, heat map, drawdown, monthly returns, risk ---------- */
 const pdS=t=>new Date(t).toLocaleDateString([], {month:"short",day:"numeric"});
@@ -3163,43 +3252,53 @@ function raceSVG(P,R,o){
   const step=Math.max(1,Math.floor(R.length/(W>400?240:120))), idx=[]; for(let i=0;i<R.length;i+=step) idx.push(i); if(idx[idx.length-1]!==R.length-1) idx.push(R.length-1);
   const spy0=spyAt(t0), spyLine=spy0?idx.map(i=>[R[i].t,((R[i].live?price(bmSym()):spyAt(R[i].t))||spy0)/spy0*100]):null;
   let lo=100,hi=100; xs.forEach(x=>idx.forEach(i=>{ const v=R[i].px[x]/R[0].px[x]*100; if(v<lo) lo=v; if(v>hi) hi=v; })); if(spyLine) spyLine.forEach(q=>{ lo=Math.min(lo,q[1]); hi=Math.max(hi,q[1]); });
-  const T=10,B=18,RP=Math.round(fs*7.4), lh=fs+3, X=t=>4+(t-t0)/(t1-t0||1)*(W-RP-8), Y=v=>T+(1-(v-lo)/(hi-lo||1))*(H-T-B);
-  const path=x=>idx.map((i,k)=>(k?"L":"M")+X(R[i].t).toFixed(1)+" "+Y(R[i].px[x]/R[0].px[x]*100).toFixed(1)).join(" ");
-  // labels for the leaders, nudged apart so they don't overlap
-  const labs=ranked.slice(0,nl).map(o=>({x:o.x,r:o.r,y:Y(100+o.r)})).sort((a,b)=>a.y-b.y); for(let i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<lh) labs[i].y=labs[i-1].y+lh;
+  const medal=["🥇","🥈","🥉"], lab=(o,i)=>`${medal[i]||""}${o.x} ${o.r>=0?"+":""}${o.r.toFixed(0)}%`, chars=Math.max(8,...ranked.slice(0,nl).map((o,i)=>lab(o,i).length+(i<3?1:0)));
+  const T=fs*1.4,B=18,RP=Math.round(chars*fs*.62+8), hs=fs*1.5, lh=fs+3, X=t=>4+(t-t0)/(t1-t0||1)*(W-RP-hs-6), Y=v=>T+(1-(v-lo)/(hi-lo||1))*(H-T-B);
+  const yv=(x,i)=>Y(R[i].px[x]/R[0].px[x]*100), path=x=>idx.map((i,k)=>(k?"L":"M")+X(R[i].t).toFixed(1)+" "+yv(x,i).toFixed(1)).join(" ");
+  // labels for the leaders, nudged apart so they don't overlap and kept inside the chart
+  const labs=ranked.slice(0,nl).map((o,i)=>({...o,i,y:Y(100+o.r)})).sort((a,b)=>a.y-b.y);
+  for(let i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<lh) labs[i].y=labs[i-1].y+lh;
+  for(let i=labs.length-1;i>=0;i--) labs[i].y=Math.min(labs[i].y,i===labs.length-1?H-B-4:labs[i+1].y-lh); labs.forEach(o=>{ o.y=Math.max(T,o.y); });
   let grid=""; if(W>400) for(let k=1;k<4;k++){ const v=hi-(k/4)*(hi-lo), y=Y(v); grid+=`<line x1="0" x2="${W-RP}" y1="${y}" y2="${y}" stroke="#1A2430"/><text x="4" y="${y-3}" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">${v>=100?"+":""}${(v-100).toFixed(0)}%</text>`; }
+  // a horse at the head of each leader's line; the replay walks it along the line
+  const horses=ranked.slice(0,Math.min(nl,W>400?10:5)).map(o=>{ const xy=idx.map(i=>X(R[i].t).toFixed(1)+","+yv(o.x,i).toFixed(1)).join(";"), e=xy.slice(xy.lastIndexOf(";")+1).split(",");
+    return `<g class="rhorse" data-xy="${xy}" transform="translate(${e[0]} ${e[1]})"><text x="0" y="${hs*.35}" font-size="${hs}" text-anchor="middle" transform="scale(-1 1)">🏇</text></g>`; }).join("");
   return `<svg class="chart" id="${id}Svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Horse race of your holdings"><defs><clipPath id="${id}Clip"><rect id="${id}Rect" x="0" y="0" width="${W}" height="${H}"/></clipPath></defs>${grid}
-        <line x1="0" x2="${W-RP}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><text x="${W-RP-2}" y="${Y(100)-3}" text-anchor="end" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">start</text>
+        <line x1="0" x2="${W-RP}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><text x="${W-RP-hs}" y="${Y(100)-3}" text-anchor="end" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">start</text>
+        <line x1="${X(t1)+hs*.6}" x2="${X(t1)+hs*.6}" y1="${T-fs*.6}" y2="${H-B}" stroke="#E6EDF5" stroke-width="1.5" stroke-dasharray="3 3" opacity=".5"/><text x="${X(t1)+hs*.6}" y="${T-fs*.8}" text-anchor="middle" font-size="${fs*.9}">🏁</text>
         <g clip-path="url(#${id}Clip)">${xs.filter(x=>!top.has(x)).map(x=>`<path d="${path(x)}" fill="none" stroke="#3A4757" stroke-width=".8" opacity=".55"/>`).join("")}
         ${spyLine?`<path d="${spyLine.map((q,k)=>(k?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="#E6EDF5" stroke-width="1.2" stroke-dasharray="4 3"/>`:""}
         ${ranked.slice(0,nl).reverse().map(o=>`<path d="${path(o.x)}" fill="none" stroke="${hue(o.x)}" stroke-width="${o===lead?2.6:1.7}"/>`).join("")}</g>
-        <g id="${id}Labs">${labs.map(o=>`<text x="${W-RP+4}" y="${o.y+fs/3}" font-size="${fs}" font-weight="700" fill="${hue(o.x)}" font-family="Sora">${esc(o.x)} ${o.r>=0?"+":""}${o.r.toFixed(0)}%</text>`).join("")}${spyLine?`<text x="${W-RP+4}" y="${Math.min(H-B,Math.max(T+8,Y(spyLine[spyLine.length-1][1])))+fs/3}" font-size="${fs-.5}" fill="#AEB9C7" font-family="Sora">${bmName()}</text>`:""}</g>
+        <g id="${id}Horses">${horses}</g>
+        <g id="${id}Labs">${labs.map(o=>`<text x="${W-RP+4}" y="${o.y+fs/3}" font-size="${fs}" font-weight="700" fill="${hue(o.x)}" font-family="Sora">${esc(lab(o,o.i))}</text>`).join("")}${spyLine?`<text x="${W-RP+4}" y="${Math.min(H-B,Math.max(T+8,Y(spyLine[spyLine.length-1][1])))+fs/3}" font-size="${fs-.5}" fill="#AEB9C7" font-family="Sora">${bmName()}</text>`:""}</g>
         <text x="4" y="${H-4}" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdL(t0)}</text><text x="${W-RP}" y="${H-4}" text-anchor="end" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdS(t1)}</text></svg>`;
 }
 function raceHTML(P,R){
-  const xs=P.have.filter(x=>R[0].px[x]>0); if(xs.length<2||R.length<3) return "";
+  const xs=P.have.filter(x=>R[0].px[x]>0); if(xs.length<2||R.length<2) return "";
   const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r);
   const lead=ranked[0], last=ranked[ranked.length-1], rng=(PRANGES.find(r=>r[0]===S.prange)||[])[1]||"";
   return `<div class="section-h"><h2>🏇 Horse race</h2><small>every holding from the same start, ${esc(rng)}</small></div>
     <div class="card" style="background:var(--panel);gap:8px">
       <p class="hint" style="margin:0">Fastest horse: <b style="color:${hue(lead.x)}">${esc(lead.x)}</b> <span class="tup">${fmtP(lead.r)}</span>. Slowest: <b>${esc(last.x)}</b> <span class="${tcls(last.r)}">${fmtP(last.r)}</span>.</p>
       ${raceSVG(P,R,{W:340,H:300,nl:5,id:"race",fs:10.5})}
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="ghost" data-prace>▶ Replay the race</button><button class="ghost" data-pracebig>⛶ Full screen</button><span class="hint" style="font-size:11.5px">Top 5 in color, the rest in gray, ${bmName()} dashed.</span></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="ghost pcta" data-prace>🏇 Start the race</button><button class="ghost" data-pracebig>⛶ Full screen</button><button class="ghost" data-pracemute aria-label="Race sound">${S.raceMute?"🔇":"🔊"}</button><span class="hint" style="font-size:11.5px">Top 5 in color, the rest in gray, ${bmName()} dashed.</span></div>
       <div class="pboard">${(S.pRaceAll?ranked:ranked.slice(0,8).concat(ranked.length>13?[null]:[],ranked.length>8?ranked.slice(Math.max(8,ranked.length-5)):[])).map((o,i)=>o?`<button class="pbrow" data-psym="${esc(o.x)}"><span class="rk">${ranked.indexOf(o)+1}</span><b>${esc(o.x)}</b><span class="pbar"><i class="${o.r>=0?"up":"dn"}" style="width:${Math.min(100,Math.abs(o.r)/Math.max(Math.abs(lead.r),Math.abs(last.r),1)*100)}%"></i></span><span class="num ${tcls(o.r)}">${fmtP(o.r)}</span></button>`:`<div class="pbgap">⋯</div>`).join("")}</div>
       ${ranked.length>13?`<button class="ghost" data-praceall style="align-self:flex-start">${S.pRaceAll?"Show top and bottom":"Show all "+ranked.length}</button>`:""}
     </div>`;
 }
-// full-screen race: tall, more horses labeled, and zoomable (pinch, or the + and − buttons)
+// full-screen race: sized to the screen, more horses labeled, zoomable (+ and −, then scroll)
 function openRaceBig(){
   const P=S.plotP; if(!P||!P.rng) return; const R=P.rng; S.open="__prace"; S.raceZ=S.raceZ||1; S.raceN=S.raceN||10;
-  const draw=()=>{ const n=Math.min(S.raceN,P.have.length); $("raceBox").innerHTML=`<div style="width:${S.raceZ*100}%">${raceSVG(P,R,{W:520,H:Math.round(Math.max(560,window.innerHeight*1.1)),nl:n,id:"raceZ",fs:13})}</div>`;
-    $("raceZl").textContent=S.raceZ===1?"Fit":S.raceZ+"×"; $("raceNl").textContent=`Label top ${n}`; };
-  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>🏇 Horse race</h3><p>${esc((PRANGES.find(r=>r[0]===S.prange)||[])[1]||"")} · ${pdS(R[0].t)} – ${pdS(R[R.length-1].t)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
-    <div class="chipbar"><button class="ghost" data-rz="-1" aria-label="Zoom out">−</button><span class="hint" id="raceZl"></span><button class="ghost" data-rz="1" aria-label="Zoom in">+</button><button class="ghost" data-rn="-5">−5</button><span class="hint" id="raceNl"></span><button class="ghost" data-rn="5">+5</button><button class="ghost" data-rplay>▶ Replay</button></div>
+  const draw=()=>{ const box=$("raceBox"); if(!box) return; const n=Math.min(S.raceN,P.have.length), bw=box.clientWidth||340, W=520, avail=Math.max(300,window.innerHeight-250), H=Math.round(Math.min(W*1.5,Math.max(W*.55,W*avail/bw)));
+    box.innerHTML=`<div style="width:${S.raceZ*100}%">${raceSVG(P,R,{W,H,nl:n,id:"raceZ",fs:13})}</div>`;
+    $("raceZl").textContent=S.raceZ===1?"Fit":S.raceZ+"×"; $("raceNl").textContent=`Top ${n}`; };
+  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>🏇 Horse race</h3><p>${esc((PRANGES.find(r=>r[0]===S.prange)||[])[1]||"")} · ${pdL(R[0].t)} – ${pdL(R[R.length-1].t)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="prace-ctl"><div class="pseg"><button data-rz="-1" aria-label="Zoom out">−</button><button disabled id="raceZl"></button><button data-rz="1" aria-label="Zoom in">+</button></div><div class="pseg"><button data-rn="-5" aria-label="Fewer labels">−</button><button disabled id="raceNl"></button><button data-rn="5" aria-label="More labels">+</button></div><button class="ghost pcta" data-rplay>🏇 Start</button><button class="ghost" data-rmute aria-label="Race sound">${S.raceMute?"🔇":"🔊"}</button></div>
     <div id="raceBox" class="racebox"></div><p class="hint" style="font-size:11.5px">Zoom in and scroll sideways to read crowded stretches. ${bmName()} dashed.</p>`;
-  $("sheetIn").querySelector(".chipbar").addEventListener("click",e=>{ const z=e.target.closest("[data-rz]"), n=e.target.closest("[data-rn]");
-    if(z){ S.raceZ=Math.max(1,Math.min(4,S.raceZ+ +z.dataset.rz)); draw(); } else if(n){ S.raceN=Math.max(5,Math.min(P.have.length,S.raceN+ +n.dataset.rn)); draw(); } else if(e.target.closest("[data-rplay]")) replayRace("raceZ"); });
-  draw(); showSheet();
+  $("sheetIn").querySelector(".prace-ctl").addEventListener("click",e=>{ const z=e.target.closest("[data-rz]"), n=e.target.closest("[data-rn]"), m=e.target.closest("[data-rmute]");
+    if(z){ S.raceZ=Math.max(1,Math.min(4,S.raceZ+ +z.dataset.rz)); draw(); } else if(n){ S.raceN=Math.max(5,Math.min(P.have.length,S.raceN+ +n.dataset.rn)); draw(); }
+    else if(m){ S.raceMute=!S.raceMute; LS.set("racemute",S.raceMute); m.textContent=S.raceMute?"🔇":"🔊"; } else if(e.target.closest("[data-rplay]")) replayRace("raceZ"); });
+  showSheet(); draw(); requestAnimationFrame(draw);
 }
 // who made (or cost) you money over the range, in dollars
 function contribHTML(P,R){
@@ -3211,32 +3310,50 @@ function contribHTML(P,R){
 }
 // heat map: tile size is position value today, color is the move over the range
 function heatHTML(P,R){
-  const a=R[0], z=R[R.length-1], tiles=P.have.map(x=>({x,v:z.px[x]*z.q[x],r:(z.px[x]/a.px[x]-1)*100})).filter(o=>o.v>0).sort((p,q)=>q.v-p.v); if(tiles.length<2) return "";
-  const tot=tiles.reduce((s,o)=>s+o.v,0), mx=Math.max(...tiles.map(o=>Math.abs(o.r)))||1;
+  const a=R[0], z=R[R.length-1], all=P.have.map(x=>({x,v:z.px[x]*z.q[x],r:(z.px[x]/a.px[x]-1)*100})).filter(o=>o.v>0).sort((p,q)=>q.v-p.v); if(all.length<2) return "";
+  const N=S.pheatN, tiles=N&&all.length>N?all.slice(0,N):all, rest=all.slice(tiles.length), tot=all.reduce((s,o)=>s+o.v,0), mx=Math.max(...tiles.map(o=>Math.abs(o.r)))||1;
   const col=r=>{ const k=Math.min(1,Math.abs(r)/mx), a=.18+.7*Math.sqrt(k); return r>=0?`rgba(43,217,154,${a.toFixed(2)})`:`rgba(255,92,114,${a.toFixed(2)})`; };
-  return `${plotChips()}<div class="section-h"><h2>🗺️ Heat map</h2><small>size = position value, color = move over the range</small></div>
-    <div class="pheat">${tiles.map(o=>{ const sh=o.v/tot*100; return `<button data-psym="${esc(o.x)}" style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?78:sh>2.5?56:40}px;background:${col(o.r)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span>${sh>2.5?`<small>${sh.toFixed(1)}%</small>`:""}</button>`; }).join("")}</div>`;
+  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?78:sh>2.5?56:40}px;background:${o.bg||col(o.r)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span>${sh>2.5?`<small>${sh.toFixed(1)}%</small>`:""}</button>`; };
+  const rv=rest.reduce((s,o)=>s+o.v,0), rr=rv?rest.reduce((s,o)=>s+o.v*o.r,0)/rv:0;
+  return `${plotChips()}<div class="section-h"><h2>🗺️ Heat map</h2><div class="pseg">${[[10,"Top 10"],[20,"Top 20"],[0,"All"]].map(([n,l])=>`<button data-pheatn="${n}" aria-pressed="${S.pheatN===n}">${l}</button>`).join("")}</div></div>
+    <div class="pheat">${tiles.map(o=>tile(o,`data-psym="${esc(o.x)}"`)).join("")}${rest.length?tile({x:`+${rest.length} more`,v:rv,r:rr,bg:"rgba(131,146,166,.28)"},`data-pheatn="0"`):""}</div>
+    <p class="hint" style="font-size:11px;margin:0">Size = position value, color = move over the range.${rest.length?" The gray tile adds up the rest; tap it to show all.":""}</p>`;
 }
-// underwater chart: how far below its previous high the value was on each day
+// drawdown: how far below its last peak the value sat each day, the worst dips and how long they took to heal
+function ddSeries(pts){ let pk=pts[0][1]; return pts.map(q=>{ pk=Math.max(pk,q[1]); return [q[0],(q[1]/pk-1)*100]; }); }
+function ddEpisodes(dd){
+  const out=[]; let cur=null; dd.forEach((q,i)=>{ if(q[1]<-0.05){ if(!cur) cur={s:dd[Math.max(0,i-1)][0],b:q[0],d:q[1],e:null}; else if(q[1]<cur.d){ cur.d=q[1]; cur.b=q[0]; } } else if(cur){ cur.e=q[0]; out.push(cur); cur=null; } }); if(cur) out.push(cur);
+  return out.filter(o=>o.d<=-1).sort((a,b)=>a.d-b.d);
+}
 function ddHTML(pts){
-  if(pts.length<5) return ""; let pk=pts[0][1], worst={d:0,t:pts[0][0]}; const dd=pts.map(q=>{ pk=Math.max(pk,q[1]); const d=(q[1]/pk-1)*100; if(d<worst.d) worst={d,t:q[0]}; return [q[0],d]; });
-  const W=340,H=90,t0=pts[0][0],t1=pts[pts.length-1][0], lo=Math.min(-1,worst.d*1.1), X=t=>4+(t-t0)/(t1-t0||1)*(W-8), Y=v=>6+(v/lo)*(H-20);
-  const p=dd.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" "), cur=dd[dd.length-1][1];
-  return `<div class="section-h"><h2>🌊 Drawdown</h2><small>% below the previous high</small></div>
-    <div class="card" style="background:var(--panel);gap:6px"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Drawdown"><line x1="0" x2="${W}" y1="6" y2="6" stroke="#2A3646"/><path d="${p} L${X(t1)} 6 L${X(t0)} 6Z" fill="rgba(255,92,114,.22)"/><path d="${p}" fill="none" stroke="#FF5C72" stroke-width="1.4"/><circle cx="${X(worst.t)}" cy="${Y(worst.d)}" r="3.5" fill="#FF5C72"/><text x="${Math.min(W-60,Math.max(4,X(worst.t)-30))}" y="${Math.min(H-4,Y(worst.d)+13)}" font-size="9" fill="#FF9AA8" font-family="JetBrains Mono">${worst.d.toFixed(1)}% ${pdS(worst.t)}</text></svg>
-      <div class="stats"><div>Worst drop<span class="num tdown">${worst.d.toFixed(1)}%</span></div><div>Now vs high<span class="num ${cur>-0.05?"tup":"tdown"}">${cur>-0.05?"At high":cur.toFixed(1)+"%"}</span></div><div>Days under water<span class="num">${(()=>{ let n=0; for(let i=dd.length-1;i>=0&&dd[i][1]<-0.05;i--) n++; return n; })()}</span></div></div></div>`;
+  if(pts.length<5) return ""; const dd=ddSeries(pts), t0=pts[0][0], t1=pts[pts.length-1][0], bs=bmSym(), ix=pts.map(q=>[q[0],spyAt(q[0])]).filter(q=>q[1]), bdd=ix.length>5?ddSeries(ix):null;
+  const worst=dd.reduce((a,b)=>b[1]<a[1]?b:a), bw=bdd?bdd.reduce((a,b)=>b[1]<a[1]?b:a)[1]:null, eps=ddEpisodes(dd), cur=dd[dd.length-1][1];
+  const W=340,H=110, lo=Math.min(-1,worst[1]*1.1,(bw||0)*1.1), X=t=>4+(t-t0)/(t1-t0||1)*(W-8), Y=v=>6+(v/lo)*(H-20), P=a=>a.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ");
+  let grid=""; [lo/2,lo].forEach(v=>{ grid+=`<line x1="0" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="#1A2430"/><text x="${W-4}" y="${Y(v)-3}" text-anchor="end" font-size="8" fill="#566377" font-family="JetBrains Mono">${v.toFixed(0)}%</text>`; });
+  const days=(a,b)=>Math.round(((b||Date.now())-a)/864e5), uw=(()=>{ let n=0; for(let i=dd.length-1;i>=0&&dd[i][1]<-0.05;i--) n++; return n; })();
+  return `<div class="section-h"><h2>🌊 Drawdown</h2><small>how far below the last high</small></div>
+    <div class="card" style="background:var(--panel);gap:8px">
+      <p class="hint" style="margin:0;font-size:12px">Each dip shows how far ${S.pSym?esc(S.pSym):"your portfolio"} sat below its last peak. Deep, long valleys are the painful stretches; the faster it climbs back to 0%, the more resilient it is.</p>
+      <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Drawdown">${grid}<line x1="0" x2="${W}" y1="6" y2="6" stroke="#2A3646"/>${eps.slice(0,3).map(o=>`<rect x="${X(o.s).toFixed(1)}" y="6" width="${Math.max(1,X(o.e||t1)-X(o.s)).toFixed(1)}" height="${H-20}" fill="rgba(255,92,114,.06)"/>`).join("")}
+        <path d="${P(dd)} L${X(t1)} 6 L${X(t0)} 6Z" fill="rgba(255,92,114,.22)"/>${bdd?`<path d="${P(bdd)}" fill="none" stroke="#6EA8FF" stroke-width="1.1" stroke-dasharray="3 3"/>`:""}<path d="${P(dd)}" fill="none" stroke="#FF5C72" stroke-width="1.5"/>
+        <circle cx="${X(worst[0])}" cy="${Y(worst[1])}" r="3.5" fill="#FF5C72"/><text x="${Math.min(W-60,Math.max(4,X(worst[0])-30))}" y="${Math.min(H-4,Y(worst[1])+13)}" font-size="9" fill="#FF9AA8" font-family="JetBrains Mono">${worst[1].toFixed(1)}% ${pdS(worst[0])}</text></svg>
+      ${bdd?`<div class="plegend"><span><i style="background:#FF5C72"></i>${S.pSym?esc(S.pSym):"You"}</span><span><i style="background:#6EA8FF"></i>${bmName(bs)}</span></div>`:""}
+      <div class="stats"><div>Worst drop<span class="num tdown">${worst[1].toFixed(1)}%</span></div><div>${bmName(bs)} worst<span class="num tdown">${bw!=null?bw.toFixed(1)+"%":"—"}</span></div><div>Now vs high<span class="num ${cur>-0.05?"tup":"tdown"}">${cur>-0.05?"At high":cur.toFixed(1)+"%"}</span></div><div>Days under water<span class="num">${uw}</span></div></div>
+      ${eps.length?`<div class="pdd"><h4 style="margin:4px 0">Biggest dips</h4>${eps.slice(0,3).map((o,i)=>`<div class="kv"><span>${["🥇","🥈","🥉"][i]} ${pdS(o.s)} → bottom ${pdS(o.b)}<small>${o.e?`recovered ${pdS(o.e)} · ${days(o.s,o.e)} days`:`not recovered yet · ${days(o.s)} days so far`}</small></span><b class="num tdown">${o.d.toFixed(1)}%</b></div>`).join("")}</div>`:""}</div>`;
 }
-// month-by-month returns across all the history on file
-function monthsHTML(all){
+// month-by-month returns across all the history on file, as % or as dollars gained
+function monthsHTML(all,P,x){
   if(all.length<40) return ""; const end={}; all.forEach(q=>{ const d=new Date(q[0]); end[d.getFullYear()*12+d.getMonth()]=q[1]; });
   const ks=Object.keys(end).map(Number).sort((a,b)=>a-b), ret={}; for(let i=1;i<ks.length;i++) if(ks[i]-ks[i-1]===1) ret[ks[i]]=(end[ks[i]]/end[ks[i-1]]-1)*100;
-  const yrs=[...new Set(Object.keys(ret).map(k=>Math.floor(k/12)))].sort(); if(!yrs.length) return "";
-  const mx=Math.max(...Object.values(ret).map(Math.abs))||1, M="JFMAMJJASOND";
-  const cell=v=>v==null?`<i class="na"></i>`:`<i style="background:${v>=0?`rgba(43,217,154,${(.15+.75*Math.min(1,v/mx)).toFixed(2)})`:`rgba(255,92,114,${(.15+.75*Math.min(1,-v/mx)).toFixed(2)})`}" title="${v.toFixed(1)}%">${Math.abs(v)>=10?v.toFixed(0):v.toFixed(1)}</i>`;
-  const vals=Object.entries(ret).sort((a,b)=>b[1]-a[1]), best=vals[0], worst=vals[vals.length-1], mn=k=>new Date(Math.floor(k/12),k%12,1).toLocaleDateString([], {month:"short",year:"numeric"});
-  return `<div class="section-h"><h2>📅 Monthly returns</h2><small>${S.pSym?esc(S.pSym):"today's shares"}, % per month</small></div>
-    <div class="card" style="background:var(--panel);gap:6px"><div class="pmon"><span></span>${[...M].map(c=>`<span>${c}</span>`).join("")}${yrs.map(y=>`<span>${String(y).slice(2)}</span>${[...Array(12).keys()].map(m=>cell(ret[y*12+m])).join("")}`).join("")}</div>
-      <p class="hint" style="font-size:11.5px">Best month ${mn(+best[0])} <span class="tup">${fmtP(best[1])}</span>, worst ${mn(+worst[0])} <span class="tdown">${fmtP(worst[1])}</span>. Up in ${vals.filter(v=>v[1]>0).length} of ${vals.length} months.</p></div>`;
+  // dollars: each day's market move on the shares held that day, added up per month
+  const usd={}; if(P){ const D=P.days, xs=x?[x]:P.have; for(let i=1;i<D.length;i++){ const a=D[i-1], o=D[i], d=new Date(o.t), k=d.getFullYear()*12+d.getMonth(); if(ret[k]==null) continue; usd[k]=(usd[k]||0)+xs.reduce((s,y)=>s+(a.q[y]||0)*((o.px[y]??0)-(a.px[y]??0)),0); } }
+  const useD=S.pmonD&&P, val=useD?usd:ret, yrs=[...new Set(Object.keys(ret).map(k=>Math.floor(k/12)))].sort(); if(!yrs.length) return "";
+  const mx=Math.max(...Object.values(val).map(Math.abs))||1, M="JFMAMJJASOND", kf=v=>{ const a=Math.abs(v); return (v<0?"−":"")+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e4?(a/1e3).toFixed(0)+"k":a>=1e3?(a/1e3).toFixed(1)+"k":a.toFixed(0)); };
+  const cell=v=>v==null?`<i class="na"></i>`:`<i style="background:${v>=0?`rgba(43,217,154,${(.15+.75*Math.min(1,v/mx)).toFixed(2)})`:`rgba(255,92,114,${(.15+.75*Math.min(1,-v/mx)).toFixed(2)})`}" title="${useD?(v>=0?"+":"−")+fmt$(Math.abs(v),0):v.toFixed(1)+"%"}">${useD?(S.priv?"•":kf(v)):Math.abs(v)>=10?v.toFixed(0):v.toFixed(1)}</i>`;
+  const vals=Object.entries(val).sort((a,b)=>b[1]-a[1]), best=vals[0], worst=vals[vals.length-1], mn=k=>new Date(Math.floor(k/12),k%12,1).toLocaleDateString([], {month:"short",year:"numeric"}), f=v=>useD?sgn$(v):fmtP(v), tot=useD?Object.values(usd).reduce((s,v)=>s+v,0):null;
+  return `<div class="section-h"><h2>📅 Monthly returns</h2>${P?`<div class="pseg"><button data-pmond="0" aria-pressed="${!useD}">%</button><button data-pmond="1" aria-pressed="${!!useD}">$</button></div>`:""}</div>
+    <div class="card" style="background:var(--panel);gap:6px"><div class="pmon"><span></span>${[...M].map(c=>`<span>${c}</span>`).join("")}${yrs.map(y=>`<span>${String(y).slice(2)}</span>${[...Array(12).keys()].map(m=>cell(val[y*12+m])).join("")}`).join("")}</div>
+      <p class="hint" style="font-size:11.5px">${useD?"Dollars gained or lost each month from price moves (buys and sells not counted). ":""}Best month ${mn(+best[0])} <span class="tup">${f(best[1])}</span>, worst ${mn(+worst[0])} <span class="tdown">${f(worst[1])}</span>. Up in ${vals.filter(v=>v[1]>0).length} of ${vals.length} months.${useD?` Total ${sgn$(tot)}.`:""}</p></div>`;
 }
 const stdev=a=>{ if(a.length<2) return 0; const m=a.reduce((s,v)=>s+v,0)/a.length; return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1)); };
 // risk and return stats for the range, from daily moves
@@ -3281,57 +3398,61 @@ function vsHTML(pts,R){
 // range and index chips, shown under the hero and again above the heat map
 function plotChips(){ return `<div class="chipbar">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}</div>
     <div class="chipbar pbmbar"><span class="hint">Compare</span>${BMS.map(([x,n])=>`<button data-pbm="${x}" aria-pressed="${S.pbm===x}">${esc(n)}</button>`).join("")}<button data-pbm="" aria-pressed="${!S.pbm}">Off</button></div>
-    <div class="chipbar pbmbar"><span class="hint">Avg</span>${MAS.map(([n,c])=>`<button data-pma="${n}" aria-pressed="${S.pmas.includes(n)}" style="${S.pmas.includes(n)?`box-shadow:inset 0 -3px 0 ${c}`:""}">${n}d</button>`).join("")}</div>
-    <div class="chipbar pbmbar"><button data-pcmp>🔎 Analyze this chart</button></div>`; }
-const reportBtnsHTML=()=>`<div class="card prepbtns"><h4>📄 Reports</h4><div>${Object.entries(PREP).map(([k,v])=>`<button class="ghost" data-preport="${k}">${v[0]}</button>`).join("")}</div><p class="hint" style="font-size:11.5px;margin:0">Summary, best and worst stocks, who made you money, your trades and the market events of the period.</p></div>`;
+    <div class="chipbar pbmbar"><span class="hint">Avg</span>${MAS.map(([n,c])=>`<button data-pma="${n}" aria-pressed="${S.pmas.includes(n)}" style="${S.pmas.includes(n)?`box-shadow:inset 0 -3px 0 ${c}`:""}">${n}d</button>`).join("")}<button data-pcross aria-pressed="${!!S.pcross}" title="Golden and death crosses">⭐💀 Crosses</button></div>
+    <div class="chipbar pbmbar"><button class="pcta" data-pcmp>🔎 Analyze this chart</button></div>`; }
+const PREPI={w:["🗓️","last 7 days"],m:["📆","last month"],"6m":["🌗","last 6 months"],"1y":["🎆","last 12 months"]};
+const reportBtnsHTML=()=>`<div class="card prepbtns"><h4>📄 Reports</h4><div class="prepgrid">${Object.entries(PREP).map(([k,v])=>`<button data-preport="${k}"><span>${PREPI[k][0]}</span><b>${v[0]}</b><small>${PREPI[k][1]}</small></button>`).join("")}</div><p class="hint" style="font-size:11.5px;margin:0">A grade, awards, your best and worst stocks, your trades and the market events of the period. Save as PDF or share.</p></div>`;
 /* ---------- ideas to consider: simple rules over the holdings, worked out on this device ---------- */
 const LEVERAGED=new Set(["TQQQ","SQQQ","SOXL","SOXS","UPRO","SPXL","SPXU","TNA","TZA","FAS","LABU","TECL","FNGU","NVDL","NVDU","TSLL","TSLT","MSTU","MSTX","CONL","QLD","SSO","USD","ROM","BITX","ETHU"]);
 const INDEXF=new Set(["SPY","VOO","IVV","QQQ","QQQM","VTI","ONEQ","DIA","RSP","VUG","SCHG","VGT","XLK","TQQQ","QLD","UPRO","SPXL","SSO","VFIAX","VTSAX","VFTAX","VIGIX","VIGAX","VIIIX","VINIX","FXAIX","FSKAX","FZROX","SWPPX","SWTSX","FSPGX"]);
 const MEGA=["NVDA","MSFT","AAPL","AMZN","GOOG","GOOGL","META","AVGO","TSLA"];
 function ideasPlotHTML(P){
   const vals=P.syms.map(x=>({x,v:(pxNow(x)||0)*S.plot[x]})).sort((a,b)=>b.v-a.v), tot=vals.reduce((s,o)=>s+o.v,0); if(!tot) return "";
-  const w=x=>(vals.find(o=>o.x===x)||{v:0}).v/tot*100, list=a=>a.slice(0,5).map(esc).join(", ")+(a.length>5?` and ${a.length-5} more`:""), out=[];
-  const top=vals[0]; if(top.v/tot>.25) out.push(["⚖️",`${esc(top.x)} is ${(top.v/tot*100).toFixed(0)}% of your money`,"One stock this big drives most of your ups and downs. Many investors cap a single stock at 10–20% and point new money elsewhere."]);
+  const w=x=>(vals.find(o=>o.x===x)||{v:0}).v/tot*100, list=a=>a.slice(0,5).map(esc).join(", ")+(a.length>5?` and ${a.length-5} more`:""), L=a=>a.map(x=>({x,w:w(x)})), out=[];
+  const top=vals[0]; if(top.v/tot>.25) out.push(["conc","⚖️",`${esc(top.x)} is ${(top.v/tot*100).toFixed(0)}% of your money`,"One stock this big drives most of your ups and downs. Many investors cap a single stock at 10–20% and point new money elsewhere."]);
   const lev=vals.filter(o=>LEVERAGED.has(o.x)), levW=lev.reduce((s,o)=>s+o.v,0)/tot*100;
-  if(levW>=5) out.push(["⚠️",`Leveraged funds are ${levW.toFixed(0)}% (${list(lev.map(o=>o.x))})`,"They reset every day, so in choppy markets they can lose even when the index ends flat. They're usually meant for short holds."]);
+  if(levW>=5) out.push(["lev","⚠️",`Leveraged funds are ${levW.toFixed(0)}% (${list(lev.map(o=>o.x))})`,"They reset every day, so in choppy markets they can lose even when the index ends flat. They're usually meant for short holds.",L(lev.map(o=>o.x))]);
   const idx=vals.filter(o=>INDEXF.has(o.x)), ov=MEGA.filter(x=>w(x)>=2);
-  if(idx.length&&ov.length) out.push(["🔁",`Your index funds already own ${list(ov)}`,`${list(idx.map(o=>o.x))} hold the same mega-caps, so you own more of them than the holdings list suggests.`]);
+  if(idx.length&&ov.length) out.push(["overlap","🔁",`Your index funds already own ${list(ov)}`,`${list(idx.map(o=>o.x))} hold the same mega-caps, so you own more of them than the holdings list suggests.`,L(ov)]);
   const hot=[], cold=[]; P.syms.forEach(x=>{ const A=analytics(x); if(!A) return; const c=S.daily[x].c.slice(-252).map(b=>b[1]), hi=Math.max(...c);
     if(A.R>=75||(A.s200&&A.p/A.s200>1.35)) hot.push(x); else if(A.s200&&A.p<A.s200&&A.p/hi<.75) cold.push(x); });
-  if(hot.length) out.push(["🔥",`Running hot: ${list(hot)}`,"Far above their 200-day average or RSI over 75. Big runs often pause; some investors trim winners back to their target size."]);
-  if(cold.length) out.push(["🧊",`Down hard: ${list(cold)}`,"More than 25% under their 1-year high and below the 200-day average. Worth re-checking why you own each one."]);
+  if(hot.length) out.push(["hot","🔥",`Running hot: ${list(hot)}`,"Far above their 200-day average or RSI over 75. Big runs often pause; some investors trim winners back to their target size.",L(hot)]);
+  if(cold.length) out.push(["cold","🧊",`Down hard: ${list(cold)}`,"More than 25% under their 1-year high and below the 200-day average. Worth re-checking why you own each one.",L(cold)]);
   const days=P.days, z=days[days.length-1], t=agoDate("y1"); let a=null; for(const o of days){ if(o.t>t+864e5/2) break; a=o; }
-  if(a&&a!==z){ const me=(z.g/a.g-1)*100, s0=bmAt("SPY",a.t), s1=price("SPY")??bmAt("SPY",z.t); if(s0&&s1){ const sp=(s1/s0-1)*100; if(me<sp-5) out.push(["🐢",`Trailing the S&P 500 by ${(sp-me).toFixed(0)} pts over the past year`,`You're ${fmtP(me)} against the S&P's ${fmtP(sp)}. A low-cost index fund as the core, with stock picks around it, is a common fix.`]); } }
+  if(a&&a!==z){ const me=(z.g/a.g-1)*100, s0=bmAt("SPY",a.t), s1=price("SPY")??bmAt("SPY",z.t); if(s0&&s1){ const sp=(s1/s0-1)*100; if(me<sp-5) out.push(["lag","🐢",`Trailing the S&P 500 by ${(sp-me).toFixed(0)} pts over the past year`,`You're ${fmtP(me)} against the S&P's ${fmtP(sp)}. A low-cost index fund as the core, with stock picks around it, is a common fix.`]); } }
   const map=(S.earnings&&S.earnings.map)||{}, soon=etISO(new Date(Date.now()+8*864e5)), er=P.syms.filter(x=>map[x]&&map[x].date>=today()&&map[x].date<=soon).sort((p,q)=>map[p].date.localeCompare(map[q].date));
-  if(er.length) out.push(["📣",`Earnings this week: ${er.slice(0,6).map(x=>`${esc(x)} ${pdS(parseET(map[x].date))}`).join(", ")}`,"Expect bigger moves around each report."]);
-  const tiny=vals.filter(o=>o.v/tot<.005); if(tiny.length>=4) out.push(["🧹",`${tiny.length} tiny positions under 0.5% each`,`${list(tiny.map(o=>o.x))} barely move your total. Combining them can make the portfolio easier to follow.`]);
-  if(!out.length) out.push(["✅","Nothing stands out","No outsized position, leveraged funds, overheated or broken charts right now."]);
+  if(er.length) out.push(["earn","📣",`Earnings this week: ${er.slice(0,6).map(x=>`${esc(x)} ${pdS(parseET(map[x].date))}`).join(", ")}`,"Expect bigger moves around each report.",L(er)]);
+  const tiny=vals.filter(o=>o.v/tot<.005); if(tiny.length>=4) out.push(["tiny","🧹",`${tiny.length} tiny positions under 0.5% each`,`${list(tiny.map(o=>o.x))} barely move your total. Combining them can make the portfolio easier to follow.`,L(tiny.map(o=>o.x))]);
+  const vis=out.filter(o=>!S.pHideIdeas.includes(o[0])), nh=out.length-vis.length;
+  if(!vis.length) vis.push(["","✅",nh?"Nothing else stands out":"Nothing stands out","No outsized position, leveraged funds, overheated or broken charts right now."]);
   return `<div class="section-h"><h2>🧭 Ideas to consider</h2><small>rules of thumb, not advice</small></div>
-    <div class="card" style="background:var(--panel);gap:10px">${out.map(([i,t,d])=>`<div class="pidea"><span>${i}</span><div><b>${t}</b><p>${d}</p></div></div>`).join("")}</div>`;
+    <div class="card" style="background:var(--panel);gap:10px">${vis.map(([id,i,t,d,l])=>`<div class="pidea"><span>${i}</span><div><b>${t}</b><p>${d}</p>
+      ${l&&l.length>1||id?`<div class="pidea-act">${l&&l.length>1?`<details class="pmore" data-pid="${id}"${S.pOpen[id]?" open":""}><summary>Show all ${l.length}</summary><div class="pchips">${l.slice().sort((p,q)=>q.w-p.w).map(o=>`<button data-psym="${esc(o.x)}">${esc(o.x)} <small>${o.w<0.1?o.w.toFixed(2):o.w.toFixed(1)}%</small></button>`).join("")}</div></details>`:""}${id?`<button class="plink" data-phide="${id}">Hide this tip</button>`:""}</div>`:""}</div></div>`).join("")}
+      ${nh?`<button class="plink" data-punhide style="align-self:flex-start">Show ${nh} hidden tip${nh>1?"s":""}</button>`:""}</div>`;
 }
 /* ---------- Ask Claude: opens claude.ai with the numbers filled in; nothing is sent until you press send there ---------- */
 function aiContext(P,R,pts){
-  const z=R[R.length-1], a=R[0], rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"").replace("Max","full history"), me=(pts[pts.length-1][1]/pts[0][1]-1)*100, hideV=S.priv;
+  const z=R[R.length-1], a=R[0], rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"").replace("Max","full history"), me=(pts[pts.length-1][1]/pts[0][1]-1)*100, hideV=true; // what goes to Claude never has share counts or dollar amounts
   const vals=P.syms.map(x=>({x,v:(pxNow(x)||0)*S.plot[x]})).sort((p,q)=>q.v-p.v), tot=vals.reduce((s,o)=>s+o.v,0), cs={}; contribs(P,R).forEach(o=>{ cs[o.x]=o; });
   const yr=x=>{ const c=S.daily[x]&&S.daily[x].c; if(!c||c.length<200) return null; const t=agoDate("y1"); let p=null; for(const b of c){ if(b[0]>t) break; p=b[1]; } return p&&pxNow(x)?(pxNow(x)/p-1)*100:null; };
   const L=[`My stock portfolio as of ${new Date().toLocaleDateString([], {month:"long",day:"numeric",year:"numeric"})}${hideV?"":`, worth about ${fmt$(tot,0)}`}.`,
     `Over ${rng}: my portfolio ${fmtP(me)}; `+BMS.map(([x,n])=>{ const s0=bmAt(x,a.t), s1=z.live?price(x)??bmAt(x,z.t):bmAt(x,z.t); return `${n} ${s0&&s1?fmtP((s1/s0-1)*100):"n/a"}`; }).join(", ")+".",
     "", "Holdings (weight, return over the range, 1-year return, RSI, distance from 200-day average):"];
   vals.forEach(o=>{ const A=analytics(o.x), c=cs[o.x]; L.push(`- ${o.x}: ${hideV?"":fmtQ(S.plot[o.x])+" sh, "}${tot?(o.v/tot*100).toFixed(1):0}%, range ${c&&c.r!=null?fmtP(c.r):"n/a"}, 1Y ${fmtP(yr(o.x))}${A?`, RSI ${A.R.toFixed(0)}${A.s200?`, ${fmtP((A.p/A.s200-1)*100)} vs 200d`:""}`:""}`); });
-  if(S.ptx.length){ L.push("","Recent buys and sells:"); S.ptx.slice(-12).forEach(t=>L.push(`- ${t.d} ${t.q>0?"bought":"sold"} ${fmtQ(Math.abs(t.q))} ${t.s}`)); }
+  if(S.ptx.length){ L.push("","Recent buys and sells:"); S.ptx.slice(-12).forEach(t=>L.push(`- ${t.d} ${t.q>0?"bought":"sold"} ${t.s}`)); }
   const map=(S.earnings&&S.earnings.map)||{}, to=etISO(new Date(Date.now()+31*864e5)), ev=marketEvents(today(),to).filter(e=>e.kind==="fed"||e.kind==="macro").slice(0,8), er=P.syms.filter(x=>map[x]&&map[x].date>=today()&&map[x].date<=to);
   if(ev.length||er.length){ L.push("","Coming up in the next month:"); ev.forEach(e=>L.push(`- ${e.date} ${e.title}`)); if(er.length) L.push(`- Earnings: ${er.map(x=>`${x} ${map[x].date}`).join(", ")}`); }
   return L.join("\n");
 }
 function aiHTML(P,R,pts){
   if(S.pSym) return ""; const ctx=aiContext(P,R,pts), rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"");
-  const asks=[["🔍 Analyze my portfolio","Analyze this portfolio: diversification, concentration, sector and theme exposure, overlap between funds and stocks, what has driven performance, and the biggest risks. Be specific to these holdings and keep it practical."],
-    ["⚖️ Rebalancing ideas","Suggest concrete rebalancing ideas for this portfolio with example target weights, what to trim or add and why, and the tradeoffs (taxes, risk, conviction). I know this isn't personal financial advice."],
-    ["📰 Explain this period",`Explain what drove this portfolio over the ${rng} period: which holdings and which market events (Fed, inflation, earnings, sector rotation) mattered most, and how it compares with the indexes.`],
-    ["🔭 What to watch next","What should I watch over the next month for these holdings: earnings dates, Fed and economic releases, key price levels, and the scenarios that would hurt or help the most?"]];
+  const asks=[["🔍","Analyze my portfolio","diversification, drivers, risks","Analyze this portfolio: diversification, concentration, sector and theme exposure, overlap between funds and stocks, what has driven performance, and the biggest risks. Be specific to these holdings and keep it practical."],
+    ["⚖️","Rebalancing ideas","what to trim or add","Suggest concrete rebalancing ideas for this portfolio with example target weights, what to trim or add and why, and the tradeoffs (taxes, risk, conviction). I know this isn't personal financial advice."],
+    ["📰","Explain this period",`what drove the ${rng}`,`Explain what drove this portfolio over the ${rng} period: which holdings and which market events (Fed, inflation, earnings, sector rotation) mattered most, and how it compares with the indexes.`],
+    ["🔭","What to watch next","earnings, Fed, key levels","What should I watch over the next month for these holdings: earnings dates, Fed and economic releases, key price levels, and the scenarios that would hurt or help the most?"]];
   return `<div class="section-h"><h2>🤖 Ask Claude</h2><small>AI analysis with your numbers filled in</small></div>
-    <div class="card pai">${asks.map(([l,q])=>`<a class="ghost" href="${esc(claudeURL(ctx+"\n\n"+q))}" target="_blank" rel="noopener">${l}</a>`).join("")}
-      <p class="hint" style="font-size:11.5px;margin:0">Opens Claude in a new tab with your holdings, weights and returns in the message${S.priv?" (share counts and dollar amounts left out while Hide $ is on)":""}. Nothing is sent until you press send there.</p></div>`;
+    <div class="card pai">${asks.map(([i,l,sub,q])=>`<a class="paibtn" href="${esc(claudeURL(ctx+"\n\n"+q))}" target="_blank" rel="noopener"><span>${i}</span><b>${l}</b><small>${esc(sub)}</small></a>`).join("")}
+      <p class="hint" style="font-size:11.5px;margin:0">🔒 Opens Claude with your tickers, weights and % returns. Share counts and dollar amounts are never included. Nothing is sent until you press send there.</p></div>`;
 }
 /* ---------- reports: week, month, 6 months, year ---------- */
 const PREP={w:["Weekly","m0",7],m:["Monthly","m1"],"6m":["6-month","m6"],"1y":["Yearly","y1"]};
@@ -3343,58 +3464,84 @@ function plotReportData(k){
   const bms=BMS.map(([x,n])=>{ const s0=bmAt(x,a.t), s1=z.live?price(x)??bmAt(x,z.t):bmAt(x,z.t); return {x,n,r:s0&&s1?(s1/s0-1)*100:null}; });
   const cs=contribs(P,R).filter(o=>o.r!=null&&(R[0].q[o.x]>0||z.q[o.x]>0)), byR=cs.slice().sort((p,q)=>q.r-p.r), byD=cs.slice().sort((p,q)=>q.d-p.d);
   const ch=R.slice(1).map((o,i)=>({t:o.t,day:o.day,r:(o.g/R[i].g-1)*100})), best=ch.length?ch.reduce((p,q)=>q.r>p.r?q:p):null, worst=ch.length?ch.reduce((p,q)=>q.r<p.r?q:p):null;
-  const pts=proSeries(R), hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0);
+  const pts=R.map(o=>[o.t,o.v]), hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0);
   const tx=S.ptx.filter(x=>x.d>a.day&&x.d<=z.day);
   const events=marketEvents(etISO(new Date(a.t+864e5)),z.day).filter(e=>e.kind==="fed"||e.kind==="macro"||e.kind==="earn"||/Quad/.test(e.title)).map(e=>({...e,m:spyMoveOn(e.date)}));
   const sc=S.daily.SPY&&S.daily.SPY.c, big=[]; if(sc) for(let i=1;i<sc.length;i++){ const d=etISO(new Date(sc[i][0])); if(d>a.day&&d<=z.day) big.push({day:d,r:(sc[i][1]/sc[i-1][1]-1)*100}); }
   big.sort((p,q)=>Math.abs(q.r)-Math.abs(p.r));
   const sp=bms[0].r, beat=bms.filter(b=>b.r!=null&&ret>=b.r).length, nb=bms.filter(b=>b.r!=null).length;
-  return {k,name:PREP[k][0],a,z,ret,gain,flow,bms,byR,byD,best,worst,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb};
+  let st=0, streak=0; ch.forEach(c=>{ st=c.r>0?st+1:0; streak=Math.max(streak,st); });
+  const wild=cs.map(o=>{ const r=[]; for(let i=1;i<R.length;i++) if(R[i-1].px[o.x]) r.push(R[i].px[o.x]/R[i-1].px[o.x]-1); return {x:o.x,v:stdev(r)*Math.sqrt(252)*100}; }).sort((p,q)=>q.v-p.v)[0]||null;
+  const bsym=S.pbm||"SPY", b0=bmAt(bsym,a.t), spark=R.map(o=>[o.t,o.g/a.g*100]), bspark=b0?R.map(o=>{ const b=o.live?(price(bsym)??bmAt(bsym,o.t)):bmAt(bsym,o.t); return [o.t,b?b/b0*100:100]; }):null;
+  return {k,name:PREP[k][0],a,z,ret,gain,flow,bms,byR,byD,best,worst,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb,green:ch.filter(c=>c.r>0).length,ndays:ch.length,streak,wild,spark,bspark,bname:bmName(bsym)};
 }
-function reportSummary(D){
-  const f=(v,d=0)=>S.priv?"":` (${(v>=0?"+":"−")+fmt$(Math.abs(v),d)})`, s=[];
+// hide: leave out dollar amounts and share counts (always on for anything sent to Claude)
+function reportSummary(D,hide){
+  const f=(v,d=0)=>hide?"":` (${(v>=0?"+":"−")+fmt$(Math.abs(v),d)})`, s=[];
   s.push(`Your portfolio ${D.ret>=0?"gained":"lost"} ${Math.abs(D.ret).toFixed(2)}%${f(D.gain)} from ${pdL(D.a.t)} to ${pdL(D.z.t)}${D.sp!=null?`, ${D.ret>=D.sp?"ahead of":"behind"} the S&P 500 (${fmtP(D.sp)})`:""}${D.nb?` and beating ${D.beat} of the ${D.nb} major indexes`:""}.`);
   if(D.byD.length){ const t=D.byD[0], b=D.byD[D.byD.length-1]; s.push(t.d>0?`${t.x} did the most for you${f(t.d)}${b.d<0?`, while ${b.x} hurt the most${f(b.d)}`:""}.`:`Every holding lost ground; ${b.x} hurt the most${f(b.d)} and ${t.x} held up best${f(t.d)}.`); }
   if(D.byR.length>1) s.push(`The fastest horse was ${D.byR[0].x} (${fmtP(D.byR[0].r)}); the slowest was ${D.byR[D.byR.length-1].x} (${fmtP(D.byR[D.byR.length-1].r)}).`);
   if(D.best&&D.worst&&D.best!==D.worst) s.push(`Best day ${pdS(D.best.t)} (${fmtP(D.best.r)}), worst day ${pdS(D.worst.t)} (${fmtP(D.worst.r)}).`);
   const fed=D.events.filter(e=>e.kind==="fed"&&!e.est); if(fed.length) s.push(`The Fed met ${fed.length===1?"once":fed.length+" times"} in this period${fed[0].m!=null?`; the S&P moved ${fmtP(fed[fed.length-1].m)} on the last decision day`:""}.`);
-  if(D.tx.length) s.push(`You made ${D.tx.length} trade${D.tx.length>1?"s":""}${D.flow&&!S.priv?`, adding a net ${(D.flow>=0?"":"−")+fmt$(Math.abs(D.flow),0)}`:""}.`);
+  if(D.tx.length) s.push(`You made ${D.tx.length} trade${D.tx.length>1?"s":""}${D.flow&&!hide?`, adding a net ${(D.flow>=0?"":"−")+fmt$(Math.abs(D.flow),0)}`:""}.`);
   return s.join(" ");
 }
-function reportText(D){
-  const L=[`📄 ${D.name} portfolio report · ${pdL(D.a.t)} – ${pdL(D.z.t)}`,"",reportSummary(D),"","vs the indexes: "+D.bms.map(b=>`${b.n} ${fmtP(b.r)}`).join(" · ")];
+function reportText(D,hide){
+  const G=reportGrade(D), L=[`📄 ${D.name} portfolio report · ${pdL(D.a.t)} – ${pdL(D.z.t)}`,`${G.mood} · Grade ${G.g}`,"",reportSummary(D,hide),"","vs the indexes: "+D.bms.map(b=>`${b.n} ${fmtP(b.r)}`).join(" · ")];
   if(D.byR.length) L.push("","Best: "+D.byR.slice(0,3).map(o=>`${o.x} ${fmtP(o.r)}`).join(", "),"Worst: "+D.byR.slice(-3).reverse().map(o=>`${o.x} ${fmtP(o.r)}`).join(", "));
-  if(D.tx.length) L.push("","Trades: "+D.tx.map(t=>`${t.d} ${t.q>0?"bought":"sold"} ${fmtQ(Math.abs(t.q))} ${t.s}`).join("; "));
+  L.push(`Green days: ${D.green} of ${D.ndays}, longest winning streak ${D.streak} day${D.streak===1?"":"s"}.`);
+  if(D.tx.length) L.push("","Trades: "+D.tx.map(t=>`${t.d} ${t.q>0?"bought":"sold"} ${hide?"":fmtQ(Math.abs(t.q))+" "}${t.s}`).join("; "));
   if(D.events.length) L.push("","Market events:",...D.events.slice(-14).map(e=>`- ${e.date} ${e.title}${e.m!=null?` (S&P ${fmtP(e.m)})`:""}`));
   return L.join("\n");
+}
+// a school grade from how you did against the S&P 500, and a weather mood from the return
+function reportGrade(D){
+  const d=D.sp!=null?D.ret-D.sp:0, g=d>=5?"A+":d>=2?"A":d>=0?"B+":d>=-2?"B":d>=-5?"C":"D", r=D.ret;
+  const mood=r>=5?"🚀 Rocket "+D.name.toLowerCase().replace("ly","").replace("weeke","week"):r>=1?"☀️ Sunny stretch":r>=-1?"⛅ Sideways shuffle":r>=-5?"🌧️ Rainy patch":"⛈️ Stormy ride";
+  return {g,mood,cls:d>=0?"up":"dn"};
+}
+function sparkSVG(a,b){
+  const W=340,H=84,all=a.map(q=>q[1]).concat(b?b.map(q=>q[1]):[]), lo=Math.min(...all), hi=Math.max(...all), t0=a[0][0], t1=a[a.length-1][0];
+  const X=t=>2+(t-t0)/(t1-t0||1)*(W-4), Y=v=>6+(1-(v-lo)/(hi-lo||1))*(H-12), P=s=>s.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" "), up=a[a.length-1][1]>=a[0][1], c=up?"#2BD99A":"#FF5C72";
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Growth over the period"><defs><linearGradient id="spkg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".35"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><line x1="0" x2="${W}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><path d="${P(a)} L${X(t1)} ${H} L${X(t0)} ${H}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="1.2" stroke-dasharray="4 3"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="2.2"/></svg>`;
 }
 function openPlotReport(k){
   S.open="__preport"; const D=plotReportData(k), si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
   const head=`<div class="d-head"><div><h3>📄 ${D?D.name:"Portfolio"} report</h3><p>${D?`${pdL(D.a.t)} – ${pdL(D.z.t)}`:"Not enough price history yet"}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
-    <div class="chipbar">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${v[0]}</button>`).join("")}</div>`;
+    <div class="chipbar prep-actions">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${PREPI[key][0]} ${v[0]}</button>`).join("")}</div>`;
   if(!D){ si.innerHTML=`<div id="prep">${head}<p class="hint">Reports need price history. Add the free Twelve Data key in Settings and give it a few minutes.</p></div>`; wireReport(null); showSheet(); return; }
-  const mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
-  const mv=(o,d)=>`<div class="kv" data-psym="${esc(o.x)}"><span>${esc(o.x)}</span><b class="num ${tcls(d?o.d:o.r)}">${d?sgn$(o.d):fmtP(o.r)}</b></div>`;
-  const evIcon={fed:"🏛️",macro:"📊",earn:"📣",options:"🎯"};
+  const G=reportGrade(D), mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
+  const mv=(o,d)=>`<div class="kv"><span>${esc(o.x)}</span><b class="num ${tcls(d?o.d:o.r)}">${d?sgn$(o.d):fmtP(o.r)}</b></div>`;
+  const evIcon={fed:"🏛️",macro:"📊",earn:"📣",options:"🎯"}, mvp=D.byD.length&&D.byD[0].d>0?D.byD[0]:null, fast=D.byR[0], slow=D.byR.length>1?D.byR[D.byR.length-1]:null;
+  const award=(i,t,x,v)=>`<div class="paward"><span>${i}</span><small>${t}</small><b>${esc(x)}</b><em class="num">${v}</em></div>`;
   si.innerHTML=`<div id="prep">${head}
-    <div class="card prep-hero"><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div>
-      ${li("Value at start",money(fmt$(D.a.v,0)))}${li("Value now",money(fmt$(D.z.v,0)))}${li("High",money(fmt$(D.hi[1],0))+` <small>${pdS(D.hi[0])}</small>`)}${li("Low",money(fmt$(D.lo[1],0))+` <small>${pdS(D.lo[0])}</small>`)}</div>
-    <div class="card pinsight"><h4>💡 Summary</h4><p style="margin:0;font-size:13.5px;line-height:1.5;color:#C9D3DF">${esc(reportSummary(D)).replace(/\(([+−][^)]*)\)/g,(m)=>S.priv?"":m)}</p></div>
+    <div class="card prep-hero ${G.cls}"><div class="prep-mood">${G.mood}</div>
+      <div class="prep-top"><div><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div></div><div class="prep-grade ${G.cls}" title="Grade vs the S&P 500"><b>${G.g}</b><small>vs S&amp;P</small></div></div>
+      ${sparkSVG(D.spark,D.bspark)}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
+      <div class="prep2">${li("Start",money(fmt$(D.a.v,0)))}${li("Now",money(fmt$(D.z.v,0)))}${li("High",money(fmt$(D.hi[1],0))+` <small>${pdS(D.hi[0])}</small>`)}${li("Low",money(fmt$(D.lo[1],0))+` <small>${pdS(D.lo[0])}</small>`)}</div></div>
+    <div class="card pinsight"><h4>💡 The story</h4><p style="margin:0;font-size:13.5px;line-height:1.55;color:#C9D3DF">${esc(reportSummary(D,S.priv))}</p></div>
+    <div class="pawards">${mvp?award("🏆","MVP",mvp.x,sgn$(mvp.d)):""}${fast?award("🚀","Fastest horse",fast.x,fmtP(fast.r)):""}${slow?award("🐌","Slowpoke",slow.x,fmtP(slow.r)):""}${D.wild?award("🎢","Wildest ride",D.wild.x,D.wild.v.toFixed(0)+"% vol"):""}${award("🔥","Win streak",D.streak+" day"+(D.streak===1?"":"s"),"in a row")}${award("☀️","Green days",D.green+" of "+D.ndays,Math.round(D.green/Math.max(1,D.ndays)*100)+"%")}</div>
     <div class="card" style="gap:6px"><h4>🏁 vs the indexes</h4>${bar("You",D.ret,1)}${D.bms.filter(b=>b.r!=null).map(b=>bar(esc(b.n),b.r)).join("")}</div>
     ${D.byR.length?`<div class="card prep2"><div><h4>🚀 Best</h4>${D.byR.slice(0,3).map(o=>mv(o)).join("")}</div><div><h4>🐌 Worst</h4>${D.byR.slice(-3).reverse().map(o=>mv(o)).join("")}</div></div>
     <div class="card prep2"><div><h4>💰 Made you money</h4>${D.byD.slice(0,3).filter(o=>o.d>0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing gained</p>`}</div><div><h4>💸 Cost you</h4>${D.byD.slice(-3).reverse().filter(o=>o.d<0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing lost</p>`}</div></div>`:""}
-    ${D.best?`<div class="card">${li("Best day · "+pdS(D.best.t),fmtP(D.best.r),"tup")}${li("Worst day · "+pdS(D.worst.t),fmtP(D.worst.r),"tdown")}</div>`:""}
+    ${D.best?`<div class="card">${li("😄 Best day · "+pdS(D.best.t),fmtP(D.best.r),"tup")}${li("😬 Worst day · "+pdS(D.worst.t),fmtP(D.worst.r),"tdown")}</div>`:""}
     ${D.tx.length?`<div class="card"><h4>🧾 Your trades</h4>${D.tx.map(t=>li(`${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} ${esc(t.s)}`,money(fmtQ(Math.abs(t.q)))+" sh",t.q>0?"tup":"tdown")).join("")}</div>`:""}
     ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4>${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
     ${D.big.length?`<div class="card"><h4>⚡ Biggest S&amp;P 500 days</h4>${D.big.map(b=>li(pdL(parseET(b.day)),fmtP(b.r),tcls(b.r))).join("")}</div>`:""}
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<a class="primary" href="${esc(claudeURL(reportText(D)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
-    <p class="hint" style="font-size:11px">Returns ignore money added or taken out with buys and sells. Event dates marked estimated follow the usual schedule. Not investment advice.</p></div>`;
+    <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(reportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
+    <p class="hint" style="font-size:11px">Returns ignore money added or taken out with buys and sells. Ask Claude gets percentages only, never dollar amounts or share counts. Event dates marked estimated follow the usual schedule. Not investment advice.</p></div>`;
   wireReport(D); showSheet();
+}
+// print just the open sheet; the browser's print dialog has "Save as PDF"
+function printSheet(title){
+  const old=document.title, done=()=>{ document.body.classList.remove("printing"); document.title=old; window.removeEventListener("afterprint",done); };
+  document.title=title; document.body.classList.add("printing"); window.addEventListener("afterprint",done); setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
 }
 function wireReport(D){
   $("prep").addEventListener("click",e=>{ const r=e.target.closest("[data-preport]"); if(r){ openPlotReport(r.dataset.preport); return; }
-    if(D&&e.target.closest("[data-prepcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(reportText(D)).then(()=>toast("Report copied"),()=>toast("Couldn't copy")); return; }
-    if(D&&e.target.closest("[data-prepshare]")){ navigator.share({title:`${D.name} portfolio report`,text:reportText(D)}).catch(()=>{}); return; } });
+    if(D&&e.target.closest("[data-prepcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(reportText(D,S.priv)).then(()=>toast("Report copied"),()=>toast("Couldn't copy")); return; }
+    if(D&&e.target.closest("[data-prepshare]")){ navigator.share({title:`${D.name} portfolio report`,text:reportText(D,S.priv)}).catch(()=>{}); return; }
+    if(D&&e.target.closest("[data-preppdf]")){ printSheet(`GoldRabbit ${D.name} report ${ymdLocal(D.z.t)}`); return; } });
 }
 /* ---------- analyze this chart: you vs the chosen index over the chosen range, in plain English ---------- */
 function plotCompareData(){
@@ -3443,18 +3590,34 @@ function openPlotCompare(){
 let proKey="", proHTML="";
 function renderPlotPro(){
   const el=$("plotPro"), P=S.plotP; if(!el||!P) return; const R=P.rng||[];
-  if(R.length<3){ setHTML(el,""); return; }
+  if(R.length<2){ setHTML(el,""); return; }
   const x=S.pSym&&P.have.includes(S.pSym)?S.pSym:null, z=R[R.length-1];
-  const key=[S.pVer||0,S.ptx.length,S.prange,S.pbm,x,R.length,R[0].t,z.live?Math.floor(Date.now()/60000):z.t,P.have.length,S.priv,S.pRaceAll,BMS.map(b=>S.daily[b[0]]?S.daily[b[0]].c.length:0).join(",")].join("|");
+  const key=[S.pVer||0,S.pheatN,S.pmonD,S.pHideIdeas.join(),S.raceMute,S.ptx.length,S.prange,S.pbm,x,R.length,R[0].t,z.live?Math.floor(Date.now()/60000):z.t,P.have.length,S.priv,S.pRaceAll,BMS.map(b=>S.daily[b[0]]?S.daily[b[0]].c.length:0).join(",")].join("|");
   if(key!==proKey){ proKey=key;
     const pts=proSeries(R,x), all=proSeries(P.days,x), risk=riskHTML(pts,R,P);
-    proHTML=reportBtnsHTML()+takeawaysHTML(P,R,pts,risk)+(x?"":ideasPlotHTML(P,R,pts))+aiHTML(P,R,pts,risk)+vsHTML(pts,R)+agoHTML(P.days,x)+(x?"":raceHTML(P,R)+contribHTML(P,R)+heatHTML(P,R))+ddHTML(pts)+monthsHTML(all)+risk.html; }
+    proHTML=reportBtnsHTML()+takeawaysHTML(P,R,pts,risk)+(x?"":ideasPlotHTML(P,R,pts))+aiHTML(P,R,pts,risk)+vsHTML(pts,R)+agoHTML(P.days,x)+(x?"":raceHTML(P,R)+contribHTML(P,R)+heatHTML(P,R))+ddHTML(pts)+monthsHTML(all,P,x)+risk.html; }
   setHTML(el,proHTML);
 }
 // replay: sweep the race lines in from left to right
+// clip-clop gallop for the length of the race, then a whinny at the finish (synthesized, no files)
+function horseSound(dur){
+  if(S.raceMute) return; try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume();
+    const t0=actx.currentTime+.05, len=Math.floor(actx.sampleRate*.05), buf=actx.createBuffer(1,len,actx.sampleRate), d=buf.getChannelData(0); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,6);
+    for(let c=0;c*.42<dur-.3;c++) [0,.09,.2].forEach((o,j)=>{ const s=actx.createBufferSource(), f=actx.createBiquadFilter(), g=actx.createGain(); s.buffer=buf; f.type="bandpass"; f.frequency.value=j===2?650:1100; f.Q.value=2; g.gain.value=j===2?.9:.55; s.connect(f).connect(g).connect(actx.destination); s.start(t0+c*.42+o); });
+    const tn=t0+dur, o=actx.createOscillator(), lfo=actx.createOscillator(), lg=actx.createGain(), f=actx.createBiquadFilter(), g=actx.createGain();
+    o.type="sawtooth"; o.frequency.setValueAtTime(900,tn); o.frequency.linearRampToValueAtTime(1250,tn+.15); o.frequency.exponentialRampToValueAtTime(380,tn+1);
+    lfo.frequency.value=13; lg.gain.value=70; lfo.connect(lg).connect(o.frequency); f.type="bandpass"; f.frequency.value=1500; f.Q.value=1.1;
+    g.gain.setValueAtTime(.0001,tn); g.gain.exponentialRampToValueAtTime(.3,tn+.05); g.gain.exponentialRampToValueAtTime(.0001,tn+1.05);
+    o.connect(f).connect(g).connect(actx.destination); o.start(tn); lfo.start(tn); o.stop(tn+1.1); lfo.stop(tn+1.1);
+  }catch(e){}
+}
 function replayRace(id="race"){
-  const r=$(id+"Rect"), labs=$(id+"Labs"); if(!r) return; const W=+r.getAttribute("width"), t0=performance.now(), dur=3200; S.pRacing=1; if(labs) labs.style.opacity=0;
-  const step=now=>{ const k=Math.min(1,(now-t0)/dur); r.setAttribute("width",(W*k).toFixed(1)); S.pBusy=Date.now(); if(k<1) requestAnimationFrame(step); else { S.pRacing=0; if(labs){ labs.style.transition="opacity .4s"; labs.style.opacity=1; } } };
+  const r=$(id+"Rect"), labs=$(id+"Labs"), hg=$(id+"Horses"); if(!r) return; const W=+r.getAttribute("width"), t0=performance.now(), dur=3600; S.pRacing=1; if(labs) labs.style.opacity=0;
+  const hs=hg?[...hg.querySelectorAll(".rhorse")].map(g=>({g,p:g.dataset.xy.split(";").map(q=>q.split(",").map(Number))})):[];
+  horseSound(dur/1000);
+  const step=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,1.6); r.setAttribute("width",(W*e).toFixed(1)); S.pBusy=Date.now();
+    hs.forEach(h=>{ const f=e*(h.p.length-1), i=Math.min(h.p.length-2,Math.floor(f)), u=f-i, a=h.p[i], b=h.p[i+1]||a, bob=k<1?Math.sin(now/55)*1.6:0; h.g.setAttribute("transform",`translate(${(a[0]+(b[0]-a[0])*u).toFixed(1)} ${(a[1]+(b[1]-a[1])*u+bob).toFixed(1)})`); });
+    if(k<1) requestAnimationFrame(step); else { S.pRacing=0; if(labs){ labs.style.transition="opacity .4s"; labs.style.opacity=1; } } };
   r.setAttribute("width",0); requestAnimationFrame(step);
 }
 const ymdLocal=t=>{ const d=new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
@@ -3544,6 +3707,16 @@ function wirePlot(){
     const rp=e.target.closest("[data-preport]"); if(rp){ openPlotReport(rp.dataset.preport); return; }
     const ma=e.target.closest("[data-pma]"); if(ma){ const n=+ma.dataset.pma; S.pmas=S.pmas.includes(n)?S.pmas.filter(k=>k!==n):S.pmas.concat(n).sort((a,b)=>a-b); LS.set("pmas",S.pmas); renderPlot(true); return; }
     if(e.target.closest("[data-pcmp]")){ openPlotCompare(); return; }
+    const bust=()=>{ S.pVer=(S.pVer||0)+1; renderPlotPro(); };
+    if(e.target.closest("[data-pcross]")){ S.pcross=!S.pcross; LS.set("pcross",S.pcross); renderPlot(true); return; }
+    const so=e.target.closest("[data-psort]"); if(so){ S.psort=so.dataset.psort; LS.set("psort",S.psort); plotSel(); return; }
+    const vw=e.target.closest("[data-pview]"); if(vw){ S.pview=vw.dataset.pview; LS.set("pview",S.pview); plotSel(); return; }
+    const hn=e.target.closest("[data-pheatn]"); if(hn){ S.pheatN=+hn.dataset.pheatn; LS.set("pheatN",S.pheatN); bust(); return; }
+    const md=e.target.closest("[data-pmond]"); if(md){ S.pmonD=md.dataset.pmond==="1"; LS.set("pmonD",S.pmonD); bust(); return; }
+    const hi=e.target.closest("[data-phide]"); if(hi){ S.pHideIdeas=S.pHideIdeas.concat(hi.dataset.phide); LS.set("phideideas",S.pHideIdeas); bust(); return; }
+    if(e.target.closest("[data-punhide]")){ S.pHideIdeas=[]; LS.set("phideideas",[]); bust(); return; }
+    const sm=e.target.closest("summary"), dl=sm&&sm.parentElement; if(dl&&dl.dataset.pid!=null){ S.pOpen[dl.dataset.pid]=!dl.open; return; }
+    if(e.target.closest("[data-pracemute]")){ S.raceMute=!S.raceMute; LS.set("racemute",S.raceMute); bust(); return; }
     const rg=e.target.closest("[data-prange]"); if(rg){ S.prange=rg.dataset.prange; LS.set("prange",S.prange); S.pIdx=null; renderPlot(true); return; }
     const bm=e.target.closest("[data-pbm]"); if(bm){ S.pbm=bm.dataset.pbm||null; LS.set("pbm",S.pbm); renderPlot(true); return; }
     if(e.target.closest("[data-ppriv]")){ S.priv=!S.priv; LS.set("priv",S.priv); render(); renderPlot(true); return; }
