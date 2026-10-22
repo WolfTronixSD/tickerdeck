@@ -296,6 +296,12 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pmon2 i{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:3px 0;line-height:1.15}
 .pmon2 i b{font-size:8.5px;font-weight:700}
 .pmon2 i small{font-size:7.5px;opacity:.85}
+.pbig h5,.pexec h5{margin:0 0 4px;font-size:12.5px;font-weight:700}
+.pbul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5}
+.pbul li{padding-left:2px}
+.pbul a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line)}
+.pbul small{color:var(--faint);font-size:10.5px;white-space:nowrap}
+.pexec{border:1px solid rgba(217,180,122,.5);background:linear-gradient(160deg,rgba(217,180,122,.12),transparent)}
 .prank thead th{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);text-align:right;padding:0 4px 2px}
 .pawards{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
 .paward{display:flex;flex-direction:column;align-items:center;gap:1px;padding:10px 6px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);text-align:center}
@@ -310,7 +316,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .print-only{display:none}
 /* printing: always white paper and dark ink, even from the browser's own Print (Ctrl+P) */
 @media print{
-  @page{size:A4;margin:14mm 12mm}
+  @page{size:A4;margin:16mm 12mm 15mm}
   html{background:#fff!important;color-scheme:light!important}
   body{--ink:#fff;--panel:#fff;--panel2:#F4F6F8;--line:#DDE1E6;--text:#111820;--muted:#4A5563;--faint:#6B7684;--gain:#0B8A5C;--loss:#C8243C;--accent:#B7791F;background:#fff!important;color:#111820}
   *{box-shadow:none!important;text-shadow:none!important}
@@ -381,6 +387,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .stats div{background:#fff;border-color:#DDE1E6}
   body.printing .chart{background:#fff;border-color:var(--line)}
   body.printing .d-head h3{color:#111820}
+  body.printing .pbul{font-size:10.5px;gap:3px;line-height:1.4}
+  body.printing .pbig h5{font-size:10.5px;margin-bottom:2px}
+  body.printing .pbig,body.printing .pexec{break-inside:avoid}
+  body.printing .pexec{background:#FBF3E4!important;border:1px solid #C9A46A!important;break-before:avoid}
   body.printing .prep-rank{background:#FBF3E4;border-color:#C9A46A;color:#6B4A1B}
   body.printing .pposter{background:#FBF1DC!important;break-inside:avoid;padding:8px}
   body.printing .pposter b{font-size:18px}
@@ -2353,8 +2363,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.46";
+const APP_VERSION="3.47";
 const CHANGELOG=[
+  {v:"3.47",date:"2026-10-22",title:"Report finishing touches",items:["PDF reports have a header and footer on every page, with page numbers","🌎 The big picture: what the Fed, inflation, jobs and growth reports did to the market and to you, which part of the market led, political and policy headlines from the news feed, and an outlook for the next five weeks","🤠 A short, funny executive summary closes each report","Wolf tracks label each column with its week of the year"]},
   {v:"3.46",date:"2026-10-22",title:"Wild West reports",items:["Reports: monthly returns show % and $ together in one grid, plus a new month-by-month bar chart with 🏆 and 🌵 for the best and worst months","Western and wolf theme: a desert skyline and full moon on the chart, 🐺 at the high and 🌵 at the low, a trail rank next to your grade, new awards (Top gun, Pack leader, Howl day, Bucking bronco, Campfire streak), a Hero of the trail poster and a WANTED poster","🐾 Wolf tracks: every trading day as a green or red paw print","Biggest Nasdaq 100 days next to the biggest S&P 500 days, with your own move those days","Pick a calendar week, month or year for reports and for the StockPlotter chart","Line thickness for the StockPlotter and report charts: thin, normal, bold or extra bold","Ask Claude buttons sit two per row"]},
   {v:"3.45",date:"2026-10-22",title:"Richer portfolio reports",items:["Report chart: month (or day) ticks, the high and low marked with their values, and Fed decision days","Top 5 best and worst returns, and top 5 that made or cost you the most, each with % and $","Best and worst 3 days with their dollar moves","Market events show how your portfolio moved that day next to the S&P 500","The reference page fits on one page: holdings in two side-by-side tables, monthly % and $ grids side by side","The PDF header shows the GoldRabbit version","StockPlotter: Best and Worst today show the full dollar amount"]},
   {v:"3.44",date:"2026-10-22",title:"Production check fixes",items:["Fixed 📊 Reports on Home, which stopped opening after the StockPlotter reports were added","Ask Claude from Home no longer sends share counts or your portfolio's dollar value, only percentages","Mutual fund prices refresh reliably again (the nightly job had been timing out)","Setup links only accept ticker-shaped symbols"]},
@@ -3733,8 +3744,8 @@ function reportRefHTML(D){
   const P=S.plotP, z=D.z, rows=D.byR.map(o=>({...o,w:z.v?(z.q[o.x]||0)*(z.px[o.x]||0)/z.v*100:0})).sort((p,q)=>q.w-p.w);
   const tbl=list=>`<table class="prep-tab"><thead><tr><th>Stock</th><th>Weight</th><th>Return</th><th>Gain</th></tr></thead><tbody>${list.map(o=>`<tr><td>${esc(o.x)}</td><td class="num">${o.w<0.1?o.w.toFixed(2):o.w.toFixed(1)}%</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table>`, half=Math.ceil(rows.length/2);
   const tab=rows.length?`<div class="card pbreak"><h4>📋 Your holdings this period · ${rows.length}</h4><div class="prep-ref2">${tbl(rows.slice(0,half))}${rows.length>1?tbl(rows.slice(half)):""}</div></div>`:"";
-  const all=proSeries(P.days,null), pts=proSeries(D.R,null);
-  return `<div class="prep-refh">📎 Reference</div>${tab}${monthsBothHTML(all,P)}${monthBarsHTML(all,P)}${riskHTML(pts,D.R,P,1).html}`;
+  const all=proSeries(P.days,null);
+  return `<div class="prep-refh">📎 Reference</div>${tab}${monthsBothHTML(all,P)}${monthBarsHTML(all,P)}`;
 }
 // a school grade from how you did against the S&P 500, and a weather mood from the return
 function reportGrade(D){
@@ -3773,10 +3784,59 @@ const prepLwHTML=()=>`<div class="prep-actions prep-lw"><span>Line</span>${LINEW
 function pawTrailHTML(D){
   const ch=D.ch; if(!ch||ch.length<2) return ""; const mx=Math.max(...ch.map(c=>Math.abs(c.r)))||1, cols=[]; let col=null, last=null;
   ch.forEach(c=>{ const d=new Date(c.day+"T12:00:00"), wd=(d.getDay()+6)%7, mon=new Date(d); mon.setDate(mon.getDate()-wd); const wk=ymdLocal(mon); if(wk!==last){ col=[]; cols.push(col); last=wk; } col.push({...c,wd}); });
-  const S2=15, L0=14, W=Math.max(cols.length*S2+4+L0,60), H=5*S2+4, paw=(x,y,c,o,t)=>`<g fill="${c}" fill-opacity="${o}"><title>${t}</title><ellipse cx="${x}" cy="${y+2.2}" rx="3.6" ry="3"/><circle cx="${x-4}" cy="${y-1.6}" r="1.45"/><circle cx="${x-1.4}" cy="${y-3.9}" r="1.45"/><circle cx="${x+1.4}" cy="${y-3.9}" r="1.45"/><circle cx="${x+4}" cy="${y-1.6}" r="1.45"/></g>`;
-  const svg=[..."MTWTF"].map((l,i)=>`<text x="2" y="${2+i*S2+S2/2+4}" font-size="9" fill="#8392A6" font-family="Sora,system-ui,sans-serif">${l}</text>`).join("")+cols.map((cl,i)=>cl.map(c=>paw(L0+2+i*S2+S2/2,2+c.wd*S2+S2/2+1,c.r>=0?"#16A374":"#DC3D55",(.35+.65*Math.min(1,Math.abs(c.r)/mx)).toFixed(2),`${pdS(c.t)} ${fmtP(c.r)}`)).join("")).join("");
+  const S2=15, L0=14, W=Math.max(cols.length*S2+4+L0,60), H=5*S2+18, paw=(x,y,c,o,t)=>`<g fill="${c}" fill-opacity="${o}"><title>${t}</title><ellipse cx="${x}" cy="${y+2.2}" rx="3.6" ry="3"/><circle cx="${x-4}" cy="${y-1.6}" r="1.45"/><circle cx="${x-1.4}" cy="${y-3.9}" r="1.45"/><circle cx="${x+1.4}" cy="${y-3.9}" r="1.45"/><circle cx="${x+4}" cy="${y-1.6}" r="1.45"/></g>`;
+  const isoWk=day=>{ const d=new Date(day+"T12:00:00Z"), t=(d.getUTCDay()+6)%7; d.setUTCDate(d.getUTCDate()-t+3); const y0=new Date(Date.UTC(d.getUTCFullYear(),0,4)); return 1+Math.round(((d-y0)/864e5-3+((y0.getUTCDay()+6)%7))/7); };
+  const every=cols.length>40?4:cols.length>20?2:1, wks=cols.map((cl,i)=>i%every?"":`<text x="${L0+2+i*S2+S2/2}" y="${H-3}" text-anchor="middle" font-size="8.5" fill="#8392A6" font-family="Sora,system-ui,sans-serif">W${isoWk(cl[0].day)}</text>`).join("");
+  const svg=wks+[..."MTWTF"].map((l,i)=>`<text x="2" y="${2+i*S2+S2/2+4}" font-size="9" fill="#8392A6" font-family="Sora,system-ui,sans-serif">${l}</text>`).join("")+cols.map((cl,i)=>cl.map(c=>paw(L0+2+i*S2+S2/2,2+c.wd*S2+S2/2+1,c.r>=0?"#16A374":"#DC3D55",(.35+.65*Math.min(1,Math.abs(c.r)/mx)).toFixed(2),`${pdS(c.t)} ${fmtP(c.r)}`)).join("")).join("");
   return `<div class="card ptrail" style="gap:6px"><h4>🐾 Wolf tracks · every trading day</h4><div class="ptrail-in"><svg viewBox="0 0 ${W} ${H}" style="width:${Math.min(100,W/5.6).toFixed(1)}%;min-width:${Math.min(W,140)}px;height:auto" role="img" aria-label="Each trading day as a paw print">${svg}</svg></div>
-    <p class="hint" style="font-size:11px;margin:0">${D.green} green paws, ${D.ndays-D.green} red. Darker paws are bigger moves. Longest run: ${D.streak} green day${D.streak===1?"":"s"} in a row.</p></div>`;
+    <p class="hint" style="font-size:11px;margin:0">${D.green} green paws, ${D.ndays-D.green} red. Darker paws are bigger moves. W is the week of the year. Longest run: ${D.streak} green day${D.streak===1?"":"s"} in a row.</p></div>`;
+}
+// the big picture: what the economy and the market did, political headlines, and what's coming up
+const POLI=/tariff|trade (war|deal|talks)|election|congress|senate|house speaker|white house|president|trump|shutdown|sanction|geopolit|ukraine|russia|israel|iran|taiwan|beijing|china|debt ceiling|treasury secretary|fed chair|powell|supreme court|executive order|regulat/i;
+function bigPicture(D){
+  const ev=D.events, avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null, eco=[], pol=[], out=[];
+  const grp=(re,ico,name)=>{ const l=ev.filter(e=>re.test(e.title)&&e.m!=null); if(!l.length) return; const big=l.slice().sort((p,q)=>Math.abs(q.m)-Math.abs(p.m))[0];
+    eco.push(`${ico} <b>${name}</b>: ${l.length} release${l.length>1?"s":""}. Biggest reaction: ${esc(big.title)} on ${pdS(parseET(big.date))}, S&amp;P <span class="${tcls(big.m)}">${fmtP(big.m)}</span>${big.me!=null?`, you <span class="${tcls(big.me)}">${fmtP(big.me)}</span>`:""}.`); };
+  const fed=ev.filter(e=>e.kind==="fed"&&/decision/.test(e.title)&&e.m!=null);
+  if(fed.length){ const sm=avg(fed.map(e=>e.m)), ym=avg(fed.filter(e=>e.me!=null).map(e=>e.me)); eco.push(`🏛️ <b>The Fed</b> decided rates ${fed.length===1?"once":fed.length+" times"} (${fed.map(e=>pdS(parseET(e.date))).join(", ")}). On those days the S&amp;P averaged <span class="${tcls(sm)}">${fmtP(sm)}</span>${ym!=null?` and you <span class="${tcls(ym)}">${fmtP(ym)}</span>`:""}.`); }
+  grp(/CPI|PCE/,"🛒","Inflation (CPI, PCE)"); grp(/Jobs/,"👷","Jobs reports"); grp(/GDP/,"🏭","Economic growth (GDP)");
+  const r=x=>(D.bms.find(b=>b.x===x)||{}).r; const ndx=r("QQQ"), dow=r("DIA"), spx=r("SPY");
+  if(ndx!=null&&dow!=null) eco.push(Math.abs(ndx-dow)<1?`⚖️ <b>Balanced market</b>: tech (Nasdaq 100 ${fmtP(ndx)}) and old economy (Dow ${fmtP(dow)}) moved about the same.`:ndx>dow?`🚀 <b>Tech led</b>: the Nasdaq 100 ${fmtP(ndx)} beat the Dow ${fmtP(dow)}. Growth and AI names set the pace.`:`🏭 <b>Old economy led</b>: the Dow ${fmtP(dow)} beat the Nasdaq 100 ${fmtP(ndx)}. Investors favored value over tech.`);
+  const c=S.daily.SPY&&S.daily.SPY.c; if(c){ const mv=[]; for(let i=1;i<c.length;i++){ const d=etISO(new Date(c[i][0])); if(d>D.a.day&&d<=D.z.day) mv.push(Math.abs(c[i][1]/c[i-1][1]-1)*100); }
+    if(mv.length>=5){ const n=mv.filter(v=>v>=1).length, sh=n/mv.length; eco.push(`${sh>.25?"🌪️":sh>.1?"🌬️":"🍃"} <b>${sh>.25?"Choppy ride":sh>.1?"Normal swings":"Calm market"}</b>: the S&amp;P moved 1% or more on ${n} of ${mv.length} days${spx!=null?`, ending ${fmtP(spx)}`:""}.`); }
+    if(c.length>=200){ const ma=c.slice(-200).reduce((x,q)=>x+q[1],0)/200, px=c[c.length-1][1], g=(px/ma-1)*100; out.push(`📈 <b>Trend</b>: the S&amp;P is ${Math.abs(g).toFixed(1)}% ${g>=0?"above":"below"} its 200-day average, ${g>=8?"a strong uptrend, though stretched":g>=0?"still an uptrend":"a warning sign until it climbs back"}.`); } }
+  // political and policy headlines from the app's news feed (Finnhub), within the period
+  (S.mnews||[]).filter(a=>a.datetime*1000>=D.a.t&&POLI.test(a.headline+" "+(a.summary||""))).slice(0,5).forEach(a=>pol.push(`🗞️ <a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.headline)}</a> <small>${esc(a.source)} · ${pdS(a.datetime*1000)}</small>`));
+  // outlook: the next five weeks
+  const t0=today(), t1=etISO(new Date(Date.now()+35*864e5)), up=marketEvents(t0,t1), nx=re=>up.find(e=>re.test(e.title));
+  const nf=nx(/Fed rate decision/), nc=nx(/CPI/), nj=nx(/Jobs/);
+  if(nf||nc||nj) out.push(`🗓️ <b>Coming up</b>: ${[nf&&`Fed decision ${pdS(parseET(nf.date))}`,nc&&`CPI inflation ${pdS(parseET(nc.date))}${nc.est?" (est.)":""}`,nj&&`jobs report ${pdS(parseET(nj.date))}${nj.est?" (est.)":""}`].filter(Boolean).join(" · ")}.`);
+  const map=(S.earnings&&S.earnings.map)||{}, z=D.z, wts=D.byR.map(o=>({x:o.x,w:z.v?(z.q[o.x]||0)*(z.px[o.x]||0)/z.v*100:0})), er=wts.filter(o=>map[o.x]&&map[o.x].date>=t0&&map[o.x].date<=t1).sort((p,q)=>q.w-p.w);
+  if(er.length){ const tw=er.reduce((x,o)=>x+o.w,0); out.push(`📣 <b>Your earnings</b>: ${er.slice(0,6).map(o=>`${esc(o.x)} ${pdS(parseET(map[o.x].date))}`).join(", ")}${er.length>6?` and ${er.length-6} more`:""}, about ${tw.toFixed(0)}% of your portfolio. Expect bigger swings around those dates.`); }
+  const nm=new Date(Date.now()+20*864e5).getMonth(), se=season("SPY"), sm=se&&se[nm];
+  if(sm) out.push(`🍂 <b>Seasonality</b>: in ${MONTHS[nm]} the S&amp;P has averaged ${fmtP(sm.avg)} over the past ${sm.n} years, up in ${sm.win} of them.`);
+  if(D.top&&D.top.w>=15) out.push(`🐺 <b>Concentration</b>: ${esc(D.top.x)} is ${D.top.w.toFixed(0)}% of your portfolio, so its news will move you most.`);
+  return {eco,pol,out};
+}
+function bigPictureHTML(D){
+  const B=bigPicture(D), ul=l=>`<ul class="pbul">${l.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+  return `<div class="card pbig"><h4>🌎 The big picture</h4>
+    ${B.eco.length?`<div><h5>💵 Economy and markets</h5>${ul(B.eco)}</div>`:""}
+    <div><h5>🏛️ Politics and policy</h5>${B.pol.length?ul(B.pol):`<p class="hint" style="margin:0">No political headlines in the app's news feed for this period. The feed only keeps the last few days, so Ask Claude below can search the web for the full story.</p>`}</div>
+    ${B.out.length?`<div><h5>🔭 Outlook</h5>${ul(B.out)}</div>`:""}
+    <p class="hint" style="margin:0;font-size:11px">Built from the economic calendar, index prices and news headlines. Not investment advice.</p></div>`;
+}
+// a short, slightly silly executive summary to close the report
+function execSummaryHTML(D){
+  const G=reportGrade(D), d=D.sp!=null?D.ret-D.sp:null, mvp=D.byD.length&&D.byD[0].d>0?D.byD[0]:null, bad=D.byD.length&&D.byD[D.byD.length-1].d<0?D.byD[D.byD.length-1]:null, usd=v=>S.priv?"":` (${sgn$(v)})`;
+  const open=d==null?`You ${D.ret>=0?"made":"lost"} ${fmtP(D.ret)} this ${D.unit}.`:d>=5?`🐺 Alpha wolf energy: you howled ${fmtP(D.ret)} while the S&amp;P managed ${fmtP(D.sp)}. The pack is impressed.`:d>=0?`🤠 You outdrew the S&amp;P, ${fmtP(D.ret)} vs ${fmtP(D.sp)}. Not flashy, but the sheriff approves.`:d>=-5?`🐎 You trailed the S&amp;P (${fmtP(D.ret)} vs ${fmtP(D.sp)}). The horse is fine, it just stopped to eat some grass.`:`🌵 Tough trail: ${fmtP(D.ret)} vs the S&amp;P ${fmtP(D.sp)}. Even cowboys fall off the horse. Dust off and ride on.`;
+  const L=[open];
+  if(mvp) L.push(`⭐ Hero: <b>${esc(mvp.x)}</b>${usd(mvp.d)} carried the posse.${bad?` 🦹 Most wanted: <b>${esc(bad.x)}</b>${usd(bad.d)}, last seen riding south.`:""}`);
+  if(D.best&&D.worst&&D.best!==D.worst) L.push(`🌕 Best day ${pdS(D.best.t)} (${fmtP(D.best.r)}): drinks are on you. ⛈️ Worst day ${pdS(D.worst.t)} (${fmtP(D.worst.r)}): we don't talk about that day.`);
+  const fed=D.events.filter(e=>e.kind==="fed"&&/decision/.test(e.title)).length; if(fed) L.push(`🏛️ The Fed rode into town ${fed===1?"once":fed+" times"}; ${D.green>=D.ndays/2?"your portfolio kept its boots on":"your portfolio got a little saddle sore"}. ${D.green} of ${D.ndays} days were green.`);
+  const B=bigPicture(D), nx=B.out.find(x=>/Coming up/.test(x)); if(nx) L.push(nx.replace(/<b>Coming up<\/b>:/,"Next on the trail:"));
+  L.push(`<b>Bottom line:</b> Grade ${G.g}, rank ${G.rank[0]} ${G.rank[1]}. ${d!=null&&d>=0?"Keep riding, partner.":"Tighten the saddle and stick to the plan, partner."}`);
+  return `<div class="card pexec"><h4>🤠 Executive summary</h4><ul class="pbul">${L.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
 }
 function openPlotReport(k){
   S.open="__preport"; const D=plotReportData(k), si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
@@ -3784,6 +3844,7 @@ function openPlotReport(k){
     <div class="chipbar prep-actions">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${PREPI[key][0]} ${v[0]}</button>`).join("")}</div>
     ${S.plotP?`<div class="prep-actions">${calPickHTML(S.plotP.days,k,"data-prepcal")}</div>`:""}`;
   if(!D){ si.innerHTML=`<div id="prep">${head}<p class="hint">Reports need price history. Add the free Twelve Data key in Settings and give it a few minutes.</p></div>`; wireReport(null); showSheet(); return; }
+  S.prepHead=`${D.name} portfolio report · ${pdL(D.from)} – ${pdL(D.z.t)}`;
   const G=reportGrade(D), mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
   // ranked lists show both the % move and the dollars it made or cost
   const rank=(t,list,empty)=>`<div><h4>${t}</h4>${list.length?`<table class="prank"><tbody>${list.map((o,i)=>`<tr><td class="rk">${i+1}</td><td class="nm">${esc(o.x)}</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">${empty}</p>`}</div>`;
@@ -3808,7 +3869,10 @@ function openPlotReport(k){
     ${D.big.length||D.bigN.length?`<div class="card prep2">${[["⚡ Biggest S&amp;P 500 days",D.big,"S&amp;P"],["🚀 Biggest Nasdaq 100 days",D.bigN,"NDX"]].map(([t,l,n])=>`<div><h4>${t}</h4>${l.length?`<table class="prank"><thead><tr><th></th><th>${n}</th><th>You</th></tr></thead><tbody>${l.map(b=>`<tr><td class="nm">${pdS(parseET(b.day))}</td><td class="num ${tcls(b.r)}">${fmtP(b.r)}</td><td class="num ${tcls(b.me)}">${b.me!=null?fmtP(b.me):"—"}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">No data yet</p>`}</div>`).join("")}</div>`:""}
     ${D.tx.length?`<div class="card"><h4>🧾 Your trades</h4>${D.tx.map(t=>li(`${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} ${esc(t.s)}`,money(fmtQ(Math.abs(t.q)))+" sh",t.q>0?"tup":"tdown")).join("")}</div>`:""}
     ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4><div class="pevs">${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="pev-r">${e.me!=null?`<b class="num ${tcls(e.me)}">You ${fmtP(e.me)}</b>`:""}${e.m!=null?`<small class="num ${tcls(e.m)}">S&amp;P ${fmtP(e.m)}</small>`:""}</span></div>`).join("")}</div>${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
+    ${riskHTML(proSeries(D.R,null),D.R,S.plotP,1).html}
+    ${bigPictureHTML(D)}
     ${reportRefHTML(D)}
+    ${execSummaryHTML(D)}
     <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(plotReportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
     <p class="hint" style="font-size:11px">Returns ignore money added or taken out with buys and sells. Ask Claude gets percentages only, never dollar amounts or share counts. Event dates marked estimated follow the usual schedule. Not investment advice.</p></div>`;
   wireReport(D); showSheet();
@@ -3816,10 +3880,16 @@ function openPlotReport(k){
 // print just the open sheet; the browser's print dialog has "Save as PDF"
 function printSheet(title){
   const old=document.title, done=()=>{ document.body.classList.remove("printing"); document.documentElement.classList.remove("printing"); document.title=old; window.removeEventListener("afterprint",done); };
-  document.title=title; document.body.classList.add("printing"); document.documentElement.classList.add("printing"); window.addEventListener("afterprint",done); setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
+  document.title=title; pageBoxes(); document.body.classList.add("printing"); document.documentElement.classList.add("printing"); window.addEventListener("afterprint",done); setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
 }
 // the browser's own Print (Ctrl+P) with a sheet open prints just that sheet, the same as Save PDF
-window.addEventListener("beforeprint",()=>{ if(!$("sheet").hidden&&!document.body.classList.contains("printing")){ document.body.classList.add("printing","printing-auto"); document.documentElement.classList.add("printing"); } });
+// running header and footer on every printed page, with page numbers (the first page has its own title block)
+function pageBoxes(){
+  let st=$("pgStyle"); if(!st){ st=document.createElement("style"); st.id="pgStyle"; document.head.appendChild(st); }
+  const q=t=>JSON.stringify(String(t)), title=S.open==="__preport"&&S.prepHead?S.prepHead:document.title, f="font-family:Sora,system-ui,sans-serif;font-size:8.5px;color:#6B7684";
+  st.textContent=`@media print{@page{@top-left{content:${q("GoldRabbit v"+APP_VERSION)};${f};font-weight:700}@top-right{content:${q(title)};${f}}@bottom-left{content:${q("Private · made on your device "+pdL(Date.now())+" · not investment advice")};${f}}@bottom-right{content:"Page " counter(page) " of " counter(pages);${f};font-weight:700}}@page:first{@top-left{content:none}@top-right{content:none}}}`;
+}
+window.addEventListener("beforeprint",()=>{ pageBoxes(); if(!$("sheet").hidden&&!document.body.classList.contains("printing")){ document.body.classList.add("printing","printing-auto"); document.documentElement.classList.add("printing"); } });
 window.addEventListener("afterprint",()=>{ if(document.body.classList.contains("printing-auto")){ document.body.classList.remove("printing","printing-auto"); document.documentElement.classList.remove("printing"); } });
 function wireReport(D){
   $("prep").addEventListener("change",e=>{ if(e.target.matches("[data-prepcal]")&&e.target.value) openPlotReport(e.target.value); });
