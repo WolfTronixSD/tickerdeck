@@ -224,7 +224,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pseg button{height:28px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--muted)}
 .pseg button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
 .pseg button[disabled]{color:var(--text);min-width:44px}
-.pctlbar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:-6px}
+.pctlbar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:10px 0}
 .pbars{gap:4px}
 .pbr{display:grid;grid-template-columns:56px 1fr 62px;align-items:center;gap:8px;padding:4px 0;text-align:left;width:100%;font-size:12.5px}
 .pbr.on b{color:var(--accent)}
@@ -239,6 +239,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pdd .kv span{display:flex;flex-direction:column}
 .pdd .kv small{color:var(--faint);font-size:10.5px}
 .prace-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:60}
 .prace-ctl .ghost{height:34px}
 .prepgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px}
 .prepgrid button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:14px;background:linear-gradient(160deg,rgba(255,181,71,.16),rgba(255,92,114,.08));border:1px solid rgba(255,181,71,.3);transition:transform .12s}
@@ -257,19 +258,34 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .prep-grade small{font-size:9px;color:var(--muted)}
 .pawards{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
 .paward{display:flex;flex-direction:column;align-items:center;gap:1px;padding:10px 6px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);text-align:center}
-.paward span{font-size:24px}
+.paward>span{font-size:24px}
 .paward small{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
 .paward b{font-size:14px}
-.paward em{font-style:normal;font-size:11.5px;color:var(--muted)}
+.paward em{font-style:normal;font-size:11.5px;color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.paward b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.print-head{font-size:11px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px}
 .prep-btns{display:flex;gap:8px;flex-wrap:wrap}
 .prep-btns .primary{display:inline-flex;align-items:center;text-decoration:none}
+.print-only{display:none}
+/* printed reports: white paper, dark ink, nothing split across pages */
 @media print{
-  body.printing{background:var(--ink);padding:0}
+  @page{margin:0}
+  html.printing{background:#fff!important}
+  body.printing{--ink:#fff;--panel:#fff;--panel2:#F2F4F7;--line:#D5DAE1;--text:#111820;--muted:#4A5563;--faint:#6B7684;--gain:#0B8A5C;--loss:#C8243C;--accent:#B7791F;background:#fff!important;color:#111820;padding:0;font-size:12px}
   body.printing>*:not(#sheet){display:none!important}
-  body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0}
+  body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0;background:#fff;padding:12mm}
+  body.printing .sheet-in{max-width:none;gap:10px}
   body.printing [data-close],body.printing .prep-actions{display:none!important}
-  body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  body.printing .card{break-inside:avoid}
+  body.printing .print-only{display:block}
+  body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none!important;text-shadow:none!important}
+  body.printing .card,body.printing .paward,body.printing .pev,body.printing .kv{break-inside:avoid}
+  body.printing .card,body.printing .paward{background:#fff!important;border:1px solid var(--line)!important}
+  body.printing .prep-hero.up{border-color:var(--gain)!important;background:#F2FBF7!important}
+  body.printing .prep-hero.dn{border-color:var(--loss)!important;background:#FDF3F5!important}
+  body.printing .pinsight p{color:#111820!important}
+  body.printing .chart{background:#fff;border-color:var(--line)}
+  body.printing .pawards{grid-template-columns:repeat(6,1fr)}
+  body.printing .d-head h3{color:#111820}
 }
 .prep-hero{text-align:center;gap:6px}
 .prep-hero .big{font-size:34px;font-weight:800;letter-spacing:-.02em}
@@ -2198,8 +2214,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.39";
+const APP_VERSION="3.40";
 const CHANGELOG=[
+  {v:"3.40",date:"2026-10-22",title:"Printer-friendly reports, pony race",items:["Save PDF now prints on white paper with dark text and keeps cards from splitting across pages","Fixed the MVP's dollar amount showing in a huge font","Sort and view buttons no longer overlap the holdings heading","Horse race: switch between 🏇 Fast horses and 🐴 Lame ponies (your best or worst 5 or 10), with a real gallop, a whinny and a cheering crowd, confetti for the winners, and a sad trombone with falling carrots for the ponies"]},
   {v:"3.39",date:"2026-10-22",title:"StockPlotter gets playful",items:["⭐ Golden and 💀 death crosses marked on your chart when the 50-day average crosses the 200-day","Holdings: sort by value, day change or A–Z, and switch between list, bars and bubbles","Horse race with real horses, medals, a finish line and gallop sounds (mute with 🔇); the full-screen view now fits the screen","Reports: a mood, a grade vs the S&P 500, awards (MVP, fastest horse, slowpoke, wildest ride, win streak), a growth chart, and Save PDF","Ask Claude and reports never include dollar amounts or share counts, only percentages","A 1D range: yesterday's close to today, live while the market is open","Heat map: show the top 10, top 20 or all. Monthly returns in % or $","Drawdown explained, compared with the index, with your biggest dips and how long each took to recover","Ideas: Show all for long lists, and Hide this tip"]},
   {v:"3.38",date:"2026-10-22",title:"Pick your moving averages",items:["Turn the 20, 50, 100 and 200-day averages on and off one by one","When comparing with the S&P 500, Nasdaq, Nasdaq 100 or Dow, the index's averages are drawn too (dotted), with whether it's above or below each","Comparing also works when you plot a single stock"]},
   {v:"3.37",date:"2026-10-22",title:"StockPlotter reports, AI and trade history",items:["Record buys and sells with their date (or paste new totals and have the changes counted as trades). The chart now uses the shares you actually held each day, and returns ignore money you added or took out","Weekly, monthly, 6-month and yearly reports: a written summary, you vs the four indexes, best and worst stocks, who made or cost you money, your trades and the Fed, inflation, jobs and earnings events of the period, with Copy and Share","Ask Claude: one tap opens Claude with your holdings, weights and returns filled in, to analyze the portfolio, suggest rebalancing, explain the period or say what to watch next","Ideas to consider: flags a stock that's too big a share, leveraged funds, index funds overlapping your stocks, overheated or broken charts and upcoming earnings","Horse race is taller with bigger labels, plus a full-screen view you can zoom (+/−) and scroll, with up to all horses labeled","The range and index buttons now also sit above the heat map, so you don't have to scroll back up","50-day and 200-day moving average lines on the chart, with whether you're above or below each","Analyze this chart: you vs the index you picked over the range you picked, explained in plain English (beta, correlation, up and down capture, drawdown, trend), with Ask Claude for more","Buys and sells show as green and red dots on the chart. Everything stays on this device"]},
@@ -3028,7 +3045,7 @@ function opticsExtraHTML(){
     </ul><p class="hint">Not investment advice.</p></details>`;
 }
 /* ---------- StockPlotter: your holdings plotted from daily closes. Holdings are typed or pasted in and stay on this device. ---------- */
-S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pcross=LS.get("pcross",true); S.psort=LS.get("psort","value"); S.pview=LS.get("pview","list"); S.pheatN=LS.get("pheatN",0); S.pmonD=LS.get("pmonD",false); S.pHideIdeas=LS.get("phideideas",[]); S.raceMute=LS.get("racemute",false); S.pOpen={}; S.pIdx=null; S.pSym=null; S.pBusy=0;
+S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pcross=LS.get("pcross",true); S.psort=LS.get("psort","value"); S.pview=LS.get("pview","list"); S.pheatN=LS.get("pheatN",0); S.pmonD=LS.get("pmonD",false); S.pHideIdeas=LS.get("phideideas",[]); S.raceMute=LS.get("racemute",false); S.raceMode=LS.get("racemode","fast"); S.raceTop=LS.get("racetop",5); S.pOpen={}; S.pIdx=null; S.pSym=null; S.pBusy=0;
 const PRANGES=[["1d","1D",1],["1w","1W",5],["2w","2W",10],["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
 if(!PRANGES.some(r=>r[0]===S.prange)) S.prange="1y";
 // indexes to compare against, through the ETFs that track them
@@ -3246,29 +3263,29 @@ function agoHTML(days,x){
 }
 // the horse race: every holding rebased to 100 at the start of the range
 // the race chart itself; used inline and, bigger, in the full-screen view
-function raceSVG(P,R,o){
-  const {W,H,nl,id,fs}=o, xs=P.have.filter(x=>R[0].px[x]>0), t0=R[0].t, t1=R[R.length-1].t;
-  const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r), top=new Set(ranked.slice(0,nl).map(o=>o.x)), lead=ranked[0];
+function raceSVG(P,R,opt){
+  const {W,H,nl,id,fs}=opt, xs=P.have.filter(x=>R[0].px[x]>0), t0=R[0].t, t1=R[R.length-1].t;
+  const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r), sel=opt.lame?ranked.slice(-nl).reverse():ranked.slice(0,nl), top=new Set(sel.map(o=>o.x)), lead=sel[0];
   const step=Math.max(1,Math.floor(R.length/(W>400?240:120))), idx=[]; for(let i=0;i<R.length;i+=step) idx.push(i); if(idx[idx.length-1]!==R.length-1) idx.push(R.length-1);
   const spy0=spyAt(t0), spyLine=spy0?idx.map(i=>[R[i].t,((R[i].live?price(bmSym()):spyAt(R[i].t))||spy0)/spy0*100]):null;
   let lo=100,hi=100; xs.forEach(x=>idx.forEach(i=>{ const v=R[i].px[x]/R[0].px[x]*100; if(v<lo) lo=v; if(v>hi) hi=v; })); if(spyLine) spyLine.forEach(q=>{ lo=Math.min(lo,q[1]); hi=Math.max(hi,q[1]); });
-  const medal=["🥇","🥈","🥉"], lab=(o,i)=>`${medal[i]||""}${o.x} ${o.r>=0?"+":""}${o.r.toFixed(0)}%`, chars=Math.max(8,...ranked.slice(0,nl).map((o,i)=>lab(o,i).length+(i<3?1:0)));
+  const medal=opt.lame?["🐌","🐢","🦥"]:["🥇","🥈","🥉"], lab=(o,i)=>`${medal[i]||""}${o.x} ${o.r>=0?"+":""}${o.r.toFixed(0)}%`, chars=Math.max(8,...sel.map((o,i)=>lab(o,i).length+(i<3?1:0)));
   const T=fs*1.4,B=18,RP=Math.round(chars*fs*.62+8), hs=fs*1.5, lh=fs+3, X=t=>4+(t-t0)/(t1-t0||1)*(W-RP-hs-6), Y=v=>T+(1-(v-lo)/(hi-lo||1))*(H-T-B);
   const yv=(x,i)=>Y(R[i].px[x]/R[0].px[x]*100), path=x=>idx.map((i,k)=>(k?"L":"M")+X(R[i].t).toFixed(1)+" "+yv(x,i).toFixed(1)).join(" ");
   // labels for the leaders, nudged apart so they don't overlap and kept inside the chart
-  const labs=ranked.slice(0,nl).map((o,i)=>({...o,i,y:Y(100+o.r)})).sort((a,b)=>a.y-b.y);
+  const labs=sel.map((o,i)=>({...o,i,y:Y(100+o.r)})).sort((a,b)=>a.y-b.y);
   for(let i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<lh) labs[i].y=labs[i-1].y+lh;
   for(let i=labs.length-1;i>=0;i--) labs[i].y=Math.min(labs[i].y,i===labs.length-1?H-B-4:labs[i+1].y-lh); labs.forEach(o=>{ o.y=Math.max(T,o.y); });
   let grid=""; if(W>400) for(let k=1;k<4;k++){ const v=hi-(k/4)*(hi-lo), y=Y(v); grid+=`<line x1="0" x2="${W-RP}" y1="${y}" y2="${y}" stroke="#1A2430"/><text x="4" y="${y-3}" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">${v>=100?"+":""}${(v-100).toFixed(0)}%</text>`; }
   // a horse at the head of each leader's line; the replay walks it along the line
-  const horses=ranked.slice(0,Math.min(nl,W>400?10:5)).map(o=>{ const xy=idx.map(i=>X(R[i].t).toFixed(1)+","+yv(o.x,i).toFixed(1)).join(";"), e=xy.slice(xy.lastIndexOf(";")+1).split(",");
-    return `<g class="rhorse" data-xy="${xy}" transform="translate(${e[0]} ${e[1]})"><text x="0" y="${hs*.35}" font-size="${hs}" text-anchor="middle" transform="scale(-1 1)">🏇</text></g>`; }).join("");
+  const horses=sel.slice(0,Math.min(nl,W>400?10:5)).map(o=>{ const xy=idx.map(i=>X(R[i].t).toFixed(1)+","+yv(o.x,i).toFixed(1)).join(";"), e=xy.slice(xy.lastIndexOf(";")+1).split(",");
+    return `<g class="rhorse" data-xy="${xy}" transform="translate(${e[0]} ${e[1]})"><text x="0" y="${hs*.35}" font-size="${hs}" text-anchor="middle" transform="scale(-1 1)">${opt.lame?"🐴":"🏇"}</text></g>`; }).join("");
   return `<svg class="chart" id="${id}Svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Horse race of your holdings"><defs><clipPath id="${id}Clip"><rect id="${id}Rect" x="0" y="0" width="${W}" height="${H}"/></clipPath></defs>${grid}
         <line x1="0" x2="${W-RP}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><text x="${W-RP-hs}" y="${Y(100)-3}" text-anchor="end" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">start</text>
         <line x1="${X(t1)+hs*.6}" x2="${X(t1)+hs*.6}" y1="${T-fs*.6}" y2="${H-B}" stroke="#E6EDF5" stroke-width="1.5" stroke-dasharray="3 3" opacity=".5"/><text x="${X(t1)+hs*.6}" y="${T-fs*.8}" text-anchor="middle" font-size="${fs*.9}">🏁</text>
         <g clip-path="url(#${id}Clip)">${xs.filter(x=>!top.has(x)).map(x=>`<path d="${path(x)}" fill="none" stroke="#3A4757" stroke-width=".8" opacity=".55"/>`).join("")}
         ${spyLine?`<path d="${spyLine.map((q,k)=>(k?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="#E6EDF5" stroke-width="1.2" stroke-dasharray="4 3"/>`:""}
-        ${ranked.slice(0,nl).reverse().map(o=>`<path d="${path(o.x)}" fill="none" stroke="${hue(o.x)}" stroke-width="${o===lead?2.6:1.7}"/>`).join("")}</g>
+        ${sel.slice().reverse().map(o=>`<path d="${path(o.x)}" fill="none" stroke="${hue(o.x)}" stroke-width="${o===lead?2.6:1.7}"/>`).join("")}</g>
         <g id="${id}Horses">${horses}</g>
         <g id="${id}Labs">${labs.map(o=>`<text x="${W-RP+4}" y="${o.y+fs/3}" font-size="${fs}" font-weight="700" fill="${hue(o.x)}" font-family="Sora">${esc(lab(o,o.i))}</text>`).join("")}${spyLine?`<text x="${W-RP+4}" y="${Math.min(H-B,Math.max(T+8,Y(spyLine[spyLine.length-1][1])))+fs/3}" font-size="${fs-.5}" fill="#AEB9C7" font-family="Sora">${bmName()}</text>`:""}</g>
         <text x="4" y="${H-4}" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdL(t0)}</text><text x="${W-RP}" y="${H-4}" text-anchor="end" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdS(t1)}</text></svg>`;
@@ -3276,12 +3293,13 @@ function raceSVG(P,R,o){
 function raceHTML(P,R){
   const xs=P.have.filter(x=>R[0].px[x]>0); if(xs.length<2||R.length<2) return "";
   const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r);
-  const lead=ranked[0], last=ranked[ranked.length-1], rng=(PRANGES.find(r=>r[0]===S.prange)||[])[1]||"";
-  return `<div class="section-h"><h2>🏇 Horse race</h2><small>every holding from the same start, ${esc(rng)}</small></div>
+  const lead=ranked[0], last=ranked[ranked.length-1], rng=(PRANGES.find(r=>r[0]===S.prange)||[])[1]||"", lame=S.raceMode==="lame", n=Math.min(S.raceTop,xs.length);
+  return `<div class="section-h"><h2>${lame?"🐴 Pony race":"🏇 Horse race"}</h2><small>every holding from the same start, ${esc(rng)}</small></div>
     <div class="card" style="background:var(--panel);gap:8px">
       <p class="hint" style="margin:0">Fastest horse: <b style="color:${hue(lead.x)}">${esc(lead.x)}</b> <span class="tup">${fmtP(lead.r)}</span>. Slowest: <b>${esc(last.x)}</b> <span class="${tcls(last.r)}">${fmtP(last.r)}</span>.</p>
-      ${raceSVG(P,R,{W:340,H:300,nl:5,id:"race",fs:10.5})}
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="ghost pcta" data-prace>🏇 Start the race</button><button class="ghost" data-pracebig>⛶ Full screen</button><button class="ghost" data-pracemute aria-label="Race sound">${S.raceMute?"🔇":"🔊"}</button><span class="hint" style="font-size:11.5px">Top 5 in color, the rest in gray, ${bmName()} dashed.</span></div>
+      <div class="prace-ctl"><div class="pseg"><button data-pracemode="fast" aria-pressed="${!lame}">🏇 Fast horses</button><button data-pracemode="lame" aria-pressed="${lame}">🐴 Lame ponies</button></div><div class="pseg"><button data-pracetop="5" aria-pressed="${S.raceTop===5}">5</button><button data-pracetop="10" aria-pressed="${S.raceTop===10}">10</button></div></div>
+      ${raceSVG(P,R,{W:340,H:S.raceTop>5?360:300,nl:n,id:"race",fs:S.raceTop>5?9.5:10.5,lame})}
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="ghost pcta" data-prace>${lame?"🐴 Start the pony race":"🏇 Start the race"}</button><button class="ghost" data-pracebig>⛶ Full screen</button><button class="ghost" data-pracemute aria-label="Race sound">${S.raceMute?"🔇":"🔊"}</button><span class="hint" style="font-size:11.5px">${lame?"Worst":"Top"} ${n} in color, the rest in gray, ${bmName()} dashed.</span></div>
       <div class="pboard">${(S.pRaceAll?ranked:ranked.slice(0,8).concat(ranked.length>13?[null]:[],ranked.length>8?ranked.slice(Math.max(8,ranked.length-5)):[])).map((o,i)=>o?`<button class="pbrow" data-psym="${esc(o.x)}"><span class="rk">${ranked.indexOf(o)+1}</span><b>${esc(o.x)}</b><span class="pbar"><i class="${o.r>=0?"up":"dn"}" style="width:${Math.min(100,Math.abs(o.r)/Math.max(Math.abs(lead.r),Math.abs(last.r),1)*100)}%"></i></span><span class="num ${tcls(o.r)}">${fmtP(o.r)}</span></button>`:`<div class="pbgap">⋯</div>`).join("")}</div>
       ${ranked.length>13?`<button class="ghost" data-praceall style="align-self:flex-start">${S.pRaceAll?"Show top and bottom":"Show all "+ranked.length}</button>`:""}
     </div>`;
@@ -3290,9 +3308,9 @@ function raceHTML(P,R){
 function openRaceBig(){
   const P=S.plotP; if(!P||!P.rng) return; const R=P.rng; S.open="__prace"; S.raceZ=S.raceZ||1; S.raceN=S.raceN||10;
   const draw=()=>{ const box=$("raceBox"); if(!box) return; const n=Math.min(S.raceN,P.have.length), bw=box.clientWidth||340, W=520, avail=Math.max(300,window.innerHeight-250), H=Math.round(Math.min(W*1.5,Math.max(W*.55,W*avail/bw)));
-    box.innerHTML=`<div style="width:${S.raceZ*100}%">${raceSVG(P,R,{W,H,nl:n,id:"raceZ",fs:13})}</div>`;
+    box.innerHTML=`<div style="width:${S.raceZ*100}%">${raceSVG(P,R,{W,H,nl:n,id:"raceZ",fs:13,lame:S.raceMode==="lame"})}</div>`;
     $("raceZl").textContent=S.raceZ===1?"Fit":S.raceZ+"×"; $("raceNl").textContent=`Top ${n}`; };
-  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>🏇 Horse race</h3><p>${esc((PRANGES.find(r=>r[0]===S.prange)||[])[1]||"")} · ${pdL(R[0].t)} – ${pdL(R[R.length-1].t)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>${S.raceMode==="lame"?"🐴 Pony race":"🏇 Horse race"}</h3><p>${esc((PRANGES.find(r=>r[0]===S.prange)||[])[1]||"")} · ${pdL(R[0].t)} – ${pdL(R[R.length-1].t)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
     <div class="prace-ctl"><div class="pseg"><button data-rz="-1" aria-label="Zoom out">−</button><button disabled id="raceZl"></button><button data-rz="1" aria-label="Zoom in">+</button></div><div class="pseg"><button data-rn="-5" aria-label="Fewer labels">−</button><button disabled id="raceNl"></button><button data-rn="5" aria-label="More labels">+</button></div><button class="ghost pcta" data-rplay>🏇 Start</button><button class="ghost" data-rmute aria-label="Race sound">${S.raceMute?"🔇":"🔊"}</button></div>
     <div id="raceBox" class="racebox"></div><p class="hint" style="font-size:11.5px">Zoom in and scroll sideways to read crowded stretches. ${bmName()} dashed.</p>`;
   $("sheetIn").querySelector(".prace-ctl").addEventListener("click",e=>{ const z=e.target.closest("[data-rz]"), n=e.target.closest("[data-rn]"), m=e.target.closest("[data-rmute]");
@@ -3515,11 +3533,12 @@ function openPlotReport(k){
   const evIcon={fed:"🏛️",macro:"📊",earn:"📣",options:"🎯"}, mvp=D.byD.length&&D.byD[0].d>0?D.byD[0]:null, fast=D.byR[0], slow=D.byR.length>1?D.byR[D.byR.length-1]:null;
   const award=(i,t,x,v)=>`<div class="paward"><span>${i}</span><small>${t}</small><b>${esc(x)}</b><em class="num">${v}</em></div>`;
   si.innerHTML=`<div id="prep">${head}
+    <div class="print-only print-head">🐰 GoldRabbit · ${D.name} portfolio report · created ${pdL(Date.now())}</div>
     <div class="card prep-hero ${G.cls}"><div class="prep-mood">${G.mood}</div>
       <div class="prep-top"><div><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div></div><div class="prep-grade ${G.cls}" title="Grade vs the S&P 500"><b>${G.g}</b><small>vs S&amp;P</small></div></div>
       ${sparkSVG(D.spark,D.bspark)}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
       <div class="prep2">${li("Start",money(fmt$(D.a.v,0)))}${li("Now",money(fmt$(D.z.v,0)))}${li("High",money(fmt$(D.hi[1],0))+` <small>${pdS(D.hi[0])}</small>`)}${li("Low",money(fmt$(D.lo[1],0))+` <small>${pdS(D.lo[0])}</small>`)}</div></div>
-    <div class="card pinsight"><h4>💡 The story</h4><p style="margin:0;font-size:13.5px;line-height:1.55;color:#C9D3DF">${esc(reportSummary(D,S.priv))}</p></div>
+    <div class="card pinsight"><h4>💡 The story</h4><p style="margin:0;font-size:13.5px;line-height:1.55">${esc(reportSummary(D,S.priv))}</p></div>
     <div class="pawards">${mvp?award("🏆","MVP",mvp.x,sgn$(mvp.d)):""}${fast?award("🚀","Fastest horse",fast.x,fmtP(fast.r)):""}${slow?award("🐌","Slowpoke",slow.x,fmtP(slow.r)):""}${D.wild?award("🎢","Wildest ride",D.wild.x,D.wild.v.toFixed(0)+"% vol"):""}${award("🔥","Win streak",D.streak+" day"+(D.streak===1?"":"s"),"in a row")}${award("☀️","Green days",D.green+" of "+D.ndays,Math.round(D.green/Math.max(1,D.ndays)*100)+"%")}</div>
     <div class="card" style="gap:6px"><h4>🏁 vs the indexes</h4>${bar("You",D.ret,1)}${D.bms.filter(b=>b.r!=null).map(b=>bar(esc(b.n),b.r)).join("")}</div>
     ${D.byR.length?`<div class="card prep2"><div><h4>🚀 Best</h4>${D.byR.slice(0,3).map(o=>mv(o)).join("")}</div><div><h4>🐌 Worst</h4>${D.byR.slice(-3).reverse().map(o=>mv(o)).join("")}</div></div>
@@ -3534,8 +3553,8 @@ function openPlotReport(k){
 }
 // print just the open sheet; the browser's print dialog has "Save as PDF"
 function printSheet(title){
-  const old=document.title, done=()=>{ document.body.classList.remove("printing"); document.title=old; window.removeEventListener("afterprint",done); };
-  document.title=title; document.body.classList.add("printing"); window.addEventListener("afterprint",done); setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
+  const old=document.title, done=()=>{ document.body.classList.remove("printing"); document.documentElement.classList.remove("printing"); document.title=old; window.removeEventListener("afterprint",done); };
+  document.title=title; document.body.classList.add("printing"); document.documentElement.classList.add("printing"); window.addEventListener("afterprint",done); setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
 }
 function wireReport(D){
   $("prep").addEventListener("click",e=>{ const r=e.target.closest("[data-preport]"); if(r){ openPlotReport(r.dataset.preport); return; }
@@ -3592,32 +3611,61 @@ function renderPlotPro(){
   const el=$("plotPro"), P=S.plotP; if(!el||!P) return; const R=P.rng||[];
   if(R.length<2){ setHTML(el,""); return; }
   const x=S.pSym&&P.have.includes(S.pSym)?S.pSym:null, z=R[R.length-1];
-  const key=[S.pVer||0,S.pheatN,S.pmonD,S.pHideIdeas.join(),S.raceMute,S.ptx.length,S.prange,S.pbm,x,R.length,R[0].t,z.live?Math.floor(Date.now()/60000):z.t,P.have.length,S.priv,S.pRaceAll,BMS.map(b=>S.daily[b[0]]?S.daily[b[0]].c.length:0).join(",")].join("|");
+  const key=[S.pVer||0,S.raceMode,S.raceTop,S.pheatN,S.pmonD,S.pHideIdeas.join(),S.raceMute,S.ptx.length,S.prange,S.pbm,x,R.length,R[0].t,z.live?Math.floor(Date.now()/60000):z.t,P.have.length,S.priv,S.pRaceAll,BMS.map(b=>S.daily[b[0]]?S.daily[b[0]].c.length:0).join(",")].join("|");
   if(key!==proKey){ proKey=key;
     const pts=proSeries(R,x), all=proSeries(P.days,x), risk=riskHTML(pts,R,P);
     proHTML=reportBtnsHTML()+takeawaysHTML(P,R,pts,risk)+(x?"":ideasPlotHTML(P,R,pts))+aiHTML(P,R,pts,risk)+vsHTML(pts,R)+agoHTML(P.days,x)+(x?"":raceHTML(P,R)+contribHTML(P,R)+heatHTML(P,R))+ddHTML(pts)+monthsHTML(all,P,x)+risk.html; }
   setHTML(el,proHTML);
 }
 // replay: sweep the race lines in from left to right
-// clip-clop gallop for the length of the race, then a whinny at the finish (synthesized, no files)
-function horseSound(dur){
+// race sounds, synthesized with WebAudio (no files): a four-beat gallop with hoof thuds and clacks,
+// then a whinny and a cheering crowd for the winners, or a slow limp and a sad trombone for the ponies
+function horseSound(dur,lame){
   if(S.raceMute) return; try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume();
-    const t0=actx.currentTime+.05, len=Math.floor(actx.sampleRate*.05), buf=actx.createBuffer(1,len,actx.sampleRate), d=buf.getChannelData(0); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,6);
-    for(let c=0;c*.42<dur-.3;c++) [0,.09,.2].forEach((o,j)=>{ const s=actx.createBufferSource(), f=actx.createBiquadFilter(), g=actx.createGain(); s.buffer=buf; f.type="bandpass"; f.frequency.value=j===2?650:1100; f.Q.value=2; g.gain.value=j===2?.9:.55; s.connect(f).connect(g).connect(actx.destination); s.start(t0+c*.42+o); });
-    const tn=t0+dur, o=actx.createOscillator(), lfo=actx.createOscillator(), lg=actx.createGain(), f=actx.createBiquadFilter(), g=actx.createGain();
-    o.type="sawtooth"; o.frequency.setValueAtTime(900,tn); o.frequency.linearRampToValueAtTime(1250,tn+.15); o.frequency.exponentialRampToValueAtTime(380,tn+1);
-    lfo.frequency.value=13; lg.gain.value=70; lfo.connect(lg).connect(o.frequency); f.type="bandpass"; f.frequency.value=1500; f.Q.value=1.1;
-    g.gain.setValueAtTime(.0001,tn); g.gain.exponentialRampToValueAtTime(.3,tn+.05); g.gain.exponentialRampToValueAtTime(.0001,tn+1.05);
-    o.connect(f).connect(g).connect(actx.destination); o.start(tn); lfo.start(tn); o.stop(tn+1.1); lfo.stop(tn+1.1);
+    const A=actx, t0=A.currentTime+.05, out=A.createGain(); out.gain.value=.9; out.connect(A.destination);
+    const noise=sec=>{ const n=Math.floor(A.sampleRate*sec), b=A.createBuffer(1,n,A.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return b; }, nb=noise(2.5);
+    const hoof=(t,acc)=>{ const o=A.createOscillator(), g=A.createGain(); o.type="sine"; o.frequency.setValueAtTime(140+Math.random()*30,t); o.frequency.exponentialRampToValueAtTime(55,t+.09); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.55*acc,t+.005); g.gain.exponentialRampToValueAtTime(.0001,t+.12); o.connect(g).connect(out); o.start(t); o.stop(t+.13);
+      const s=A.createBufferSource(), f=A.createBiquadFilter(), h=A.createGain(); s.buffer=nb; f.type="bandpass"; f.frequency.value=1800+Math.random()*900; f.Q.value=3; h.gain.setValueAtTime(.35*acc,t); h.gain.exponentialRampToValueAtTime(.0001,t+.035); s.connect(f).connect(h).connect(out); s.start(t,Math.random()*2,.05); };
+    const stride=lame?.85:.46, beats=lame?[[0,1],[.32,.5]]:[[0,.8],[.07,.6],[.15,.7],[.22,1]];
+    for(let c=0;c*stride<dur-.25;c++) beats.forEach(([o,a])=>hoof(t0+c*stride+o+(Math.random()-.5)*.012,a));
+    const tn=t0+dur;
+    if(lame){ // wah wah wah waaah
+      [[196,.45],[185,.45],[175,.45],[165,1.3]].reduce((t,[fq,len],k)=>{ const o=A.createOscillator(), f=A.createBiquadFilter(), g=A.createGain(); o.type="sawtooth"; o.frequency.setValueAtTime(fq*1.03,t); o.frequency.exponentialRampToValueAtTime(fq,t+.12);
+        if(k===3){ const l=A.createOscillator(), lg=A.createGain(); l.frequency.value=5.5; lg.gain.value=6; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t+len); }
+        f.type="lowpass"; f.frequency.setValueAtTime(500,t); f.frequency.linearRampToValueAtTime(1300,t+.15); f.frequency.linearRampToValueAtTime(600,t+len); g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.28,t+.05); g.gain.setValueAtTime(.28,t+len-.12); g.gain.exponentialRampToValueAtTime(.0001,t+len);
+        o.connect(f).connect(g).connect(out); o.start(t); o.stop(t+len+.02); return t+len+.03; },tn);
+      return; }
+    // whinny: two detuned voices sweeping up, wobbling, then falling off in a "ho-ho-ho"
+    [1,1.5].forEach((m,k)=>{ const o=A.createOscillator(), l=A.createOscillator(), lg=A.createGain(), f=A.createBiquadFilter(), g=A.createGain(), tr=A.createOscillator(), tg=A.createGain();
+      o.type="sawtooth"; o.frequency.setValueAtTime(700*m,tn); o.frequency.linearRampToValueAtTime(1350*m,tn+.18); o.frequency.linearRampToValueAtTime(1100*m,tn+.6); o.frequency.exponentialRampToValueAtTime(360*m,tn+1.3);
+      l.frequency.setValueAtTime(9,tn); l.frequency.linearRampToValueAtTime(16,tn+1.3); lg.gain.value=55*m; l.connect(lg).connect(o.frequency);
+      tr.frequency.setValueAtTime(0.1,tn); tr.frequency.setValueAtTime(7,tn+.8); tg.gain.value=.12; tr.connect(tg);
+      f.type="bandpass"; f.frequency.value=1500*m; f.Q.value=1.4; g.gain.setValueAtTime(.0001,tn); g.gain.exponentialRampToValueAtTime(k?.12:.3,tn+.06); g.gain.setValueAtTime(k?.12:.3,tn+.9); g.gain.exponentialRampToValueAtTime(.0001,tn+1.35); tg.connect(g.gain);
+      o.connect(f).connect(g).connect(out); [o,l,tr].forEach(x=>{ x.start(tn); x.stop(tn+1.4); }); });
+    // the crowd goes wild
+    const cs=A.createBufferSource(), cf=A.createBiquadFilter(), cg=A.createGain(); cs.buffer=nb; cf.type="bandpass"; cf.frequency.value=1100; cf.Q.value=.6;
+    cg.gain.setValueAtTime(.0001,tn+.2); cg.gain.exponentialRampToValueAtTime(.22,tn+.7); cg.gain.setValueAtTime(.22,tn+1.6); cg.gain.exponentialRampToValueAtTime(.0001,tn+2.6); cs.connect(cf).connect(cg).connect(out); cs.start(tn+.2,0,2.4);
   }catch(e){}
+}
+// confetti for the winners, falling carrots for the ponies; skipped when the phone asks for reduced motion
+function confetti(lame){
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c=document.createElement("canvas"), dpr=Math.min(2,window.devicePixelRatio||1), W=innerWidth, H=innerHeight; c.width=W*dpr; c.height=H*dpr; c.className="confetti"; document.body.appendChild(c);
+  const x=c.getContext("2d"); x.scale(dpr,dpr); const cols=["#FFB547","#2BD99A","#6EA8FF","#FF5C72","#B48CFF","#FFD54A"], emo=["🥕","🐌","🥕","💤"];
+  const ps=[...Array(lame?28:150)].map(()=>({x:lame?Math.random()*W:W/2+(Math.random()-.5)*80,y:lame?-20-Math.random()*H*.5:H*.55,vx:lame?(Math.random()-.5)*.6:(Math.random()-.5)*11,vy:lame?1.5+Math.random()*2:-8-Math.random()*9,r:Math.random()*6.28,vr:(Math.random()-.5)*.3,s:5+Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],e:emo[Math.floor(Math.random()*emo.length)]}));
+  const t0=performance.now(), life=2800; x.font="22px serif";
+  const step=now=>{ const k=(now-t0)/life; x.clearRect(0,0,W,H); x.globalAlpha=Math.max(0,1-Math.max(0,k-.7)/.3);
+    ps.forEach(p=>{ p.vy+=lame?.02:.28; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; x.save(); x.translate(p.x,p.y); x.rotate(p.r); if(lame) x.fillText(p.e,-11,8); else { x.fillStyle=p.c; x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); } x.restore(); });
+    if(k<1) requestAnimationFrame(step); else c.remove(); };
+  requestAnimationFrame(step);
 }
 function replayRace(id="race"){
   const r=$(id+"Rect"), labs=$(id+"Labs"), hg=$(id+"Horses"); if(!r) return; const W=+r.getAttribute("width"), t0=performance.now(), dur=3600; S.pRacing=1; if(labs) labs.style.opacity=0;
   const hs=hg?[...hg.querySelectorAll(".rhorse")].map(g=>({g,p:g.dataset.xy.split(";").map(q=>q.split(",").map(Number))})):[];
-  horseSound(dur/1000);
+  const lame=S.raceMode==="lame"; horseSound(dur/1000,lame);
   const step=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,1.6); r.setAttribute("width",(W*e).toFixed(1)); S.pBusy=Date.now();
     hs.forEach(h=>{ const f=e*(h.p.length-1), i=Math.min(h.p.length-2,Math.floor(f)), u=f-i, a=h.p[i], b=h.p[i+1]||a, bob=k<1?Math.sin(now/55)*1.6:0; h.g.setAttribute("transform",`translate(${(a[0]+(b[0]-a[0])*u).toFixed(1)} ${(a[1]+(b[1]-a[1])*u+bob).toFixed(1)})`); });
-    if(k<1) requestAnimationFrame(step); else { S.pRacing=0; if(labs){ labs.style.transition="opacity .4s"; labs.style.opacity=1; } } };
+    if(k<1) requestAnimationFrame(step); else { S.pRacing=0; if(labs){ labs.style.transition="opacity .4s"; labs.style.opacity=1; } confetti(lame); } };
   r.setAttribute("width",0); requestAnimationFrame(step);
 }
 const ymdLocal=t=>{ const d=new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
@@ -3716,6 +3764,8 @@ function wirePlot(){
     const hi=e.target.closest("[data-phide]"); if(hi){ S.pHideIdeas=S.pHideIdeas.concat(hi.dataset.phide); LS.set("phideideas",S.pHideIdeas); bust(); return; }
     if(e.target.closest("[data-punhide]")){ S.pHideIdeas=[]; LS.set("phideideas",[]); bust(); return; }
     const sm=e.target.closest("summary"), dl=sm&&sm.parentElement; if(dl&&dl.dataset.pid!=null){ S.pOpen[dl.dataset.pid]=!dl.open; return; }
+    const rm=e.target.closest("[data-pracemode]"); if(rm){ S.raceMode=rm.dataset.pracemode; LS.set("racemode",S.raceMode); bust(); return; }
+    const rt=e.target.closest("[data-pracetop]"); if(rt){ S.raceTop=+rt.dataset.pracetop; LS.set("racetop",S.raceTop); bust(); return; }
     if(e.target.closest("[data-pracemute]")){ S.raceMute=!S.raceMute; LS.set("racemute",S.raceMute); bust(); return; }
     const rg=e.target.closest("[data-prange]"); if(rg){ S.prange=rg.dataset.prange; LS.set("prange",S.prange); S.pIdx=null; renderPlot(true); return; }
     const bm=e.target.closest("[data-pbm]"); if(bm){ S.pbm=bm.dataset.pbm||null; LS.set("pbm",S.pbm); renderPlot(true); return; }
