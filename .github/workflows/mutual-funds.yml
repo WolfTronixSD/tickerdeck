@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: node scripts/mutual_funds.mjs
-        timeout-minutes: 5
+        timeout-minutes: 8
       - name: Save mutual_funds.json
         run: |
           git config user.name "github-actions[bot]"

@@ -864,7 +864,9 @@ const SETUP_KEYS=["key","tdkey","list","hold","cost","alerts","targets","divs","
   if(!data||typeof data!=="object") return;
   const has=!!LS.get("key","");
   if(has&&!confirm("Use the GoldRabbit setup from your other app? This replaces the keys and watchlist here.")) return;
-  for(const k of SETUP_KEYS) if(k in data) try{ localStorage.setItem("tdl."+k,JSON.stringify(data[k])); }catch(e){}
+  // only ticker-shaped symbols come in, so a doctored link can't slip markup into the page
+  const sym=x=>typeof x==="string"&&/^[A-Za-z0-9.^=\-]{1,12}$/.test(x), clean=(k,v)=>k==="list"?(Array.isArray(v)?v.filter(sym):[]):k==="ptx"?(Array.isArray(v)?v.filter(t=>t&&sym(t.s)&&/^\d{4}-\d\d-\d\d$/.test(t.d)&&isFinite(t.q)):[]):v&&typeof v==="object"&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).filter(([x])=>sym(x))):v;
+  for(const k of SETUP_KEYS) if(k in data) try{ localStorage.setItem("tdl."+k,JSON.stringify(k==="key"||k==="tdkey"?String(data[k]):clean(k,data[k]))); }catch(e){}
 })();
 function setupLink(){
   const d={}; for(const k of SETUP_KEYS){ const v=LS.get(k,null); if(v!=null&&v!=="") d[k]=v; }
@@ -1929,12 +1931,13 @@ function reportData(P){
   const hol=Object.entries(HOLIDAYS).filter(([d])=>d>=t&&d<=ahead);
   return {P,from,to,L,idx,avg,spy,held,now,then,contrib,sec,spread,th,sig,er,dv,hol};
 }
-function reportText(D){
+// hide: percentages only, no dollar amounts (always on for anything sent to Claude)
+function reportText(D,hide){
   const R=REP[D.P], f=d=>d.toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"}), out=[];
   out.push(`🐇 GoldRabbit ${R.name} report · ${f(D.from)} – ${f(D.to)}`,"");
   out.push("MARKET: "+D.idx.map(o=>`${o.n} ${fmtP(o.r)}`).join(" · "));
   if(D.avg!=null) out.push(`WATCHLIST: ${fmtP(D.avg)} equal-weight${D.spy!=null?` (${D.avg>=D.spy?"beat":"trailed"} S&P by ${Math.abs(D.avg-D.spy).toFixed(1)} pts)`:""}`);
-  if(D.held.length) out.push(`PORTFOLIO: ${fmt$(D.now)} (${D.now-D.then>=0?"+":"−"}${fmt$(Math.abs(D.now-D.then))}, ${fmtP(D.then?(D.now/D.then-1)*100:null)})`);
+  if(D.held.length) out.push(`PORTFOLIO: ${hide?"":`${fmt$(D.now)} (${D.now-D.then>=0?"+":"−"}${fmt$(Math.abs(D.now-D.then))}, `}${fmtP(D.then?(D.now/D.then-1)*100:null)}${hide?"":")"}`);
   if(D.L.length){ out.push("","Best: "+D.L.slice(0,3).map(o=>`${o.x} ${fmtP(o.r)}`).join(", ")); out.push("Worst: "+D.L.slice(-3).reverse().map(o=>`${o.x} ${fmtP(o.r)}`).join(", ")); }
   if(D.sec.length) out.push("Sectors leading: "+D.sec.slice(0,3).map(o=>`${o.n} ${fmtP(o.r)}`).join(", ")+" · lagging: "+D.sec.slice(-2).map(o=>`${o.n} ${fmtP(o.r)}`).join(", "));
   if(D.th.length) out.push("Themes: "+D.th.map(o=>`${o.n} ${fmtP(o.avg)}`).join(", "));
@@ -1965,9 +1968,9 @@ function openReport(P,load=true){
     ${sec(`Coming up (next ${REP[P].ahead} days)`,[...D.er.map(o=>li(`📣 ${o.x} earnings`,`${dShort(o.e.date)}${o.e.hour==="bmo"?" · pre-mkt":o.e.hour==="amc"?" · after close":""}`)),...D.dv.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}`,dShort(o.n.ex))),...D.hol.map(([d,n])=>li(`🏖 Market closed: ${n}`,dShort(d)))].join("")||`<p class="hint">Nothing scheduled for your stocks.</p>`)}
     <button class="ghost" data-open-ahead style="width:100%">🔭 Look ahead: next week, month and quarter</button>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="ghost" id="repShare">⇪ Share report</button><button class="ghost" id="repCopy">⧉ Copy text</button></div>
-    <a class="claude" href="${claudeURL(`Write my ${R.name.toLowerCase()} investing report for ${f(D.from)} – ${f(D.to)}. Search the web for what drove markets over this period and what's ahead. My data:\n${reportText(D)}\n\nStructure: 1) what happened and why, 2) my winners and losers explained, 3) sector and theme rotation, 4) risks and what to watch next ${R.span}, 5) three action ideas to research (not advice).`)}" target="_blank" rel="noopener">✨ Ask Claude to write the full report</a>`;
+    <a class="claude" href="${claudeURL(`Write my ${R.name.toLowerCase()} investing report for ${f(D.from)} – ${f(D.to)}. Search the web for what drove markets over this period and what's ahead. My data:\n${reportText(D,true)}\n\nStructure: 1) what happened and why, 2) my winners and losers explained, 3) sector and theme rotation, 4) risks and what to watch next ${R.span}, 5) three action ideas to research (not advice).`)}" target="_blank" rel="noopener">✨ Ask Claude to write the full report</a>`;
   $("repTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-rep]"); if(b) openReport(b.dataset.rep,false); });
-  const txt=reportText(D);
+  const txt=reportText(D,S.priv);
   $("repShare").addEventListener("click",async()=>{ try{ if(navigator.share){ await navigator.share({title:`GoldRabbit ${R.name} report`,text:txt}); return; } }catch(e){ if(e&&e.name==="AbortError") return; } try{ await navigator.clipboard.writeText(txt); toast("Report copied"); }catch(e){ toast("Couldn't share on this device"); } });
   $("repCopy").addEventListener("click",async()=>{ try{ await navigator.clipboard.writeText(txt); toast("Report copied"); }catch(e){ toast("Couldn't copy on this device"); } });
   if(!$("sheet").classList.contains("show")) showSheet();
@@ -2289,8 +2292,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.43";
+const APP_VERSION="3.44";
 const CHANGELOG=[
+  {v:"3.44",date:"2026-10-22",title:"Production check fixes",items:["Fixed 📊 Reports on Home, which stopped opening after the StockPlotter reports were added","Ask Claude from Home no longer sends share counts or your portfolio's dollar value, only percentages","Mutual fund prices refresh reliably again (the nightly job had been timing out)","Setup links only accept ticker-shaped symbols"]},
   {v:"3.43",date:"2026-10-22",title:"Printer-friendly report PDF",items:["Printing with Ctrl+P or the browser menu while a report is open now prints the clean white report, not the dark app","New print layout: a title header, white cards with a colored edge, two-column market events and a compact award row","Reference tables (holdings, monthly returns, risk) start on their own page","Printing any other page uses white paper and dark ink too"]},
   {v:"3.42",date:"2026-10-22",title:"Cleaner chart buttons, fuller reports",items:["Range, compare and average buttons sit together in one compact panel, with a colored dot for each average","Reports end with reference tables: every holding with weight, return and gain, monthly returns in % and $, and risk stats (the $ grid is left out when amounts are hidden)","Save PDF now has white margins on every page and lets long lists flow across pages without gaps","On a computer with a mouse, button rows wrap instead of needing a swipe, and the mouse wheel scrolls the Home buttons"]},
   {v:"3.41",date:"2026-10-22",title:"Tidier horse race labels",items:["The index label (S&P 500, Nasdaq…) on the horse race no longer overlaps the stock labels","The start marker moved to the left edge, out of the way of the finish"]},
@@ -2966,7 +2970,7 @@ function stockPrompt(s){
   return L.join("\n");
 }
 function listPrompt(){
-  const rows=S.list.filter(s=>price(s)!=null).map(s=>{ const A=analytics(s); return `${s}: ${fmt$(price(s))}, today ${fmtP(r1d(s))}, 1M ${fmtP(ret(s,"1m"))}, 1Y ${fmtP(ret(s,"1y"))}${A?`, ${A.label}, RSI ${A.R.toFixed(0)}`:""}${S.holdings[s]?`, I own ${S.holdings[s]} sh`:""}`; });
+  const rows=S.list.filter(s=>price(s)!=null).map(s=>{ const A=analytics(s); return `${s}: ${fmt$(price(s))}, today ${fmtP(r1d(s))}, 1M ${fmtP(ret(s,"1m"))}, 1Y ${fmtP(ret(s,"1y"))}${A?`, ${A.label}, RSI ${A.R.toFixed(0)}`:""}${S.holdings[s]?`, I own it`:""}`; });
   return `Review my stock watchlist as of ${new Date().toLocaleDateString()}. Live data:\n${rows.join("\n")}\n\nSearch the web for the latest news, then tell me: what's moving and why, concentration and sector risk, which names look stretched or oversold, upcoming catalysts, and 3 things to watch this week. Be direct and balanced.`;
 }
 function renderSignals(){
@@ -3585,7 +3589,7 @@ function reportSummary(D,hide){
   if(D.tx.length) s.push(`You made ${D.tx.length} trade${D.tx.length>1?"s":""}${D.flow&&!hide?`, adding a net ${(D.flow>=0?"":"−")+fmt$(Math.abs(D.flow),0)}`:""}.`);
   return s.join(" ");
 }
-function reportText(D,hide){
+function plotReportText(D,hide){
   const G=reportGrade(D), L=[`📄 ${D.name} portfolio report · ${pdL(D.a.t)} – ${pdL(D.z.t)}`,`${G.mood} · Grade ${G.g}`,"",reportSummary(D,hide),"","vs the indexes: "+D.bms.map(b=>`${b.n} ${fmtP(b.r)}`).join(" · ")];
   if(D.byR.length) L.push("","Best: "+D.byR.slice(0,3).map(o=>`${o.x} ${fmtP(o.r)}`).join(", "),"Worst: "+D.byR.slice(-3).reverse().map(o=>`${o.x} ${fmtP(o.r)}`).join(", "));
   L.push(`Green days: ${D.green} of ${D.ndays}, longest winning streak ${D.streak} day${D.streak===1?"":"s"}.`);
@@ -3636,7 +3640,7 @@ function openPlotReport(k){
     ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4><div class="pevs">${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}</div>${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
     ${D.big.length?`<div class="card"><h4>⚡ Biggest S&amp;P 500 days</h4>${D.big.map(b=>li(pdL(parseET(b.day)),fmtP(b.r),tcls(b.r))).join("")}</div>`:""}
     ${reportRefHTML(D)}
-    <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(reportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
+    <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(plotReportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
     <p class="hint" style="font-size:11px">Returns ignore money added or taken out with buys and sells. Ask Claude gets percentages only, never dollar amounts or share counts. Event dates marked estimated follow the usual schedule. Not investment advice.</p></div>`;
   wireReport(D); showSheet();
 }
@@ -3650,8 +3654,8 @@ window.addEventListener("beforeprint",()=>{ if(!$("sheet").hidden&&!document.bod
 window.addEventListener("afterprint",()=>{ if(document.body.classList.contains("printing-auto")){ document.body.classList.remove("printing","printing-auto"); document.documentElement.classList.remove("printing"); } });
 function wireReport(D){
   $("prep").addEventListener("click",e=>{ const r=e.target.closest("[data-preport]"); if(r){ openPlotReport(r.dataset.preport); return; }
-    if(D&&e.target.closest("[data-prepcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(reportText(D,S.priv)).then(()=>toast("Report copied"),()=>toast("Couldn't copy")); return; }
-    if(D&&e.target.closest("[data-prepshare]")){ navigator.share({title:`${D.name} portfolio report`,text:reportText(D,S.priv)}).catch(()=>{}); return; }
+    if(D&&e.target.closest("[data-prepcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(plotReportText(D,S.priv)).then(()=>toast("Report copied"),()=>toast("Couldn't copy")); return; }
+    if(D&&e.target.closest("[data-prepshare]")){ navigator.share({title:`${D.name} portfolio report`,text:plotReportText(D,S.priv)}).catch(()=>{}); return; }
     if(D&&e.target.closest("[data-preppdf]")){ printSheet(`GoldRabbit ${D.name} report ${ymdLocal(D.z.t)}`); return; } });
 }
 /* ---------- analyze this chart: you vs the chosen index over the chosen range, in plain English ---------- */
