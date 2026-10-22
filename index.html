@@ -293,9 +293,11 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pposter span{font-size:12.5px}
 .pposter em{font-style:normal;font-size:11px;color:#6B5233}
 .pposter .money{color:inherit}
-.pmon2 i{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:3px 0;line-height:1.15}
-.pmon2 i b{font-size:8.5px;font-weight:700}
-.pmon2 i small{font-size:7.5px;opacity:.85}
+.pmon.pmon2{grid-template-columns:30px repeat(12,1fr);gap:3px;font-size:11px;font-weight:600}
+.pmon2>span{align-self:center}
+.pmon2 i{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:7px 0;line-height:1.15;border-radius:5px}
+.pmon2 i b{font-size:12px;font-weight:700}
+.pmon2 i small{font-size:10px;opacity:.9}
 .pbig h5,.pexec h5{margin:0 0 4px;font-size:12.5px;font-weight:700}
 .pbul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5}
 .pbul li{padding-left:2px}
@@ -387,7 +389,9 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .stats div{background:#fff;border-color:#DDE1E6}
   body.printing .chart{background:#fff;border-color:var(--line)}
   body.printing .d-head h3{color:#111820}
-  body.printing .pbul{font-size:10.5px;gap:3px;line-height:1.4}
+  body.printing .pbul{font-size:11px;gap:3px;line-height:1.4}
+  body.printing .pexec .pbul{font-size:12.5px;gap:5px;line-height:1.5}
+  body.printing .pexec h4{font-size:11px}
   body.printing .pbig h5{font-size:10.5px;margin-bottom:2px}
   body.printing .pbig,body.printing .pexec{break-inside:avoid}
   body.printing .pexec{background:#FBF3E4!important;border:1px solid #C9A46A!important;break-before:avoid}
@@ -399,9 +403,11 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .prisk{display:grid!important;grid-template-columns:1fr 1fr;column-gap:6px}
   body.printing .prisk>h4,body.printing .prisk>p{grid-column:1/-1;margin:0}
   body.printing .prisk .stats div{padding:4px 6px;font-size:9.5px}
-  body.printing .pmon2 i{padding:2px 0}
-  body.printing .pmon2 i b{font-size:9px}
-  body.printing .pmon2 i small{font-size:8px}
+  body.printing .pmon.pmon2{font-size:11px;gap:3px}
+  body.printing .pmon2 i{padding:7px 0}
+  body.printing .pmon2 i b{font-size:12.5px}
+  body.printing .pmon2 i small{font-size:10.5px}
+  body.printing .pmon2+.hint{font-size:11px!important}
 }
 }
 .prep-hero{text-align:center;gap:6px}
@@ -2363,8 +2369,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.47";
+const APP_VERSION="3.48";
 const CHANGELOG=[
+  {v:"3.48",date:"2026-10-22",title:"Easier to read monthly returns",items:["Reports: the monthly % and $ grid, the month-by-month bar chart and the executive summary are bigger and easier to read"]},
   {v:"3.47",date:"2026-10-22",title:"Report finishing touches",items:["PDF reports have a header and footer on every page, with page numbers","🌎 The big picture: what the Fed, inflation, jobs and growth reports did to the market and to you, which part of the market led, political and policy headlines from the news feed, and an outlook for the next five weeks","🤠 A short, funny executive summary closes each report","Wolf tracks label each column with its week of the year"]},
   {v:"3.46",date:"2026-10-22",title:"Wild West reports",items:["Reports: monthly returns show % and $ together in one grid, plus a new month-by-month bar chart with 🏆 and 🌵 for the best and worst months","Western and wolf theme: a desert skyline and full moon on the chart, 🐺 at the high and 🌵 at the low, a trail rank next to your grade, new awards (Top gun, Pack leader, Howl day, Bucking bronco, Campfire streak), a Hero of the trail poster and a WANTED poster","🐾 Wolf tracks: every trading day as a green or red paw print","Biggest Nasdaq 100 days next to the biggest S&P 500 days, with your own move those days","Pick a calendar week, month or year for reports and for the StockPlotter chart","Line thickness for the StockPlotter and report charts: thin, normal, bold or extra bold","Ask Claude buttons sit two per row"]},
   {v:"3.45",date:"2026-10-22",title:"Richer portfolio reports",items:["Report chart: month (or day) ticks, the high and low marked with their values, and Fed decision days","Top 5 best and worst returns, and top 5 that made or cost you the most, each with % and $","Best and worst 3 days with their dollar moves","Market events show how your portfolio moved that day next to the S&P 500","The reference page fits on one page: holdings in two side-by-side tables, monthly % and $ grids side by side","The PDF header shows the GoldRabbit version","StockPlotter: Best and Worst today show the full dollar amount"]},
@@ -3561,20 +3568,20 @@ function monthsBothHTML(all,P){
   const M0=monthData(all,P,null); if(!M0) return ""; const {ret,usd,yrs}=M0, showD=!S.priv, mx=Math.max(...Object.values(ret).map(Math.abs))||1;
   const cell=k=>{ const v=ret[k]; if(v==null) return `<i class="na"></i>`; return `<i style="background:${v>=0?`rgba(43,217,154,${(.15+.75*Math.min(1,v/mx)).toFixed(2)})`:`rgba(255,92,114,${(.15+.75*Math.min(1,-v/mx)).toFixed(2)})`}"><b>${Math.abs(v)>=10?v.toFixed(0):v.toFixed(1)}%</b>${showD&&usd[k]!=null?`<small>${kfmt(usd[k])}</small>`:""}</i>`; };
   const vals=Object.entries(ret).sort((a,b)=>b[1]-a[1]), best=vals[0], worst=vals[vals.length-1], tot=Object.values(usd).reduce((s,v)=>s+v,0);
-  return `<div class="card" style="gap:6px"><h4>📅 Monthly returns · % and $</h4><div class="pmon pmon2"><span></span>${[..."JFMAMJJASOND"].map(c=>`<span>${c}</span>`).join("")}${yrs.map(y=>`<span>${String(y).slice(2)}</span>${[...Array(12).keys()].map(m=>cell(y*12+m)).join("")}`).join("")}</div>
+  return `<div class="card" style="gap:6px"><h4>📅 Monthly returns · % and $</h4><div class="pmon pmon2"><span></span>${MONTHS.map(c=>`<span>${c}</span>`).join("")}${yrs.map(y=>`<span>${y}</span>${[...Array(12).keys()].map(m=>cell(y*12+m)).join("")}`).join("")}</div>
     <p class="hint" style="font-size:11.5px;margin:0">Top: the month's return. ${showD?"Bottom: dollars gained or lost from price moves (buys and sells not counted). ":""}Best ${monName(+best[0])} <span class="tup">${fmtP(best[1])}</span>${showD?` (${sgn$(usd[best[0]]||0)})`:""}, worst ${monName(+worst[0])} <span class="tdown">${fmtP(worst[1])}</span>${showD?` (${sgn$(usd[worst[0]]||0)})`:""}. Up in ${vals.filter(v=>v[1]>0).length} of ${vals.length} months.${showD?` Total ${sgn$(tot)}.`:""}</p></div>`;
 }
 // report: the same months as a bar chart, with the best month's trophy and the worst month's cactus
 function monthBarsHTML(all,P){
   const M0=monthData(all,P,null); if(!M0) return ""; const ks=Object.keys(M0.ret).map(Number).sort((a,b)=>a-b).slice(-24), v=ks.map(k=>M0.ret[k]); if(ks.length<2) return "";
-  const W=760,H=160,L=34,Rt=8,T=24,B=28, mx=Math.max(...v.map(Math.abs))*1.1||1, lo=Math.min(0,...v)<0?-mx:0, hi=Math.max(0,...v)>0?mx:0, Y=x=>T+(hi-x)/(hi-lo||1)*(H-T-B), bw=(W-L-Rt)/ks.length, y0=Y(0);
+  const W=620,H=250,L=40,Rt=8,T=34,B=36, mx=Math.max(...v.map(Math.abs))*1.1||1, lo=Math.min(0,...v)<0?-mx:0, hi=Math.max(0,...v)>0?mx:0, Y=x=>T+(hi-x)/(hi-lo||1)*(H-T-B), bw=(W-L-Rt)/ks.length, y0=Y(0);
   const bi=v.indexOf(Math.max(...v)), wi=v.indexOf(Math.min(...v)), lab=x=>(x>0?"+":"")+(Math.abs(x)>=10?x.toFixed(0):x.toFixed(1));
-  const grid=[hi,hi/2,0,lo/2,lo].filter((q,i,a)=>a.indexOf(q)===i).map(q=>`<line x1="${L}" x2="${W-Rt}" y1="${Y(q).toFixed(1)}" y2="${Y(q).toFixed(1)}" stroke="#8392A6" stroke-opacity="${q===0?.6:.15}"/><text x="${L-4}" y="${(Y(q)+3.5).toFixed(1)}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora,system-ui,sans-serif">${q.toFixed(0)}%</text>`).join("");
+  const grid=[hi,hi/2,0,lo/2,lo].filter((q,i,a)=>a.indexOf(q)===i).map(q=>`<line x1="${L}" x2="${W-Rt}" y1="${Y(q).toFixed(1)}" y2="${Y(q).toFixed(1)}" stroke="#8392A6" stroke-opacity="${q===0?.6:.15}"/><text x="${L-4}" y="${(Y(q)+3.5).toFixed(1)}" text-anchor="end" font-size="11.5" fill="#6B7684" font-family="Sora,system-ui,sans-serif">${q.toFixed(0)}%</text>`).join("");
   const bars=ks.map((k,i)=>{ const x=L+i*bw+bw*.16, w=bw*.68, r=v[i], y=Y(Math.max(0,r)), h=Math.max(1,Math.abs(Y(r)-y0)), m=k%12, cx=x+w/2;
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="${r>=0?"#22B07D":"#E0475E"}"${i===bi||i===wi?"":` fill-opacity=".8"`}><title>${monName(k)} ${fmtP(r)}${S.priv||M0.usd[k]==null?"":" · "+(M0.usd[k]>=0?"+":"−")+fmt$(Math.abs(M0.usd[k]),0)}</title></rect>`
-      +(ks.length<=14||i===bi||i===wi?`<text x="${cx.toFixed(1)}" y="${(r>=0?y-4:y+h+10).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="${r>=0?"#0B8A5C":"#C8243C"}" font-family="Sora,system-ui,sans-serif">${lab(r)}</text>`:"")
-      +(i===bi?`<text x="${cx.toFixed(1)}" y="${(y-15).toFixed(1)}" text-anchor="middle" font-size="13">🏆</text>`:i===wi&&r<0?`<text x="${cx.toFixed(1)}" y="${(y+h+25).toFixed(1)}" text-anchor="middle" font-size="13">🌵</text>`:"")
-      +`<text x="${cx.toFixed(1)}" y="${H-14}" text-anchor="middle" font-size="9.5" fill="#8392A6" font-family="Sora,system-ui,sans-serif">${"JFMAMJJASOND"[m]}</text>`+(m===0||i===0?`<text x="${(x-bw*.16).toFixed(1)}" y="${H-2}" font-size="9.5" font-weight="700" fill="#4A5563" font-family="Sora,system-ui,sans-serif">${Math.floor(k/12)}</text>`:""); }).join("");
+      +(ks.length<=24||i===bi||i===wi?`<text x="${cx.toFixed(1)}" y="${(r>=0?y-5:y+h+13).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="${r>=0?"#0B8A5C":"#C8243C"}" font-family="Sora,system-ui,sans-serif">${lab(r)}</text>`:"")
+      +(i===bi?`<text x="${cx.toFixed(1)}" y="${(y-20).toFixed(1)}" text-anchor="middle" font-size="17">🏆</text>`:i===wi&&r<0?`<text x="${cx.toFixed(1)}" y="${(y+h+31).toFixed(1)}" text-anchor="middle" font-size="17">🌵</text>`:"")
+      +`<text x="${cx.toFixed(1)}" y="${H-17}" text-anchor="middle" font-size="11.5" fill="#6B7684" font-family="Sora,system-ui,sans-serif">${"JFMAMJJASOND"[m]}</text>`+(m===0||i===0?`<text x="${(x-bw*.16).toFixed(1)}" y="${H-2}" font-size="11.5" font-weight="700" fill="#4A5563" font-family="Sora,system-ui,sans-serif">${Math.floor(k/12)}</text>`:""); }).join("");
   const up=v.filter(q=>q>0).length, avg=v.reduce((a,b)=>a+b,0)/v.length;
   return `<div class="card" style="gap:6px"><h4>📊 Month by month</h4><svg class="chart pspark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly returns as bars">${grid}${bars}</svg>
     <p class="hint" style="font-size:11.5px;margin:0">🏆 best month ${monName(ks[bi])} ${fmtP(v[bi])}${v[wi]<0?` · 🌵 worst ${monName(ks[wi])} ${fmtP(v[wi])}`:""} · ${up} green month${up===1?"":"s"} of ${v.length} · average ${fmtP(avg)} a month.</p></div>`;
