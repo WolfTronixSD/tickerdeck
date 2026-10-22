@@ -2135,8 +2135,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.37";
+const APP_VERSION="3.38";
 const CHANGELOG=[
+  {v:"3.38",date:"2026-10-22",title:"Pick your moving averages",items:["Turn the 20, 50, 100 and 200-day averages on and off one by one","When comparing with the S&P 500, Nasdaq, Nasdaq 100 or Dow, the index's averages are drawn too (dotted), with whether it's above or below each","Comparing also works when you plot a single stock"]},
   {v:"3.37",date:"2026-10-22",title:"StockPlotter reports, AI and trade history",items:["Record buys and sells with their date (or paste new totals and have the changes counted as trades). The chart now uses the shares you actually held each day, and returns ignore money you added or took out","Weekly, monthly, 6-month and yearly reports: a written summary, you vs the four indexes, best and worst stocks, who made or cost you money, your trades and the Fed, inflation, jobs and earnings events of the period, with Copy and Share","Ask Claude: one tap opens Claude with your holdings, weights and returns filled in, to analyze the portfolio, suggest rebalancing, explain the period or say what to watch next","Ideas to consider: flags a stock that's too big a share, leveraged funds, index funds overlapping your stocks, overheated or broken charts and upcoming earnings","Horse race is taller with bigger labels, plus a full-screen view you can zoom (+/−) and scroll, with up to all horses labeled","The range and index buttons now also sit above the heat map, so you don't have to scroll back up","50-day and 200-day moving average lines on the chart, with whether you're above or below each","Analyze this chart: you vs the index you picked over the range you picked, explained in plain English (beta, correlation, up and down capture, drawdown, trend), with Ask Claude for more","Buys and sells show as green and red dots on the chart. Everything stays on this device"]},
   {v:"3.36",date:"2026-10-22",title:"StockPlotter pro charts",items:["1W and 2W ranges, and the chart now marks the range high and low, with how far you are from each","Compare against the S&P 500, Nasdaq, Nasdaq 100 or Dow on every chart, plus a vs the indexes card showing how you did against all four","Then vs now: your value 1W, 2W, 3W, 4W, 1M, 3M, 6M, YTD and 1Y ago, the change since, and the index over the same stretch","Horse race: every holding from the same start line, the fastest horse in color, a replay animation and a full leaderboard","Who made you money, a heat map sized by position, a drawdown chart, monthly returns and risk stats (best and worst day, volatility, beta)","What the chart says: plain-English takeaways for the range you pick"]},
   {v:"3.35",date:"2026-10-22",title:"Mutual funds in StockPlotter",items:["Mutual funds like VFTAX and VIGIX now show a price, value and chart in StockPlotter","Their daily closing prices (NAV) come from a list of about 40 popular Vanguard, Fidelity, Schwab, T. Rowe Price and American Funds funds, refreshed each weekday evening","Mutual funds price once a day, so they move after the close rather than live"]},
@@ -2963,7 +2964,7 @@ function opticsExtraHTML(){
     </ul><p class="hint">Not investment advice.</p></details>`;
 }
 /* ---------- StockPlotter: your holdings plotted from daily closes. Holdings are typed or pasted in and stay on this device. ---------- */
-S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pma=LS.get("pma",true); S.pIdx=null; S.pSym=null; S.pBusy=0;
+S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pIdx=null; S.pSym=null; S.pBusy=0;
 const PRANGES=[["1w","1W",5],["2w","2W",10],["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
 if(!PRANGES.some(r=>r[0]===S.prange)) S.prange="1y";
 // indexes to compare against, through the ETFs that track them
@@ -3064,19 +3065,28 @@ function plotChart(pts,idx,bench,marks,mas){
   // buys (green) and sells (red) along the bottom
   const tm=(marks||[]).filter(m=>m.t>=t0-864e5/2&&m.t<=t1+864e5/2).map(m=>`<circle cx="${X(Math.min(t1,Math.max(t0,m.t))).toFixed(1)}" cy="${H-B-3}" r="3" fill="${m.q>0?"#2BD99A":"#FF5C72"}" stroke="#070B10" stroke-width="1"><title>${m.q>0?"Bought":"Sold"} ${esc(fmtQ(Math.abs(m.q)))} ${esc(m.s)} · ${esc(m.d)}</title></circle>`).join("");
   return `<svg class="chart" id="pSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Value over time" style="touch-action:pan-y">${grid}<defs><linearGradient id="plg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".26"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
-    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}${(mas||[]).filter(m=>m.pts.length>1).map(m=>`<path d="${path(m.pts)}" fill="none" stroke="${m.c}" stroke-width="1.2" opacity=".9"/>`).join("")}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>${hl}${tm}
+    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}${(mas||[]).filter(m=>m.pts.length>1).map(m=>`<path d="${path(m.pts)}" fill="none" stroke="${m.c}" stroke-width="${m.dash?1:1.2}" opacity="${m.dash?.7:.9}"${m.dash?` stroke-dasharray="2 3"`:""}/>`).join("")}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>${hl}${tm}
     <line x1="${X(sel[0])}" x2="${X(sel[0])}" y1="${T-4}" y2="${H-B}" stroke="#FFB547" stroke-dasharray="2 3"/><circle cx="${X(sel[0])}" cy="${Y(sel[1])}" r="4.5" fill="#FFB547" stroke="#070B10" stroke-width="2"/>
     <text x="6" y="${H-6}" font-size="9.5" fill="#8392A6" font-family="Sora">${dl(t0)}</text><text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">${pts[pts.length-1]===sel&&new Date(t1).toDateString()===new Date().toDateString()?"Today":dl(t1)}</text></svg>`;
 }
-// 50- and 200-day moving averages over the whole history, drawn for the days in range.
+// moving averages over the whole history, drawn for the days in range.
 // The portfolio uses the growth index, so a buy or sell doesn't bend the average; it's shown in today's dollars.
-const MAS=[[50,"#B48CFF"],[200,"#FF9F43"]];
-function plotMAs(P,R,x){
-  const D=P.days, f=x?o=>o.px[x]:o=>o.g, pos=new Map(D.map((o,i)=>[o,i])), out=[];
-  MAS.forEach(([n,c])=>{ if(D.length<n) return; const pts=[]; let sum=0; const avg=[];
+const MAS=[[20,"#4FD1C5"],[50,"#B48CFF"],[100,"#F78FB3"],[200,"#FF9F43"]];
+function plotMAs(P,R,x,want){
+  const D=P.days, f=x?o=>o.px[x]:o=>o.g, pos=new Map(D.map((o,i)=>[o,i])), out=[], sel=want||S.pmas;
+  MAS.forEach(([n,c])=>{ if(!sel.includes(n)||D.length<n) return; const pts=[]; let sum=0; const avg=[];
     D.forEach((o,i)=>{ sum+=f(o); if(i>=n) sum-=f(D[i-n]); avg[i]=i>=n-1?sum/n:null; });
     R.forEach(o=>{ const i=pos.get(o), a=avg[i]; if(a!=null) pts.push([o.t,x?a:o.v*a/o.g]); });
     const last=R[R.length-1], la=avg[pos.get(last)]; out.push({n,c,pts,now:la!=null?(f(last)/la-1)*100:null}); });
+  return out;
+}
+// the same averages for the compare index, scaled like its dashed line (base = the chart's first value)
+function benchMAs(R,bs,base){
+  const c=S.daily[bs]&&S.daily[bs].c, s0=bmAt(bs,R[0].t); if(!c||!s0) return []; const out=[];
+  MAS.forEach(([n,col])=>{ if(!S.pmas.includes(n)||c.length<n) return; let sum=0; const avg=[];
+    c.forEach((b,i)=>{ sum+=b[1]; if(i>=n) sum-=c[i-n][1]; avg[i]=i>=n-1?sum/n:null; });
+    const pts=[]; let j=-1; R.forEach(o=>{ while(j+1<c.length&&c[j+1][0]<=o.t+864e5/2) j++; if(j>=0&&avg[j]!=null) pts.push([o.t,base*avg[j]/s0]); });
+    const lastP=price(bs)??c[c.length-1][1], la=avg[c.length-1]; out.push({n,c:col,pts,dash:1,now:la?(lastP/la-1)*100:null}); });
   return out;
 }
 // everything that follows the slider: chart, readout and the holdings table for the chosen day
@@ -3087,6 +3097,7 @@ function plotSel(){
   let pts, bench=null, read;
   if(S.pSym&&P.have.includes(S.pSym)){
     const x=S.pSym; pts=R.map(o=>[o.t,o.px[x]]); const p=d.px[x], p0=R[0].px[x], pn=pxNow(x)??now.px[x];
+    if(S.pbm){ const s0=spyAt(R[0].t); if(s0) bench=R.map(o=>{ const s=o.live?(price(S.pbm)??spyAt(o.t)):spyAt(o.t); return [o.t,s?p0*s/s0:p0]; }); }
     read=`<div class="prd"><div><b>${esc(x)} on ${dateL}</b><span class="num">${fmt$(p)}</span></div><div><b>Your ${money(fmtQ(S.plot[x]))} sh</b><span class="num">${money(fmt$(p*S.plot[x],0))}</span></div><div><b>${isNow?"Since range start":"From then to now"}</b><span class="num ${tcls(isNow?p/p0-1:pn/p-1)}">${fmtP(isNow?(p/p0-1)*100:(pn/p-1)*100)}</span></div></div>`;
   } else {
     pts=R.map(o=>[o.t,o.v]);
@@ -3096,9 +3107,12 @@ function plotSel(){
   }
   if(pts.length>4){ const hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0), last=pts[pts.length-1][1], f=v=>S.pSym?fmt$(v):money(fmt$(v,0));
     read+=`<div class="phl"><span><i class="tup">▲</i> High ${f(pts[hiI][1])} <small>${pdL(pts[hiI][0])}</small></span><span><i class="tdown">▼</i> Low ${f(pts[loI][1])} <small>${pdL(pts[loI][0])}</small></span><span>Now <b class="${last>=pts[hiI][1]-1e-9?"tup":"tdown"}">${last>=pts[hiI][1]-1e-9?"at the high":(last/pts[hiI][1]*100-100).toFixed(1)+"% from high"}</b>, ${fmtP((last/pts[loI][1]-1)*100)} from low</span></div>`; }
-  const marks=S.ptx.filter(t=>!S.pSym||t.s===S.pSym).map(t=>({...t,t:parseET(t.d)})), xs=S.pSym&&P.have.includes(S.pSym)?S.pSym:null, mas=S.pma?plotMAs(P,R,xs):[];
-  if(mas.length) read+=`<div class="phl pmal">${mas.map(m=>`<span><i style="color:${m.c}">━</i> ${m.n}-day avg${m.now!=null?` <b class="${m.now>=0?"tup":"tdown"}">${m.now>=0?"above":"below"} by ${Math.abs(m.now).toFixed(1)}%</b>`:""}</span>`).join("")}${mas.length>1&&mas[0].pts.length&&mas[1].pts.length?`<span>${mas[0].pts[mas[0].pts.length-1][1]>=mas[1].pts[mas[1].pts.length-1][1]?"50 over 200: uptrend":"50 under 200: downtrend"}</span>`:""}</div>`;
-  $("pChart").innerHTML=plotChart(pts,idx,bench,marks,mas); $("pRead").innerHTML=read;
+  const marks=S.ptx.filter(t=>!S.pSym||t.s===S.pSym).map(t=>({...t,t:parseET(t.d)})), xs=S.pSym&&P.have.includes(S.pSym)?S.pSym:null, mas=plotMAs(P,R,xs), bmas=bench?benchMAs(R,S.pbm,pts[0][1]):[];
+  const ab=m=>m.now!=null?` <b class="${m.now>=0?"tup":"tdown"}">${m.now>=0?"above":"below"} ${Math.abs(m.now).toFixed(1)}%</b>`:"";
+  const cross=a=>{ const f=a.find(m=>m.n===50), l=a.find(m=>m.n===200); return f&&l&&f.pts.length&&l.pts.length?(f.pts[f.pts.length-1][1]>=l.pts[l.pts.length-1][1]?`<span class="tup">50 over 200: uptrend</span>`:`<span class="tdown">50 under 200: downtrend</span>`):""; };
+  if(mas.length) read+=`<div class="phl pmal"><span><b>${xs?esc(xs):"You"}</b></span>${mas.map(m=>`<span><i style="color:${m.c}">━</i> ${m.n}d${ab(m)}</span>`).join("")}${cross(mas)}</div>`;
+  if(bmas.length) read+=`<div class="phl pmal"><span><b>${bmName()}</b></span>${bmas.map(m=>`<span><i style="color:${m.c}">┅</i> ${m.n}d${ab(m)}</span>`).join("")}${cross(bmas)}</div>`;
+  $("pChart").innerHTML=plotChart(pts,idx,bench,marks,mas.concat(bmas)); $("pRead").innerHTML=read;
   const sl=$("pSlide"); if(sl&&+sl.value!==idx) sl.value=idx;
   const dt=$("pDate"); if(dt) dt.value=ymdLocal(d.t);
   // table: each holding's price and value on the chosen day, and how it has done since
@@ -3267,7 +3281,8 @@ function vsHTML(pts,R){
 // range and index chips, shown under the hero and again above the heat map
 function plotChips(){ return `<div class="chipbar">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}</div>
     <div class="chipbar pbmbar"><span class="hint">Compare</span>${BMS.map(([x,n])=>`<button data-pbm="${x}" aria-pressed="${S.pbm===x}">${esc(n)}</button>`).join("")}<button data-pbm="" aria-pressed="${!S.pbm}">Off</button></div>
-    <div class="chipbar pbmbar"><button data-pma aria-pressed="${!!S.pma}">50d / 200d avg</button><button data-pcmp>🔎 Analyze this chart</button></div>`; }
+    <div class="chipbar pbmbar"><span class="hint">Avg</span>${MAS.map(([n,c])=>`<button data-pma="${n}" aria-pressed="${S.pmas.includes(n)}" style="${S.pmas.includes(n)?`box-shadow:inset 0 -3px 0 ${c}`:""}">${n}d</button>`).join("")}</div>
+    <div class="chipbar pbmbar"><button data-pcmp>🔎 Analyze this chart</button></div>`; }
 const reportBtnsHTML=()=>`<div class="card prepbtns"><h4>📄 Reports</h4><div>${Object.entries(PREP).map(([k,v])=>`<button class="ghost" data-preport="${k}">${v[0]}</button>`).join("")}</div><p class="hint" style="font-size:11.5px;margin:0">Summary, best and worst stocks, who made you money, your trades and the market events of the period.</p></div>`;
 /* ---------- ideas to consider: simple rules over the holdings, worked out on this device ---------- */
 const LEVERAGED=new Set(["TQQQ","SQQQ","SOXL","SOXS","UPRO","SPXL","SPXU","TNA","TZA","FAS","LABU","TECL","FNGU","NVDL","NVDU","TSLL","TSLT","MSTU","MSTX","CONL","QLD","SSO","USD","ROM","BITX","ETHU"]);
@@ -3395,7 +3410,7 @@ function plotCompareData(){
   let gi=0, gb=0, gw=0, wi=0; const gap=me.map((v,i)=>(v/me[0])/(ix[i]/ix[0]));
   for(let i=1;i<gap.length;i++){ if(gap[i]<gap[gi]) gi=i; if(gap[i]/gap[gi]-1>gb){ gb=gap[i]/gap[gi]-1; gw=i; wi=gi; } }
   return {x,bs,bn,R,rMe,rIx,beta,corr,volMe:sm*Math.sqrt(252)*100,volIx:si*Math.sqrt(252)*100,ddMe:dd(me),ddIx:dd(ix),upCap:cap(upD),dnCap:cap(dnD),
-    beatDays:rm.filter((v,i)=>v>ri[i]).length,n,run:gb>0.02?{a:R[wi].t,b:R[gw].t,r:gb*100}:null,mas:plotMAs(P,R,x),rng:((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"")};
+    beatDays:rm.filter((v,i)=>v>ri[i]).length,n,run:gb>0.02?{a:R[wi].t,b:R[gw].t,r:gb*100}:null,mas:plotMAs(P,R,x,[50,200]),rng:((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"")};
 }
 function plotCompareText(C){
   const who=C.x||"Your portfolio", L=[], d=C.rMe-C.rIx;
@@ -3527,7 +3542,7 @@ function wirePlot(){
   el.addEventListener("click",e=>{
     if(e.target.closest("[data-pedit]")){ openPlotEdit(); return; }
     const rp=e.target.closest("[data-preport]"); if(rp){ openPlotReport(rp.dataset.preport); return; }
-    if(e.target.closest("[data-pma]")){ S.pma=!S.pma; LS.set("pma",S.pma); renderPlot(true); return; }
+    const ma=e.target.closest("[data-pma]"); if(ma){ const n=+ma.dataset.pma; S.pmas=S.pmas.includes(n)?S.pmas.filter(k=>k!==n):S.pmas.concat(n).sort((a,b)=>a-b); LS.set("pmas",S.pmas); renderPlot(true); return; }
     if(e.target.closest("[data-pcmp]")){ openPlotCompare(); return; }
     const rg=e.target.closest("[data-prange]"); if(rg){ S.prange=rg.dataset.prange; LS.set("prange",S.prange); S.pIdx=null; renderPlot(true); return; }
     const bm=e.target.closest("[data-pbm]"); if(bm){ S.pbm=bm.dataset.pbm||null; LS.set("pbm",S.pbm); renderPlot(true); return; }
