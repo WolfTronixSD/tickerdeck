@@ -318,7 +318,18 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .prep-hero .big{font-size:28px}
   body.printing .prep-grade{width:52px;height:52px}
   body.printing .prep-grade b{font-size:20px}
-  body.printing .prep-hero .chart{height:120px;background:#fff;border:0}
+  body.printing .prep-hero .chart{background:#fff;border:0;max-height:250px}
+  body.printing .prank{font-size:11px}
+  body.printing .stats div{padding:5px 8px}
+  body.printing .stats .num{font-size:12px}
+  body.printing .prank td{padding:2.5px 4px}
+  body.printing .card.prep2 h4{margin-bottom:2px}
+  body.printing .prep-ref2{grid-template-columns:1fr 1fr!important;gap:12px}
+  body.printing .prep-ref2 .prep-tab{font-size:9.5px}
+  body.printing .prep-ref2 .prep-tab th{font-size:8px;padding:2px 4px}
+  body.printing .prep-ref2 .prep-tab td{padding:1.5px 4px}
+  body.printing .prep-ref2 .pmon i{font-size:7.5px;padding:3px 0}
+  body.printing .prep-ref2 .hint{font-size:9px!important}
   body.printing .prep-hero .prep2{grid-template-columns:repeat(4,1fr)}
   body.printing .prep-hero .kv{flex-direction:column;gap:1px;font-size:12px}
   body.printing .prep-hero .kv span{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em}
@@ -348,6 +359,18 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .prep-hero{text-align:center;gap:6px}
 .prep-refh{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
 .prep-tab{width:100%;border-collapse:collapse;font-size:12.5px}
+.prep-ref2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.prep-ref2>.card{margin:0}
+@media (max-width:520px){.prep-ref2{grid-template-columns:1fr}}
+.prank{width:100%;border-collapse:collapse;font-size:12.5px}
+.prank td{padding:4px 4px;border-top:1px solid var(--line)}
+.prank tr:first-child td{border-top:0}
+.prank td.num{text-align:right;white-space:nowrap}
+.prank td.rk{width:16px;color:var(--faint);font-size:10.5px}
+.prank td.nm{font-weight:700}
+.pev-r{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.pev-r small{font-size:10px}
+.pspark{width:100%;height:auto;display:block}
 .prep-tab th{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);text-align:right;padding:4px 6px;border-bottom:1px solid var(--line)}
 .prep-tab th:first-child,.prep-tab td:first-child{text-align:left;font-weight:700}
 .prep-tab td{text-align:right;padding:5px 6px;border-bottom:1px solid var(--line)}
@@ -399,7 +422,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .thero .big{font-family:var(--mono);font-size:30px;font-weight:600}
 .thero .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .thero .row3 div{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
-.thero .row3 b{font-size:10.5px;color:#AEB9C7;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.thero .row3 b{font-size:10px;color:#AEB9C7;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;font-weight:600}
 .thero .row3 span{font-family:var(--mono);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .breadth{display:flex;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.08)}
 .breadth i{display:block;height:100%}
@@ -2292,8 +2315,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.44";
+const APP_VERSION="3.45";
 const CHANGELOG=[
+  {v:"3.45",date:"2026-10-22",title:"Richer portfolio reports",items:["Report chart: month (or day) ticks, the high and low marked with their values, and Fed decision days","Top 5 best and worst returns, and top 5 that made or cost you the most, each with % and $","Best and worst 3 days with their dollar moves","Market events show how your portfolio moved that day next to the S&P 500","The reference page fits on one page: holdings in two side-by-side tables, monthly % and $ grids side by side","The PDF header shows the GoldRabbit version","StockPlotter: Best and Worst today show the full dollar amount"]},
   {v:"3.44",date:"2026-10-22",title:"Production check fixes",items:["Fixed 📊 Reports on Home, which stopped opening after the StockPlotter reports were added","Ask Claude from Home no longer sends share counts or your portfolio's dollar value, only percentages","Mutual fund prices refresh reliably again (the nightly job had been timing out)","Setup links only accept ticker-shaped symbols"]},
   {v:"3.43",date:"2026-10-22",title:"Printer-friendly report PDF",items:["Printing with Ctrl+P or the browser menu while a report is open now prints the clean white report, not the dark app","New print layout: a title header, white cards with a colored edge, two-column market events and a compact award row","Reference tables (holdings, monthly returns, risk) start on their own page","Printing any other page uses white paper and dark ink too"]},
   {v:"3.42",date:"2026-10-22",title:"Cleaner chart buttons, fuller reports",items:["Range, compare and average buttons sit together in one compact panel, with a colored dot for each average","Reports end with reference tables: every holding with weight, return and gain, monthly returns in % and $, and risk stats (the $ grid is left out when amounts are hidden)","Save PDF now has white margins on every page and lets long lists flow across pages without gaps","On a computer with a mouse, button rows wrap instead of needing a swipe, and the mouse wheel scrolls the Home buttons"]},
@@ -3566,17 +3590,18 @@ function plotReportData(k){
   const R=days.slice(i0); if(R.length<2) return null; const a=R[0], z=R[R.length-1], ret=(z.g/a.g-1)*100, gain=marketGain(a,z), flow=netFlow(a,z);
   const bms=BMS.map(([x,n])=>{ const s0=bmAt(x,a.t), s1=z.live?price(x)??bmAt(x,z.t):bmAt(x,z.t); return {x,n,r:s0&&s1?(s1/s0-1)*100:null}; });
   const cs=contribs(P,R).filter(o=>o.r!=null&&(R[0].q[o.x]>0||z.q[o.x]>0)), byR=cs.slice().sort((p,q)=>q.r-p.r), byD=cs.slice().sort((p,q)=>q.d-p.d);
-  const ch=R.slice(1).map((o,i)=>({t:o.t,day:o.day,r:(o.g/R[i].g-1)*100})), best=ch.length?ch.reduce((p,q)=>q.r>p.r?q:p):null, worst=ch.length?ch.reduce((p,q)=>q.r<p.r?q:p):null;
+  const ch=R.slice(1).map((o,i)=>({t:o.t,day:o.day,r:(o.g/R[i].g-1)*100,d:marketGain(R[i],o)})), best=ch.length?ch.reduce((p,q)=>q.r>p.r?q:p):null, worst=ch.length?ch.reduce((p,q)=>q.r<p.r?q:p):null;
   const pts=R.map(o=>[o.t,o.v]), hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0);
   const tx=S.ptx.filter(x=>x.d>a.day&&x.d<=z.day);
-  const events=marketEvents(etISO(new Date(a.t+864e5)),z.day).filter(e=>e.kind==="fed"||e.kind==="macro"||e.kind==="earn"||/Quad/.test(e.title)).map(e=>({...e,m:spyMoveOn(e.date)}));
+  const events=marketEvents(etISO(new Date(a.t+864e5)),z.day).filter(e=>e.kind==="fed"||e.kind==="macro"||e.kind==="earn"||/Quad/.test(e.title)).map(e=>{ const j=R.findIndex(o=>o.day>=e.date&&o.t-parseET(e.date)<4*864e5); return {...e,m:spyMoveOn(e.date),me:j>0?(R[j].g/R[j-1].g-1)*100:null}; });
   const sc=S.daily.SPY&&S.daily.SPY.c, big=[]; if(sc) for(let i=1;i<sc.length;i++){ const d=etISO(new Date(sc[i][0])); if(d>a.day&&d<=z.day) big.push({day:d,r:(sc[i][1]/sc[i-1][1]-1)*100}); }
   big.sort((p,q)=>Math.abs(q.r)-Math.abs(p.r));
   const sp=bms[0].r, beat=bms.filter(b=>b.r!=null&&ret>=b.r).length, nb=bms.filter(b=>b.r!=null).length;
   let st=0, streak=0; ch.forEach(c=>{ st=c.r>0?st+1:0; streak=Math.max(streak,st); });
   const wild=cs.map(o=>{ const r=[]; for(let i=1;i<R.length;i++) if(R[i-1].px[o.x]) r.push(R[i].px[o.x]/R[i-1].px[o.x]-1); return {x:o.x,v:stdev(r)*Math.sqrt(252)*100}; }).sort((p,q)=>q.v-p.v)[0]||null;
   const bsym=S.pbm||"SPY", b0=bmAt(bsym,a.t), spark=R.map(o=>[o.t,o.g/a.g*100]), bspark=b0?R.map(o=>{ const b=o.live?(price(bsym)??bmAt(bsym,o.t)):bmAt(bsym,o.t); return [o.t,b?b/b0*100:100]; }):null;
-  return {k,name:PREP[k][0],R,a,z,ret,gain,flow,bms,byR,byD,best,worst,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb,green:ch.filter(c=>c.r>0).length,ndays:ch.length,streak,wild,spark,bspark,bname:bmName(bsym)};
+  const byDay=ch.slice().sort((p,q)=>q.r-p.r), up3=byDay.slice(0,3).filter(c=>c.r>0), dn3=byDay.slice(-3).reverse().filter(c=>c.r<0);
+  return {k,name:PREP[k][0],R,a,z,ret,gain,flow,bms,byR,byD,best,worst,up3,dn3,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb,green:ch.filter(c=>c.r>0).length,ndays:ch.length,streak,wild,spark,bspark,bname:bmName(bsym)};
 }
 // hide: leave out dollar amounts and share counts (always on for anything sent to Claude)
 function reportSummary(D,hide){
@@ -3600,9 +3625,10 @@ function plotReportText(D,hide){
 // reference tables at the end of a report: every holding, monthly returns, risk stats
 function reportRefHTML(D){
   const P=S.plotP, z=D.z, rows=D.byR.map(o=>({...o,w:z.v?(z.q[o.x]||0)*(z.px[o.x]||0)/z.v*100:0})).sort((p,q)=>q.w-p.w);
-  const tab=rows.length?`<div class="card pbreak"><h4>📋 Your holdings this period</h4><table class="prep-tab"><thead><tr><th>Stock</th><th>Weight</th><th>Return</th><th>Gain</th></tr></thead><tbody>${rows.map(o=>`<tr><td>${esc(o.x)}</td><td class="num">${o.w<0.1?o.w.toFixed(2):o.w.toFixed(1)}%</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table></div>`:"";
+  const tbl=list=>`<table class="prep-tab"><thead><tr><th>Stock</th><th>Weight</th><th>Return</th><th>Gain</th></tr></thead><tbody>${list.map(o=>`<tr><td>${esc(o.x)}</td><td class="num">${o.w<0.1?o.w.toFixed(2):o.w.toFixed(1)}%</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table>`, half=Math.ceil(rows.length/2);
+  const tab=rows.length?`<div class="card pbreak"><h4>📋 Your holdings this period · ${rows.length}</h4><div class="prep-ref2">${tbl(rows.slice(0,half))}${rows.length>1?tbl(rows.slice(half)):""}</div></div>`:"";
   const all=proSeries(P.days,null), pts=proSeries(D.R,null);
-  return `<div class="prep-refh">📎 Reference</div>${tab}${monthsHTML(all,P,null,"%")}${S.priv?"":monthsHTML(all,P,null,"$")}${riskHTML(pts,D.R,P,1).html}`;
+  return `<div class="prep-refh">📎 Reference</div>${tab}<div class="prep-ref2">${monthsHTML(all,P,null,"%")}${S.priv?"":monthsHTML(all,P,null,"$")}</div>${riskHTML(pts,D.R,P,1).html}`;
 }
 // a school grade from how you did against the S&P 500, and a weather mood from the return
 function reportGrade(D){
@@ -3610,10 +3636,24 @@ function reportGrade(D){
   const mood=r>=5?"🚀 Rocket "+D.name.toLowerCase().replace("ly","").replace("weeke","week"):r>=1?"☀️ Sunny stretch":r>=-1?"⛅ Sideways shuffle":r>=-5?"🌧️ Rainy patch":"⛈️ Stormy ride";
   return {g,mood,cls:d>=0?"up":"dn"};
 }
-function sparkSVG(a,b){
-  const W=340,H=84,all=a.map(q=>q[1]).concat(b?b.map(q=>q[1]):[]), lo=Math.min(...all), hi=Math.max(...all), t0=a[0][0], t1=a[a.length-1][0];
-  const X=t=>2+(t-t0)/(t1-t0||1)*(W-4), Y=v=>6+(1-(v-lo)/(hi-lo||1))*(H-12), P=s=>s.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" "), up=a[a.length-1][1]>=a[0][1], c=up?"#2BD99A":"#FF5C72";
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Growth over the period"><defs><linearGradient id="spkg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".35"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><line x1="0" x2="${W}" y1="${Y(100)}" y2="${Y(100)}" stroke="#8392A6" stroke-opacity=".6" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><path d="${P(a)} L${X(t1)} ${H} L${X(t0)} ${H}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="2.2" vector-effect="non-scaling-stroke"/></svg>`;
+// the report's growth chart: you vs the index, date ticks, the high and low, and Fed decision days
+function sparkSVG(a,b,o={}){
+  const W=560,H=210,L=6,Rt=6,T=30,B=26,all=a.map(q=>q[1]).concat(b?b.map(q=>q[1]):[]), lo=Math.min(...all), hi=Math.max(...all), t0=a[0][0], t1=a[a.length-1][0], span=(t1-t0)/864e5;
+  const X=t=>L+(t-t0)/(t1-t0||1)*(W-L-Rt), Y=v=>T+(1-(v-lo)/(hi-lo||1))*(H-T-B), P=s=>s.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" "), up=a[a.length-1][1]>=a[0][1], c=up?"#2BD99A":"#FF5C72";
+  // ticks: each month for longer reports, every few days for short ones
+  const tk=[]; if(span>45){ const d=new Date(t0); d.setDate(1); d.setHours(0,0,0,0); d.setMonth(d.getMonth()+1);
+    for(;+d<=t1;d.setMonth(d.getMonth()+(span>400?2:1))) tk.push([+d,d.getMonth()===0?String(d.getFullYear()):d.toLocaleDateString([], {month:"short"})]); }
+  else { const n=span>20?5:Math.min(6,a.length-1); for(let i=0;i<=n;i++){ const q=a[Math.round(i*(a.length-1)/n)]; tk.push([q[0],pdS(q[0])]); } }
+  const at=t=>{ let v=a[0]; for(const q of a){ if(q[0]>t) break; v=q; } return v; }, txt=(x,y,s,anc,col,w)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anc}" font-size="11" fill="${col}"${w?` font-weight="700"`:""} font-family="Sora,system-ui,sans-serif">${s}</text>`;
+  const anc=x=>x<70?"start":x>W-70?"end":"middle";
+  const mark=(pt,lab,isHi)=>{ if(!pt) return ""; const q=at(pt[0]), x=X(q[0]), y=Y(q[1]); const ly=isHi?(y-9<T-4?y+17:y-9):(y+17>H-B-3?y-9:y+17), ax=anc(x), lx=ax==="start"?x+6:ax==="end"?x-6:x;
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${isHi?"#0B8A5C":"#C8243C"}" stroke="#fff" stroke-width="1.5"/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${ax}" font-size="11" font-weight="700" fill="${isHi?"#0B8A5C":"#C8243C"}" stroke="#fff" stroke-width="3" paint-order="stroke" font-family="Sora,system-ui,sans-serif">${lab}</text>`; };
+  return `<svg class="chart pspark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Growth over the period"><defs><linearGradient id="spkg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".30"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs>
+    ${tk.map(([t,l])=>{ const x=X(t); return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#8392A6" stroke-opacity=".18"/>${txt(Math.min(Math.max(x,14),W-14),H-8,l,"middle","#8392A6")}`; }).join("")}
+    ${(o.fed||[]).map(t=>{ const x=X(t); return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="14" y2="${H-B}" stroke="#B48CFF" stroke-opacity=".55" stroke-dasharray="2 3"/>${txt(x,11,"Fed","middle","#9A6BEA")}`; }).join("")}
+    <line x1="${L}" x2="${W-Rt}" y1="${Y(100).toFixed(1)}" y2="${Y(100).toFixed(1)}" stroke="#8392A6" stroke-opacity=".6" stroke-dasharray="3 3"/>
+    <path d="${P(a)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="1.6" stroke-dasharray="5 4"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="2.4" stroke-linejoin="round"/>
+    ${mark(o.hi,`High${o.hiV?" "+o.hiV:""} · ${o.hi?pdS(o.hi[0]):""}`,1)}${mark(o.lo,`Low${o.loV?" "+o.loV:""} · ${o.lo?pdS(o.lo[0]):""}`,0)}</svg>`;
 }
 function openPlotReport(k){
   S.open="__preport"; const D=plotReportData(k), si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
@@ -3621,23 +3661,25 @@ function openPlotReport(k){
     <div class="chipbar prep-actions">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${PREPI[key][0]} ${v[0]}</button>`).join("")}</div>`;
   if(!D){ si.innerHTML=`<div id="prep">${head}<p class="hint">Reports need price history. Add the free Twelve Data key in Settings and give it a few minutes.</p></div>`; wireReport(null); showSheet(); return; }
   const G=reportGrade(D), mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
-  const mv=(o,d)=>`<div class="kv"><span>${esc(o.x)}</span><b class="num ${tcls(d?o.d:o.r)}">${d?sgn$(o.d):fmtP(o.r)}</b></div>`;
+  // ranked lists show both the % move and the dollars it made or cost
+  const rank=(t,list,empty)=>`<div><h4>${t}</h4>${list.length?`<table class="prank"><tbody>${list.map((o,i)=>`<tr><td class="rk">${i+1}</td><td class="nm">${esc(o.x)}</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">${empty}</p>`}</div>`;
+  const dayRows=(t,list)=>`<div><h4>${t}</h4>${list.length?`<table class="prank"><tbody>${list.map(c=>`<tr><td class="nm">${pdS(c.t)}</td><td class="num ${tcls(c.r)}">${fmtP(c.r)}</td><td class="num ${tcls(c.d)}">${sgn$(c.d)}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">None</p>`}</div>`;
   const evIcon={fed:"🏛️",macro:"📊",earn:"📣",options:"🎯"}, mvp=D.byD.length&&D.byD[0].d>0?D.byD[0]:null, fast=D.byR[0], slow=D.byR.length>1?D.byR[D.byR.length-1]:null;
   const award=(i,t,x,v)=>`<div class="paward"><span>${i}</span><small>${t}</small><b>${esc(x)}</b><em class="num">${v}</em></div>`;
   si.innerHTML=`<div id="prep">${head}
-    <div class="print-only print-head"><div><b>📄 ${D.name} portfolio report</b><small>${pdL(D.a.t)} – ${pdL(D.z.t)}</small></div><div class="ph-r">🐰 GoldRabbit<br>created ${pdL(Date.now())}</div></div>
+    <div class="print-only print-head"><div><b>📄 ${D.name} portfolio report</b><small>${pdL(D.a.t)} – ${pdL(D.z.t)}</small></div><div class="ph-r">🐰 GoldRabbit v${APP_VERSION}<br>created ${pdL(Date.now())}</div></div>
     <div class="card prep-hero ${G.cls}"><div class="prep-mood">${G.mood}</div>
       <div class="prep-top"><div><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div></div><div class="prep-grade ${G.cls}" title="Grade vs the S&P 500"><b>${G.g}</b><small>vs S&amp;P</small></div></div>
-      ${sparkSVG(D.spark,D.bspark)}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
+      ${sparkSVG(D.spark,D.bspark,{hi:D.hi,lo:D.lo,hiV:S.priv?"":fmt$(D.hi[1],0),loV:S.priv?"":fmt$(D.lo[1],0),fed:D.events.filter(e=>e.kind==="fed"&&!e.est).map(e=>parseET(e.date))})}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
       <div class="prep2">${li("Start",money(fmt$(D.a.v,0)))}${li("Now",money(fmt$(D.z.v,0)))}${li("High",money(fmt$(D.hi[1],0))+` <small>${pdS(D.hi[0])}</small>`)}${li("Low",money(fmt$(D.lo[1],0))+` <small>${pdS(D.lo[0])}</small>`)}</div></div>
     <div class="card pinsight"><h4>💡 The story</h4><p style="margin:0;font-size:13.5px;line-height:1.55">${esc(reportSummary(D,S.priv))}</p></div>
     <div class="pawards">${mvp?award("🏆","MVP",mvp.x,sgn$(mvp.d)):""}${fast?award("🚀","Fastest horse",fast.x,fmtP(fast.r)):""}${slow?award("🐌","Slowpoke",slow.x,fmtP(slow.r)):""}${D.wild?award("🎢","Wildest ride",D.wild.x,D.wild.v.toFixed(0)+"% vol"):""}${award("🔥","Win streak",D.streak+" day"+(D.streak===1?"":"s"),"in a row")}${award("☀️","Green days",D.green+" of "+D.ndays,Math.round(D.green/Math.max(1,D.ndays)*100)+"%")}</div>
     <div class="card" style="gap:6px"><h4>🏁 vs the indexes</h4>${bar("You",D.ret,1)}${D.bms.filter(b=>b.r!=null).map(b=>bar(esc(b.n),b.r)).join("")}</div>
-    ${D.byR.length?`<div class="card prep2"><div><h4>🚀 Best</h4>${D.byR.slice(0,3).map(o=>mv(o)).join("")}</div><div><h4>🐌 Worst</h4>${D.byR.slice(-3).reverse().map(o=>mv(o)).join("")}</div></div>
-    <div class="card prep2"><div><h4>💰 Made you money</h4>${D.byD.slice(0,3).filter(o=>o.d>0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing gained</p>`}</div><div><h4>💸 Cost you</h4>${D.byD.slice(-3).reverse().filter(o=>o.d<0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing lost</p>`}</div></div>`:""}
-    ${D.best?`<div class="card">${li("😄 Best day · "+pdS(D.best.t),fmtP(D.best.r),"tup")}${li("😬 Worst day · "+pdS(D.worst.t),fmtP(D.worst.r),"tdown")}</div>`:""}
+    ${D.byR.length?`<div class="card prep2">${rank("🚀 Best returns",D.byR.slice(0,5),"")}${rank("🐌 Worst returns",D.byR.slice(-5).reverse(),"")}</div>
+    <div class="card prep2">${rank("💰 Made you the most",D.byD.slice(0,5).filter(o=>o.d>0),"Nothing gained")}${rank("💸 Cost you the most",D.byD.slice(-5).reverse().filter(o=>o.d<0),"Nothing lost")}</div>`:""}
+    ${D.best?`<div class="card prep2">${dayRows("😄 Best days",D.up3)}${dayRows("😬 Worst days",D.dn3)}</div>`:""}
     ${D.tx.length?`<div class="card"><h4>🧾 Your trades</h4>${D.tx.map(t=>li(`${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} ${esc(t.s)}`,money(fmtQ(Math.abs(t.q)))+" sh",t.q>0?"tup":"tdown")).join("")}</div>`:""}
-    ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4><div class="pevs">${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}</div>${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
+    ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4><div class="pevs">${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="pev-r">${e.me!=null?`<b class="num ${tcls(e.me)}">You ${fmtP(e.me)}</b>`:""}${e.m!=null?`<small class="num ${tcls(e.m)}">S&amp;P ${fmtP(e.m)}</small>`:""}</span></div>`).join("")}</div>${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
     ${D.big.length?`<div class="card"><h4>⚡ Biggest S&amp;P 500 days</h4>${D.big.map(b=>li(pdL(parseET(b.day)),fmtP(b.r),tcls(b.r))).join("")}</div>`:""}
     ${reportRefHTML(D)}
     <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(plotReportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
@@ -3782,7 +3824,7 @@ function renderPlot(force){
   if(!$("plotMain")) el.innerHTML=`<div id="plotMain" class="pcol"></div><div id="plotPro" class="pcol"></div><div id="plotRest" class="pcol"></div>`;
   $("plotMain").innerHTML=`${head}
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big">${money(fmt$(val,0))}</span><span class="num ${tcls(dch)}">${money((dch>=0?"+":"−")+fmt$(Math.abs(dch),0))} (${fmtP(prev?dch/prev*100:null)}) today</span></div>
-      <div class="row3"><div><b>Positions</b><span>${syms.length}</span></div><div><b>Best today</b><span class="tup">${mv.length&&mv[0].d>0?esc(mv[0].x)+" "+money("+"+fmt$(mv[0].d,0)):"—"}</span></div><div><b>Worst today</b><span class="tdown">${mv.length&&mv[mv.length-1].d<0?esc(mv[mv.length-1].x)+" "+money("−"+fmt$(-mv[mv.length-1].d,0)):"—"}</span></div></div>
+      <div class="row3"><div><b>Positions</b><span>${syms.length}</span></div><div><b>Best today</b>${mv.length&&mv[0].d>0?`<span class="tup">${esc(mv[0].x)}</span><span class="tup">${money("+"+fmt$(mv[0].d,0))}</span>`:"<span>—</span>"}</div><div><b>Worst today</b>${mv.length&&mv[mv.length-1].d<0?`<span class="tdown">${esc(mv[mv.length-1].x)}</span><span class="tdown">${money("−"+fmt$(-mv[mv.length-1].d,0))}</span>`:"<span>—</span>"}</div></div>
       <div class="palloc">${top.map(o=>`<i style="flex:${o.v||0.0001};background:${hue(o.x)}" title="${esc(o.x)}"></i>`).join("")}${other?`<i style="flex:${other};background:#2A3646"></i>`:""}</div>
       <div class="plegend">${top.map(o=>`<span><i style="background:${hue(o.x)}"></i>${esc(o.x)} ${val?(o.v/val*100).toFixed(0):0}%</span>`).join("")}${other?`<span><i style="background:#2A3646"></i>Other ${(other/val*100).toFixed(0)}%</span>`:""}</div>
     </section>
