@@ -2214,8 +2214,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.40";
+const APP_VERSION="3.41";
 const CHANGELOG=[
+  {v:"3.41",date:"2026-10-22",title:"Tidier horse race labels",items:["The index label (S&P 500, Nasdaq…) on the horse race no longer overlaps the stock labels","The start marker moved to the left edge, out of the way of the finish"]},
   {v:"3.40",date:"2026-10-22",title:"Printer-friendly reports, pony race",items:["Save PDF now prints on white paper with dark text and keeps cards from splitting across pages","Fixed the MVP's dollar amount showing in a huge font","Sort and view buttons no longer overlap the holdings heading","Horse race: switch between 🏇 Fast horses and 🐴 Lame ponies (your best or worst 5 or 10), with a real gallop, a whinny and a cheering crowd, confetti for the winners, and a sad trombone with falling carrots for the ponies"]},
   {v:"3.39",date:"2026-10-22",title:"StockPlotter gets playful",items:["⭐ Golden and 💀 death crosses marked on your chart when the 50-day average crosses the 200-day","Holdings: sort by value, day change or A–Z, and switch between list, bars and bubbles","Horse race with real horses, medals, a finish line and gallop sounds (mute with 🔇); the full-screen view now fits the screen","Reports: a mood, a grade vs the S&P 500, awards (MVP, fastest horse, slowpoke, wildest ride, win streak), a growth chart, and Save PDF","Ask Claude and reports never include dollar amounts or share counts, only percentages","A 1D range: yesterday's close to today, live while the market is open","Heat map: show the top 10, top 20 or all. Monthly returns in % or $","Drawdown explained, compared with the index, with your biggest dips and how long each took to recover","Ideas: Show all for long lists, and Hide this tip"]},
   {v:"3.38",date:"2026-10-22",title:"Pick your moving averages",items:["Turn the 20, 50, 100 and 200-day averages on and off one by one","When comparing with the S&P 500, Nasdaq, Nasdaq 100 or Dow, the index's averages are drawn too (dotted), with whether it's above or below each","Comparing also works when you plot a single stock"]},
@@ -3273,7 +3274,7 @@ function raceSVG(P,R,opt){
   const T=fs*1.4,B=18,RP=Math.round(chars*fs*.62+8), hs=fs*1.5, lh=fs+3, X=t=>4+(t-t0)/(t1-t0||1)*(W-RP-hs-6), Y=v=>T+(1-(v-lo)/(hi-lo||1))*(H-T-B);
   const yv=(x,i)=>Y(R[i].px[x]/R[0].px[x]*100), path=x=>idx.map((i,k)=>(k?"L":"M")+X(R[i].t).toFixed(1)+" "+yv(x,i).toFixed(1)).join(" ");
   // labels for the leaders, nudged apart so they don't overlap and kept inside the chart
-  const labs=sel.map((o,i)=>({...o,i,y:Y(100+o.r)})).sort((a,b)=>a.y-b.y);
+  const labs=sel.map((o,i)=>({...o,i,y:Y(100+o.r)})).concat(spyLine?[{bm:1,y:Y(spyLine[spyLine.length-1][1])}]:[]).sort((a,b)=>a.y-b.y);
   for(let i=1;i<labs.length;i++) if(labs[i].y-labs[i-1].y<lh) labs[i].y=labs[i-1].y+lh;
   for(let i=labs.length-1;i>=0;i--) labs[i].y=Math.min(labs[i].y,i===labs.length-1?H-B-4:labs[i+1].y-lh); labs.forEach(o=>{ o.y=Math.max(T,o.y); });
   let grid=""; if(W>400) for(let k=1;k<4;k++){ const v=hi-(k/4)*(hi-lo), y=Y(v); grid+=`<line x1="0" x2="${W-RP}" y1="${y}" y2="${y}" stroke="#1A2430"/><text x="4" y="${y-3}" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">${v>=100?"+":""}${(v-100).toFixed(0)}%</text>`; }
@@ -3281,13 +3282,13 @@ function raceSVG(P,R,opt){
   const horses=sel.slice(0,Math.min(nl,W>400?10:5)).map(o=>{ const xy=idx.map(i=>X(R[i].t).toFixed(1)+","+yv(o.x,i).toFixed(1)).join(";"), e=xy.slice(xy.lastIndexOf(";")+1).split(",");
     return `<g class="rhorse" data-xy="${xy}" transform="translate(${e[0]} ${e[1]})"><text x="0" y="${hs*.35}" font-size="${hs}" text-anchor="middle" transform="scale(-1 1)">${opt.lame?"🐴":"🏇"}</text></g>`; }).join("");
   return `<svg class="chart" id="${id}Svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Horse race of your holdings"><defs><clipPath id="${id}Clip"><rect id="${id}Rect" x="0" y="0" width="${W}" height="${H}"/></clipPath></defs>${grid}
-        <line x1="0" x2="${W-RP}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><text x="${W-RP-hs}" y="${Y(100)-3}" text-anchor="end" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">start</text>
+        <line x1="0" x2="${W-RP}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><text x="4" y="${Y(100)+fs}" font-size="${fs-1}" fill="#566377" font-family="JetBrains Mono">start</text>
         <line x1="${X(t1)+hs*.6}" x2="${X(t1)+hs*.6}" y1="${T-fs*.6}" y2="${H-B}" stroke="#E6EDF5" stroke-width="1.5" stroke-dasharray="3 3" opacity=".5"/><text x="${X(t1)+hs*.6}" y="${T-fs*.8}" text-anchor="middle" font-size="${fs*.9}">🏁</text>
         <g clip-path="url(#${id}Clip)">${xs.filter(x=>!top.has(x)).map(x=>`<path d="${path(x)}" fill="none" stroke="#3A4757" stroke-width=".8" opacity=".55"/>`).join("")}
         ${spyLine?`<path d="${spyLine.map((q,k)=>(k?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ")}" fill="none" stroke="#E6EDF5" stroke-width="1.2" stroke-dasharray="4 3"/>`:""}
         ${sel.slice().reverse().map(o=>`<path d="${path(o.x)}" fill="none" stroke="${hue(o.x)}" stroke-width="${o===lead?2.6:1.7}"/>`).join("")}</g>
         <g id="${id}Horses">${horses}</g>
-        <g id="${id}Labs">${labs.map(o=>`<text x="${W-RP+4}" y="${o.y+fs/3}" font-size="${fs}" font-weight="700" fill="${hue(o.x)}" font-family="Sora">${esc(lab(o,o.i))}</text>`).join("")}${spyLine?`<text x="${W-RP+4}" y="${Math.min(H-B,Math.max(T+8,Y(spyLine[spyLine.length-1][1])))+fs/3}" font-size="${fs-.5}" fill="#AEB9C7" font-family="Sora">${bmName()}</text>`:""}</g>
+        <g id="${id}Labs">${labs.map(o=>o.bm?`<text x="${W-RP+4}" y="${o.y+fs/3}" font-size="${fs-.5}" fill="#AEB9C7" font-family="Sora">┅ ${bmName()}</text>`:`<text x="${W-RP+4}" y="${o.y+fs/3}" font-size="${fs}" font-weight="700" fill="${hue(o.x)}" font-family="Sora">${esc(lab(o,o.i))}</text>`).join("")}</g>
         <text x="4" y="${H-4}" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdL(t0)}</text><text x="${W-RP}" y="${H-4}" text-anchor="end" font-size="${fs}" fill="#8392A6" font-family="Sora">${pdS(t1)}</text></svg>`;
 }
 function raceHTML(P,R){
