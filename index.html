@@ -1566,10 +1566,11 @@ function summaryText(){
 }
 /* ---------- look ahead: next week / month / quarter ---------- */
 const AHEAD={w:{name:"Next week",days:7,tdays:5,span:"week"},m:{name:"Next month",days:31,tdays:21,span:"month"},q:{name:"Next quarter",days:92,tdays:63,span:"quarter"}};
-// Fed decision days (2nd day of each 2026 meeting, 2:00 PM ET); "proj" = with economic projections / dot plot
-const FOMC={"2026-01-28":0,"2026-03-18":1,"2026-04-29":0,"2026-06-17":1,"2026-07-29":0,"2026-09-16":1,"2026-10-28":0,"2026-12-09":1};
+// Fed decision days (2nd day of each 2026/2027 meeting, 2:00 PM ET); "proj" = with economic projections / dot plot
+const FOMC={"2026-01-28":0,"2026-03-18":1,"2026-04-29":0,"2026-06-17":1,"2026-07-29":0,"2026-09-16":1,"2026-10-28":0,"2026-12-09":1,
+  "2027-01-27":0,"2027-03-17":1,"2027-04-28":0,"2027-06-09":1,"2027-07-28":0,"2027-09-15":1,"2027-10-27":0,"2027-12-08":1};
 // release dates published by the BLS (others are estimated from the usual pattern)
-const KNOWN_MACRO={"2026-10-02":"Jobs report (Sep)","2026-12-04":"Jobs report (Nov)","2026-12-10":"CPI inflation (Nov)"};
+const KNOWN_MACRO={"2026-10-02":"Jobs report (Sep)","2026-10-14":"CPI inflation (Sep)","2026-11-06":"Jobs report (Oct)","2026-11-10":"CPI inflation (Oct)","2026-12-04":"Jobs report (Nov)","2026-12-10":"CPI inflation (Nov)"};
 const MOVERS=["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","AVGO","JPM","BAC","GS","WFC","NFLX","LLY","UNH","XOM","WMT","COST","ORCL","TSM","V","MA"];
 function nthWeekday(y,m,wd,n){ const d=new Date(Date.UTC(y,m,1)); let c=0; for(let i=0;i<31;i++){ const x=new Date(Date.UTC(y,m,1+i)); if(x.getUTCMonth()!==m) break; if(x.getUTCDay()===wd&&++c===n) return x; } return null; }
 function lastWeekday(y,m,wd){ for(let i=31;i>=1;i--){ const x=new Date(Date.UTC(y,m,i)); if(x.getUTCMonth()===m&&x.getUTCDay()===wd) return x; } return null; }
@@ -1600,9 +1601,13 @@ function marketEvents(from,to){
 }
 function aheadData(P){
   const A=AHEAD[P], from=etISO(new Date(Date.now()+864e5)), to=etISO(new Date(Date.now()+A.days*864e5)), map=S.earnings.map||{};
-  const mine=S.list.filter(x=>map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x]}));
-  const movers=MOVERS.filter(x=>!S.list.includes(x)&&map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x]}));
-  const divs=S.list.map(x=>({x,n:nextDiv(x)})).filter(o=>o.n&&o.n.ex>=from&&o.n.ex<=to);
+  const byDate=(a,b)=>a.e.date.localeCompare(b.e.date);
+  const val=x=>{ const p=price(x), n=S.holdings[x]; return p&&n>0?p*n:0; };
+  const mine=S.list.filter(x=>map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x],v:val(x)})).sort(byDate);
+  const movers=MOVERS.filter(x=>!S.list.includes(x)&&map[x]&&map[x].date>=from&&map[x].date<=to).map(x=>({x,e:map[x]})).sort(byDate);
+  const divs=S.list.map(x=>({x,n:nextDiv(x)})).filter(o=>o.n&&o.n.ex>=from&&o.n.ex<=to).sort((a,b)=>a.n.ex.localeCompare(b.n.ex));
+  // how much of the portfolio (by value) reports earnings in the period
+  const total=S.list.reduce((a,x)=>a+val(x),0), atStake=mine.reduce((a,o)=>a+o.v,0);
   const events=marketEvents(from,to);
   // seasonality: average of the calendar months the period covers
   const months=[...new Set(Array.from({length:Math.max(1,Math.round(A.days/30))},(_,i)=>(new Date().getMonth()+(P==="w"?0:1)+i)%12))];
@@ -1617,7 +1622,7 @@ function aheadData(P){
     lv.forEach(v=>{ const d=(v/p-1)*100; if(Math.abs(d)<=r) tested.push({x,v,d}); }); });
   const cross=S.list.map(x=>({x,A:analytics(x)})).filter(o=>o.A&&o.A.s200&&Math.abs(o.A.s50/o.A.s200-1)<.015).map(o=>({x:o.x,up:o.A.s50<o.A.s200}));
   const hot=S.list.filter(x=>{ const An=analytics(x); return An&&An.R>=70; }), cold=S.list.filter(x=>{ const An=analytics(x); return An&&An.R<=30; });
-  return {A,from,to,mine,movers,divs,events,months,seasRows,spyR,spyP,rangeRows,tested,cross,hot,cold};
+  return {A,from,to,mine,movers,divs,events,months,seasRows,spyR,spyP,rangeRows,tested,cross,hot,cold,total,atStake};
 }
 function openAhead(P){
   if(!AHEAD[P]) P=Object.keys(AHEAD)[0];
@@ -1635,18 +1640,34 @@ function openAhead(P){
     <div class="brief-hero"><h3>🔭 ${A.name}</h3>
       <p class="hint" style="font-size:14px;color:#D5DEE9">${headline.length?`Key moments: ${headline.join(", ")}.`:"A quieter stretch on the calendar."}${D.spyR!=null&&D.spyP?` The S&P 500 typically moves within ±${D.spyR.toFixed(1)}% over a ${A.span} (about ${fmt$(D.spyP*(1-D.spyR/100),0)}–${fmt$(D.spyP*(1+D.spyR/100),0)} for SPY), based on recent swings.`:""}</p></div>
     ${sec("Market calendar",D.events.map(e=>li(`${icon[e.kind]||"•"} ${esc(e.title)}${e.note?`<br><span class="hint">${esc(e.note)}</span>`:""}`,`${dl(e.date)}${e.est?" ~":""}`)).join("")||`<p class="hint">No major scheduled events.</p>`,"~ means estimated from the usual schedule; confirm at bls.gov or federalreserve.gov.")}
-    ${sec("Your earnings",D.mine.map(o=>li(`📣 ${o.x}${o.e.eps!=null?` · EPS est. ${fmt$(o.e.eps)}`:""}`,`${dl(o.e.date)}${hr(o.e)}`)).join(""),"Expect bigger moves around these dates.")}
+    ${sec("Your earnings",D.mine.map(o=>li(`📣 ${o.x}${o.e.eps!=null||o.v?`<br><span class="hint">${[o.e.eps!=null?`EPS est. ${fmt$(o.e.eps)}`:"",o.v?`${money(fmt$(o.v,0))} held`:""].filter(Boolean).join(" · ")}</span>`:""}`,`${dl(o.e.date)}${hr(o.e)}`)).join(""),`Expect bigger moves around these dates.${D.total&&D.atStake?` ${Math.round(D.atStake/D.total*100)}% of your holdings (${money(fmt$(D.atStake,0))}) report this ${A.span}.`:""}`)}
     ${sec("Market-moving earnings",D.movers.slice(0,12).map(o=>li(`📣 ${o.x}`,`${dl(o.e.date)}${hr(o.e)}`)).join(""),"Mega-caps and bellwethers that can move the whole market.")}
     ${sec("Dividends",D.divs.map(o=>li(`💵 ${o.x} ex-dividend${o.n.est?" (est.)":""}${o.n.amt?` · ${fmt$(o.n.amt,3)}`:""}`,dl(o.n.ex))).join(""),"Own the stock before the ex-dividend date to get paid.")}
     ${sec(`Typical ${A.span} range`,D.rangeRows.map(o=>li(o.x,`±${o.r.toFixed(1)}%`)).join(""),"68% of the time the move stays inside this range, based on the last 60 days of swings. Not a prediction of direction.")}
     ${sec("Alerts & targets likely to be tested",D.tested.map(o=>li(`🎯 ${o.x} at ${fmt$(price(o.x))}`,`${fmt$(o.v)} (${fmtP(o.d)})`)).join(""),"These levels sit inside the typical range for the period.")}
     ${sec("Seasonality",D.seasRows.map(o=>li(o.x==="SPY"?"S&P 500":o.x,`${fmtP(o.s.avg)} · up ${Math.round(o.s.win*100)}% of years`,tcls(o.s.avg))).join(""),`Average return in ${D.months.map(m=>MONTHS[m]).join(", ")} over the last 10 years.`)}
     ${sec("Signals to watch",(D.cross.map(o=>li(`${o.up?"★":"⚠"} ${o.x}`,o.up?"Near a golden cross":"Near a death cross"))).concat(D.hot.length?[li("🔥 Overbought, could cool off",D.hot.join(", "))]:[]).concat(D.cold.length?[li("🧊 Oversold, could bounce",D.cold.join(", "))]:[]).join(""))}
+    <button class="ghost" id="aheadIcs" style="width:100%">📅 Add these dates to my calendar</button>
     <a class="claude" href="${claudeURL(`What should I expect in the stock market over the ${A.name.toLowerCase()} (${dl(D.from)} – ${dl(D.to)})? Search the web for the latest economic calendar, Fed expectations, earnings previews and analyst outlooks. My calendar so far:\n${D.events.map(e=>`${e.date}: ${e.title}${e.est?" (est.)":""}`).join("\n")}\nMy stocks: ${S.list.join(", ")}${D.mine.length?`\nMy earnings: ${D.mine.map(o=>`${o.x} ${o.e.date}`).join(", ")}`:""}\n\nGive me: the main catalysts and what the market expects, scenarios (bull/base/bear) for the period, what it means for my stocks, and what to watch day by day.`)}" target="_blank" rel="noopener">✨ Ask Claude for the ${A.name.toLowerCase()} outlook</a>
-    <p class="hint" style="font-size:11.5px">Fed dates are the Federal Reserve's 2026 schedule. Economic release dates marked ~ are estimated from their usual timing. Earnings dates come from Finnhub and can shift.</p>`;
+    <p class="hint" style="font-size:11.5px">Fed dates are the Federal Reserve's 2026–27 schedule. Economic release dates marked ~ are estimated from their usual timing. Earnings dates come from Finnhub and can shift.</p>`;
   $("aheadTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-ahead]"); if(b) openAhead(b.dataset.ahead); });
+  $("aheadIcs").addEventListener("click",()=>aheadICS(D));
   if(!$("sheet").classList.contains("show")) showSheet(); else $("sheet").scrollTop=0;
   loadEarnings();
+}
+
+// all-day calendar file (.ics) with the period's market events, your earnings and ex-dividend dates
+function aheadICS(D){
+  const ev=D.events.map(e=>({d:e.date,t:e.title+(e.est?" (est.)":""),n:e.note||""}))
+    .concat(D.mine.map(o=>({d:o.e.date,t:`${o.x} earnings${o.e.hour==="bmo"?" (before open)":o.e.hour==="amc"?" (after close)":""}`,n:o.e.eps!=null?`EPS est. ${fmt$(o.e.eps)}`:""})))
+    .concat(D.divs.map(o=>({d:o.n.ex,t:`${o.x} ex-dividend${o.n.est?" (est.)":""}`,n:o.n.amt?`${fmt$(o.n.amt,3)} per share`:""})));
+  if(!ev.length){ toast("Nothing to add for this period"); return; }
+  const dt=d=>d.replace(/-/g,""), nx=d=>{ const x=new Date(d+"T12:00:00Z"); x.setUTCDate(x.getUTCDate()+1); return dt(isoD(x)); };
+  const tx=t=>String(t).replace(/[\\,;]/g,m=>"\\"+m).replace(/\n/g,"\\n"), stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
+  const body=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//GoldRabbit//Look ahead//EN","CALSCALE:GREGORIAN"].concat(...ev.map((e,i)=>["BEGIN:VEVENT",`UID:${dt(e.d)}-${i}-${tx(e.t).replace(/[^A-Za-z0-9]/g,"").slice(0,24)}@goldrabbit`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${dt(e.d)}`,`DTEND;VALUE=DATE:${nx(e.d)}`,`SUMMARY:${tx(e.t)}`].concat(e.n?[`DESCRIPTION:${tx(e.n)}`]:[]).concat(["TRANSP:TRANSPARENT","END:VEVENT"]))).concat(["END:VCALENDAR"]).join("\r\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([body],{type:"text/calendar"})); a.download=`goldrabbit-${D.A.span}-ahead.ics`;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
+  toast(`${ev.length} date${ev.length>1?"s":""} ready to add to Calendar`);
 }
 
 /* ---------- weekly / monthly / yearly reports ---------- */
@@ -2029,8 +2050,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.28";
+const APP_VERSION="3.29";
 const CHANGELOG=[
+  {v:"3.29",date:"2026-10-22",title:"Look ahead upgrades",items:["Fed meetings for all of 2027 so the next-quarter view keeps showing the January and March decisions","Official BLS dates for the October jobs report and CPI (CPI is Nov 10, not the 11th)","Your earnings now list in date order with your position size, plus how much of your holdings report in the period","New 📅 Add these dates to my calendar button saves the period's Fed, economic, earnings and dividend dates to your phone's Calendar"]},
   {v:"3.28",date:"2026-10-21",title:"Timeframe bar moved up",items:["The 1D–5Y timeframe bar now sits near the top of Home, right under the index tiles and above the watchlist summary it controls","It still sticks to the top of the screen as you scroll"]},
   {v:"3.27",date:"2026-10-21",title:"Stock wisdom",items:["New 🦉 Stock wisdom button on Home: 20 lessons from market history, as 10 traps to avoid, 6 habits that work and 4 signals to watch, each with what history shows and what to do","Wisdom of the day, plus a mind map: tap any box to jump to that lesson","Before you buy: an 8-point checklist to go through before any new purchase","Crash plan: write down what you'll do in a 20% or 30% drop; it saves on this device as you type"]},
   {v:"3.26",date:"2026-10-20",title:"Fiber & Photonics section",items:["Fiber & Photonics is now its own section: tap 💡 Fiber & Photonics on Home, or pick it on the Trends tab","Live prices grouped by role: lasers & transceivers, optical chips & interconnects, fiber & connectors, and links between data centers","After the close, the group's after-hours and pre-market moves, refreshed every 30 minutes overnight","\"Why optics matter for AI\" explains who makes what, co-packaged optics, and what moves these stocks","Removed the optics row from the Tomorrow card"]},
