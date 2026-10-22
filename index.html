@@ -281,30 +281,69 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .prep-btns{display:flex;gap:8px;flex-wrap:wrap}
 .prep-btns .primary{display:inline-flex;align-items:center;text-decoration:none}
 .print-only{display:none}
-/* printed reports: white paper, dark ink, nothing split across pages */
+/* printing: always white paper and dark ink, even from the browser's own Print (Ctrl+P) */
 @media print{
-  @page{margin:12mm 11mm}
-  html.printing{background:#fff!important;color-scheme:light!important}
-  body.printing{--ink:#fff;--panel:#fff;--panel2:#F2F4F7;--line:#D5DAE1;--text:#111820;--muted:#4A5563;--faint:#6B7684;--gain:#0B8A5C;--loss:#C8243C;--accent:#B7791F;background:#fff!important;color:#111820;padding:0;font-size:12px}
+  @page{size:A4;margin:14mm 12mm}
+  html{background:#fff!important;color-scheme:light!important}
+  body{--ink:#fff;--panel:#fff;--panel2:#F4F6F8;--line:#DDE1E6;--text:#111820;--muted:#4A5563;--faint:#6B7684;--gain:#0B8A5C;--loss:#C8243C;--accent:#B7791F;background:#fff!important;color:#111820}
+  *{box-shadow:none!important;text-shadow:none!important}
+  .tabbar,.ticker-tape,.scrim,.toast,.ptr,.top{display:none!important}
+  /* a report or analysis sheet prints on its own as a clean document */
+  body.printing{padding:0;font-size:11px}
   body.printing>*:not(#sheet){display:none!important}
+  body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0;background:#fff;padding:0}
-  body.printing .sheet-in{max-width:none;gap:10px}
-  body.printing [data-close],body.printing .prep-actions{display:none!important}
-  body.printing .print-only{display:block}
-  body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none!important;text-shadow:none!important}
+  body.printing .sheet-in{max-width:none;display:block}
+  body.printing .sheet-in>*+*,body.printing #prep>*+*{margin-top:9px}
+  body.printing [data-close],body.printing .prep-actions,body.printing #prep>.d-head,body.printing .sheet-in>a.primary{display:none!important}
+  body.printing .print-only{display:flex}
+  body.printing .print-head{justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid #111820;padding:0 0 7px;color:#111820}
+  body.printing .print-head b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em}
+  body.printing .print-head small{display:block;font-size:10.5px;color:#4A5563;margin-top:2px}
+  body.printing .print-head .ph-r{text-align:right;font-size:10px;color:#6B7684;line-height:1.5}
+  body.printing .card,body.printing .paward{background:#fff!important;border:1px solid #DDE1E6!important;border-radius:6px}
+  body.printing .card{padding:10px 12px;gap:6px}
+  body.printing .card h4{font-size:9.5px;letter-spacing:.09em;color:#4A5563}
+  body.printing .kv{font-size:11.5px}
+  body.printing .hint{color:#6B7684}
   body.printing .card,body.printing .paward,body.printing .pev,body.printing .kv,body.printing tr,body.printing .pmon{break-inside:avoid}
-  body.printing .card.pbreak{break-inside:auto}
+  body.printing .card.pbreak{break-inside:auto;border:0!important;padding:0}
+  body.printing .prep-refh{break-before:page;border:0;padding:0;margin:0 0 2px;font-size:13px;color:#111820}
   body.printing h4,body.printing .prep-refh{break-after:avoid}
-  body.printing .card,body.printing .paward{background:#fff!important;border:1px solid var(--line)!important;border-radius:8px}
-  body.printing .pmon i{color:#111820;font-size:9px}
-  body.printing .pmon i.na{background:#F2F4F7}
+  /* hero: white with a colored edge instead of a tinted block */
+  body.printing .prep-hero{border-left:4px solid var(--line)!important;padding:12px 14px}
+  body.printing .prep-hero.up{border-left-color:var(--gain)!important}
+  body.printing .prep-hero.dn{border-left-color:var(--loss)!important}
+  body.printing .prep-mood{font-size:15px}
+  body.printing .prep-hero .big{font-size:28px}
+  body.printing .prep-grade{width:52px;height:52px}
+  body.printing .prep-grade b{font-size:20px}
+  body.printing .prep-hero .chart{height:120px;background:#fff;border:0}
+  body.printing .prep-hero .prep2{grid-template-columns:repeat(4,1fr)}
+  body.printing .prep-hero .kv{flex-direction:column;gap:1px;font-size:12px}
+  body.printing .prep-hero .kv span{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em}
+  body.printing .card.prep2{display:grid!important;grid-template-columns:1fr 1fr;column-gap:24px}
+  body.printing .pinsight{border-left:4px solid #6EA8FF!important}
+  body.printing .pinsight p{color:#111820!important;font-size:11.5px!important;line-height:1.5!important}
+  body.printing .pawards{grid-template-columns:repeat(6,1fr);gap:6px}
+  body.printing .paward{padding:6px 4px}
+  body.printing .paward>span{font-size:18px}
+  body.printing .paward small{font-size:8.5px}
+  body.printing .paward b{font-size:12px}
+  body.printing .paward em{font-size:10px}
+  body.printing .pvs{font-size:11px}
+  body.printing .pevs{columns:2;column-gap:22px}
+  body.printing .pev{padding:3px 0;font-size:10.5px;grid-template-columns:18px 1fr auto;gap:6px}
+  body.printing .pev small{font-size:9px}
+  body.printing .prep-tab{font-size:11px}
+  body.printing .prep-tab td{padding:3px 6px}
   body.printing .prep-tab tbody tr:nth-child(even){background:#F6F7F9}
-  body.printing .prep-hero.up{border-color:var(--gain)!important;background:#F2FBF7!important}
-  body.printing .prep-hero.dn{border-color:var(--loss)!important;background:#FDF3F5!important}
-  body.printing .pinsight p{color:#111820!important}
+  body.printing .pmon i{color:#111820;font-size:9px}
+  body.printing .pmon i.na{background:#F4F6F8}
+  body.printing .stats div{background:#fff;border-color:#DDE1E6}
   body.printing .chart{background:#fff;border-color:var(--line)}
-  body.printing .pawards{grid-template-columns:repeat(6,1fr)}
   body.printing .d-head h3{color:#111820}
+}
 }
 .prep-hero{text-align:center;gap:6px}
 .prep-refh{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
@@ -2250,8 +2289,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.42";
+const APP_VERSION="3.43";
 const CHANGELOG=[
+  {v:"3.43",date:"2026-10-22",title:"Printer-friendly report PDF",items:["Printing with Ctrl+P or the browser menu while a report is open now prints the clean white report, not the dark app","New print layout: a title header, white cards with a colored edge, two-column market events and a compact award row","Reference tables (holdings, monthly returns, risk) start on their own page","Printing any other page uses white paper and dark ink too"]},
   {v:"3.42",date:"2026-10-22",title:"Cleaner chart buttons, fuller reports",items:["Range, compare and average buttons sit together in one compact panel, with a colored dot for each average","Reports end with reference tables: every holding with weight, return and gain, monthly returns in % and $, and risk stats (the $ grid is left out when amounts are hidden)","Save PDF now has white margins on every page and lets long lists flow across pages without gaps","On a computer with a mouse, button rows wrap instead of needing a swipe, and the mouse wheel scrolls the Home buttons"]},
   {v:"3.41",date:"2026-10-22",title:"Tidier horse race labels",items:["The index label (S&P 500, Nasdaq…) on the horse race no longer overlaps the stock labels","The start marker moved to the left edge, out of the way of the finish"]},
   {v:"3.40",date:"2026-10-22",title:"Printer-friendly reports, pony race",items:["Save PDF now prints on white paper with dark text and keeps cards from splitting across pages","Fixed the MVP's dollar amount showing in a huge font","Sort and view buttons no longer overlap the holdings heading","Horse race: switch between 🏇 Fast horses and 🐴 Lame ponies (your best or worst 5 or 10), with a real gallop, a whinny and a cheering crowd, confetti for the winners, and a sad trombone with falling carrots for the ponies"]},
@@ -3569,7 +3609,7 @@ function reportGrade(D){
 function sparkSVG(a,b){
   const W=340,H=84,all=a.map(q=>q[1]).concat(b?b.map(q=>q[1]):[]), lo=Math.min(...all), hi=Math.max(...all), t0=a[0][0], t1=a[a.length-1][0];
   const X=t=>2+(t-t0)/(t1-t0||1)*(W-4), Y=v=>6+(1-(v-lo)/(hi-lo||1))*(H-12), P=s=>s.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" "), up=a[a.length-1][1]>=a[0][1], c=up?"#2BD99A":"#FF5C72";
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Growth over the period"><defs><linearGradient id="spkg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".35"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><line x1="0" x2="${W}" y1="${Y(100)}" y2="${Y(100)}" stroke="#2A3646" stroke-dasharray="3 3"/><path d="${P(a)} L${X(t1)} ${H} L${X(t0)} ${H}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="1.2" stroke-dasharray="4 3"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="2.2"/></svg>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Growth over the period"><defs><linearGradient id="spkg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".35"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><line x1="0" x2="${W}" y1="${Y(100)}" y2="${Y(100)}" stroke="#8392A6" stroke-opacity=".6" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><path d="${P(a)} L${X(t1)} ${H} L${X(t0)} ${H}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="1.4" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="2.2" vector-effect="non-scaling-stroke"/></svg>`;
 }
 function openPlotReport(k){
   S.open="__preport"; const D=plotReportData(k), si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
@@ -3581,7 +3621,7 @@ function openPlotReport(k){
   const evIcon={fed:"🏛️",macro:"📊",earn:"📣",options:"🎯"}, mvp=D.byD.length&&D.byD[0].d>0?D.byD[0]:null, fast=D.byR[0], slow=D.byR.length>1?D.byR[D.byR.length-1]:null;
   const award=(i,t,x,v)=>`<div class="paward"><span>${i}</span><small>${t}</small><b>${esc(x)}</b><em class="num">${v}</em></div>`;
   si.innerHTML=`<div id="prep">${head}
-    <div class="print-only print-head">🐰 GoldRabbit · ${D.name} portfolio report · created ${pdL(Date.now())}</div>
+    <div class="print-only print-head"><div><b>📄 ${D.name} portfolio report</b><small>${pdL(D.a.t)} – ${pdL(D.z.t)}</small></div><div class="ph-r">🐰 GoldRabbit<br>created ${pdL(Date.now())}</div></div>
     <div class="card prep-hero ${G.cls}"><div class="prep-mood">${G.mood}</div>
       <div class="prep-top"><div><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div></div><div class="prep-grade ${G.cls}" title="Grade vs the S&P 500"><b>${G.g}</b><small>vs S&amp;P</small></div></div>
       ${sparkSVG(D.spark,D.bspark)}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
@@ -3593,7 +3633,7 @@ function openPlotReport(k){
     <div class="card prep2"><div><h4>💰 Made you money</h4>${D.byD.slice(0,3).filter(o=>o.d>0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing gained</p>`}</div><div><h4>💸 Cost you</h4>${D.byD.slice(-3).reverse().filter(o=>o.d<0).map(o=>mv(o,1)).join("")||`<p class="hint">Nothing lost</p>`}</div></div>`:""}
     ${D.best?`<div class="card">${li("😄 Best day · "+pdS(D.best.t),fmtP(D.best.r),"tup")}${li("😬 Worst day · "+pdS(D.worst.t),fmtP(D.worst.r),"tdown")}</div>`:""}
     ${D.tx.length?`<div class="card"><h4>🧾 Your trades</h4>${D.tx.map(t=>li(`${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} ${esc(t.s)}`,money(fmtQ(Math.abs(t.q)))+" sh",t.q>0?"tup":"tdown")).join("")}</div>`:""}
-    ${D.events.length?`<div class="card pbreak"><h4>🗓️ Market events</h4>${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
+    ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4><div class="pevs">${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="num ${tcls(e.m)}">${e.m!=null?"S&amp;P "+fmtP(e.m):""}</span></div>`).join("")}</div>${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
     ${D.big.length?`<div class="card"><h4>⚡ Biggest S&amp;P 500 days</h4>${D.big.map(b=>li(pdL(parseET(b.day)),fmtP(b.r),tcls(b.r))).join("")}</div>`:""}
     ${reportRefHTML(D)}
     <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(reportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
@@ -3605,6 +3645,9 @@ function printSheet(title){
   const old=document.title, done=()=>{ document.body.classList.remove("printing"); document.documentElement.classList.remove("printing"); document.title=old; window.removeEventListener("afterprint",done); };
   document.title=title; document.body.classList.add("printing"); document.documentElement.classList.add("printing"); window.addEventListener("afterprint",done); setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
 }
+// the browser's own Print (Ctrl+P) with a sheet open prints just that sheet, the same as Save PDF
+window.addEventListener("beforeprint",()=>{ if(!$("sheet").hidden&&!document.body.classList.contains("printing")){ document.body.classList.add("printing","printing-auto"); document.documentElement.classList.add("printing"); } });
+window.addEventListener("afterprint",()=>{ if(document.body.classList.contains("printing-auto")){ document.body.classList.remove("printing","printing-auto"); document.documentElement.classList.remove("printing"); } });
 function wireReport(D){
   $("prep").addEventListener("click",e=>{ const r=e.target.closest("[data-preport]"); if(r){ openPlotReport(r.dataset.preport); return; }
     if(D&&e.target.closest("[data-prepcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(reportText(D,S.priv)).then(()=>toast("Report copied"),()=>toast("Couldn't copy")); return; }
