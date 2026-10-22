@@ -3763,7 +3763,7 @@ function sparkSVG(a,b,o={}){
     ${(o.fed||[]).map(t=>{ const x=X(t); return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="14" y2="${H-B}" stroke="#B48CFF" stroke-opacity=".55" stroke-dasharray="2 3"/>${txt(x,11,"Fed","middle","#9A6BEA")}`; }).join("")}
     <line x1="${L}" x2="${W-Rt}" y1="${Y(100).toFixed(1)}" y2="${Y(100).toFixed(1)}" stroke="#8392A6" stroke-opacity=".6" stroke-dasharray="3 3"/>
     ${desert}<path d="${P(a)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="${Math.max(1.2,lw*.6).toFixed(1)}" stroke-dasharray="5 4"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="${lw}" stroke-linejoin="round" stroke-linecap="round"/>
-    <text x="${W-Rt-2}" y="13" text-anchor="end" font-size="13">${up?"🌕🐺":"🌑🌵"}</text>
+    ${(o.fed||[]).some(t=>X(t)>W-60)?"":`<text x="${W-Rt-2}" y="13" text-anchor="end" font-size="13">${up?"🌕🐺":"🌑🌵"}</text>`}
     ${mark(o.hi,`🐺 High${o.hiV?" "+o.hiV:""} · ${o.hi?pdS(o.hi[0]):""}`,1)}${mark(o.lo,`🌵 Low${o.loV?" "+o.loV:""} · ${o.lo?pdS(o.lo[0]):""}`,0)}</svg>`;
 }
 // the report's growth chart, redrawn on its own when the line thickness changes
