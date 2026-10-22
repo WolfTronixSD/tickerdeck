@@ -666,7 +666,8 @@ if(!TF[S.tf]) S.tf="1d";
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const fmt$=(v,d=2)=>v==null||isNaN(v)?"—":"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+// one cached formatter per decimal count: toLocaleString builds a new one on every call, and prices are formatted thousands of times a second while trades stream
+const NF={}; const fmt$=(v,d=2)=>v==null||isNaN(v)?"—":"$"+(NF[d]||(NF[d]=new Intl.NumberFormat("en-US",{minimumFractionDigits:d,maximumFractionDigits:d}))).format(Number(v));
 const fmtP=v=>v==null||isNaN(v)?"—":(v>0?"+":"")+Number(v).toFixed(2)+"%";
 const cls=v=>v==null?"na":v>=0?"up":"down";
 const tcls=v=>v==null?"":v>=0?"tup":"tdown";
@@ -674,7 +675,10 @@ const money=s=>`<span class="money">${s}</span>`;
 // calendar dates are US market dates (New York), not UTC, so "today" doesn't flip to tomorrow at 5 PM Pacific
 const etDayFmt=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"});
 const etISO=d=>etDayFmt.format(d);
-const today=()=>etISO(new Date());
+// cached for a minute: it is checked on every streamed trade
+const todayMemo={m:-1,v:""}; const today=()=>{ const m=Math.floor(Date.now()/60000); if(todayMemo.m!==m){ todayMemo.m=m; todayMemo.v=etISO(new Date()); } return todayMemo.v; };
+// one-time move alerts are keyed by day; drop past days so the saved list doesn't grow forever
+{ const d=today(); let n=0; for(const k in S.fired) if(k.startsWith("mv:")&&k.slice(3,13)!==d){ delete S.fired[k]; n++; } if(n) LS.set("fired",S.fired); }
 function hue(s){ if(HUES[s]) return HUES[s]; let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 55% 42%)`; }
 function logo(s){ const p=S.profile[s]; return `<div class="logo" style="background:${hue(s)}${s.length>3?";font-size:10px":""}">${p&&p.logo?`<img src="${esc(p.logo)}" alt="" loading="lazy" onerror="this.remove()">`:""}${p&&p.logo?"":esc(s.slice(0,4))}</div>`; }
 function ago(ms){ const s=Math.round((Date.now()-ms)/1000); if(s<5) return "just now"; if(s<60) return s+"s ago"; const m=Math.round(s/60); if(m<60) return m+" min ago"; const h=Math.round(m/60); return h<48?h+" h ago":Math.round(h/24)+" days ago"; }
@@ -892,9 +896,11 @@ function addTick(s,p,t){
   seedTicks(s); const pts=S.ticks[s].pts, last=pts[pts.length-1];
   if(last&&t-last[0]<5000){ last[1]=p; } else { pts.push([t,p]); if(pts.length>1500) pts.splice(0,pts.length-1500); }
 }
-let saveT=null, frame=null; const dirty=new Set();
+let frame=null; const dirty=new Set();
 // which session a trade at time t (ms) belongs to, in New York time
-function sessionAt(t){ const q=etParts(new Date(t)), inf=dayInfo(q.y,q.mo,q.d), m=q.h*60+q.mi; if(!inf.open) return "closed"; if(m>=240&&m<570) return "pre"; if(m>=570&&m<inf.close) return "reg"; if(m>=inf.close&&m<1200) return "post"; return "closed"; }
+const sessMemo={m:-1,v:null};
+function sessionAt(t){ const mk=Math.floor(t/60000); if(sessMemo.m===mk) return sessMemo.v; sessMemo.m=mk; return sessMemo.v=sessionCalc(t); }
+function sessionCalc(t){ const q=etParts(new Date(t)), inf=dayInfo(q.y,q.mo,q.d), m=q.h*60+q.mi; if(!inf.open) return "closed"; if(m>=240&&m<570) return "pre"; if(m>=570&&m<inf.close) return "reg"; if(m>=inf.close&&m<1200) return "post"; return "closed"; }
 S.ext=LS.get("ext",{}); S.showExt=LS.get("showExt",true); setInterval(()=>{ if(S.extDirty){ S.extDirty=0; LS.set("ext",S.ext); } },15000);
 // extended-hours quote to show now: pre-market trades during pre-market, after-hours trades until the next pre-market
 function extOf(s){
@@ -910,24 +916,32 @@ function onTrade(s,p,t){
   if(!S.list.includes(s)&&!IDX.some(x=>x[0]===s)&&!S.extra.has(s)) return;
   const sess=sessionAt(t);
   if(sess==="pre"||sess==="post"){ const prevE=S.ext[s]; S.ext[s]={p,t,sess}; S.extDirty=1; S.tickCount++; S.lastTick=Date.now(); dirty.add(s);
-    if(prevE&&prevE.p!==p) (S.edir||(S.edir={}))[s]=p>prevE.p?1:-1; if(!frame) frame=requestAnimationFrame(flush); return; }
+    if(prevE&&prevE.p!==p) (S.edir||(S.edir={}))[s]=p>prevE.p?1:-1; schedFlush(); return; }
   const prev=price(s); S.live[s]={p,t}; S.tickCount++; S.lastTick=Date.now();
   addTick(s,p,t); dirty.add(s); if(prev!=null&&p!==prev) (S.dir||(S.dir={}))[s]=p>prev?1:-1;
   checkAlerts(s); checkMove(s);
-  if(!frame) frame=requestAnimationFrame(flush);
-  clearTimeout(saveT); saveT=setTimeout(()=>Object.keys(S.ticks).forEach(k=>LS.set("ticks."+k,S.ticks[k])),5000);
+  schedFlush(); ticksDirty.add(s);
 }
+// today's ticks are saved every 15 s, and only for stocks that traded (re-arming a 5 s timer on every trade meant they were never saved while trades kept coming)
+const ticksDirty=new Set(); setInterval(()=>{ ticksDirty.forEach(k=>S.ticks[k]&&LS.set("ticks."+k,S.ticks[k])); ticksDirty.clear(); },15000);
+// trades arrive hundreds of times a second; the screen is patched at most 4 times a second
+function schedFlush(){ if(!frame) frame=setTimeout(()=>requestAnimationFrame(flush),250); }
+// brief green/red flash on a price; swaps classes without forcing a page layout, so many prices can flash at once
+function flash(n,d){ clearTimeout(n._ft); n.classList.toggle("tu",d>0); n.classList.toggle("td",d<0); n._ft=setTimeout(()=>n.classList.remove("tu","td"),350); }
+// skip DOM writes when the markup hasn't changed, so the browser doesn't re-layout identical content
+// (firstChild check: if other code rewrote the element since, write again)
+function setHTML(el,html){ if(el&&(el._h!==html||el._n!==el.firstChild)){ el._h=html; el.innerHTML=html; el._n=el.firstChild; } }
 // patch rows in place so the page never jumps while prices stream
-let lastFull=0;
+let lastFull=0; const sparkAt={};
 function flush(){
   frame=null;
   dirty.forEach(s=>{
     const el=document.querySelector(`#list [data-sym="${CSS.escape(s)}"]`);
     if(el){ const n=el.querySelector(".px .num"), pill=el.querySelector(".pill"), r=ret(s,S.tf);
-      if(n){ n.textContent=fmt$(price(s)); const d=S.dir&&S.dir[s]; if(d){ n.classList.remove("tu","td"); void n.offsetWidth; n.classList.add(d>0?"tu":"td"); setTimeout(()=>n.classList.remove("tu","td"),350); } }
+      if(n){ n.textContent=fmt$(price(s)); const d=S.dir&&S.dir[s]; if(d) flash(n,d); }
       if(pill){ pill.textContent=fmtP(r); pill.className="pill "+cls(r); }
       const xl=el.querySelector(".extl"), nx=extLine(s); if(xl) xl.outerHTML=nx||"<small class=\"extl\"></small>"; else if(nx) el.querySelector(".px").insertAdjacentHTML("beforeend",nx);
-      const sp=el.querySelector(".spark"); if(sp) sp.outerHTML=spark(s); }
+      const sp=el.querySelector(".spark"), now=Date.now(); if(sp&&now-(sparkAt[s]||0)>5000){ sparkAt[s]=now; sp.outerHTML=spark(s); } }
     if(S.open===s) patchDetail(s);
   });
   if(S.dir) S.dir={};
@@ -1226,7 +1240,7 @@ function renderBanners(){
   if(S.wsState==="on"&&st.phase==="closed"&&!S.dismissed.closed) b.push(`<div class="banner info"><span>Market is closed, so prices sit at the last trade until the next session.</span><button class="x" data-dismiss="closed" aria-label="Dismiss">✕</button></div>`);
   (S.moves||[]).filter(m=>Date.now()-m.at<30*60000&&!S.dismissed["mv"+m.s]).forEach(m=>{ const r=r1d(m.s); b.push(`<div class="banner ${r>=0?"info":"alert"}"><span>${r>=0?"🚀":"📉"} <b>${esc(m.s)}</b> is ${r>=0?"up":"down"} ${fmtP(r)} today, now ${money(fmt$(price(m.s)))}.</span><button class="x" data-dismiss="mv${esc(m.s)}" aria-label="Dismiss">✕</button></div>`); });
   alertHits().forEach(h=>{ const k=h.s+h.dir+h.v; if(S.dismissed[k]) return; b.push(`<div class="banner alert"><span>🔔 <b>${esc(h.s)}</b> is ${h.dir} your ${money(fmt$(h.v))} alert, now ${money(fmt$(h.p))}.</span><button class="x" data-dismiss="${esc(k)}" aria-label="Dismiss">✕</button></div>`); });
-  $("banners").innerHTML=b.join("");
+  setHTML($("banners"),b.join(""));
 }
 function hero(){
   const syms=S.list.filter(s=>price(s)!=null), held=syms.filter(s=>S.holdings[s]>0); let html="";
@@ -1246,9 +1260,9 @@ function hero(){
   html+=`<div class="hero-stats"><div class="hs"><b>Top · ${S.tf.toUpperCase()}</b><span class="num tup">${best?esc(best.s)+" "+fmtP(best.r):"—"}</span></div>
     <div class="hs"><b>Bottom</b><span class="num ${worst&&worst.r<0?"tdown":"tup"}">${worst?esc(worst.s)+" "+fmtP(worst.r):"—"}</span></div>
     <div class="hs"><b>Breadth</b><span class="num">${w.length?up+" up · "+(w.length-up)+" dn":"—"}</span></div></div>`;
-  $("hero").innerHTML=html;
+  setHTML($("hero"),html);
 }
-function tape(){ const it=S.list.filter(s=>price(s)!=null).map(s=>{const r=r1d(s);return `<span><b>${esc(s)}</b><span class="num">${fmt$(price(s))}</span> <span class="num ${tcls(r)}">${fmtP(r)}</span></span>`;}).join(""); $("tape").innerHTML=it+it; }
+function tape(){ const it=S.list.filter(s=>price(s)!=null).map(s=>{const r=r1d(s);return `<span><b>${esc(s)}</b><span class="num">${fmt$(price(s))}</span> <span class="num ${tcls(r)}">${fmtP(r)}</span></span>`;}).join(""); setHTML($("tape"),it+it); }
 function sorted(){ const l=S.list.slice(), R=s=>ret(s,S.tf), nn=(v,d)=>v==null?d:v;
   if(S.sort==="chg") l.sort((a,b)=>nn(R(b),-1e9)-nn(R(a),-1e9)); else if(S.sort==="chgAsc") l.sort((a,b)=>nn(R(a),1e9)-nn(R(b),1e9)); else if(S.sort==="az") l.sort(); else if(S.sort==="price") l.sort((a,b)=>(price(b)||0)-(price(a)||0)); return l; }
 function earnChip(s){ const e=S.earnings.map&&S.earnings.map[s]; if(!e) return ""; const days=Math.round((new Date(e.date+"T12:00:00")-new Date(today()+"T12:00:00"))/864e5); return days>=0&&days<=21?`<span class="earn">ER ${days===0?"today":days+"d"}</span>`:""; }
@@ -1306,12 +1320,12 @@ function renderBubbles(){
 }
 function renderList(){ const L=$("list"), l=sorted(); L.className="list"+(S.editing?" editing":""); L.innerHTML=l.length?l.map(rowHTML).join(""):`<div class="row"><div></div><div class="who"><b>Your watchlist is empty</b><span>Tap ＋ to add a stock.</span></div></div>`; }
 function heatColor(r,tf){ if(r==null) return "background:#1A222D;color:#9AA8BA"; const k=Math.min(1,Math.abs(r)/({"1d":4,"1w":8,"2w":10,"1m":15,"3m":30,"5y":300,"all":1000}[tf||S.tf]||80)), a=.18+k*.72; return r>=0?`background:rgba(22,160,108,${a});color:#EFFFF8`:`background:rgba(214,52,76,${a});color:#FFF1F3`; }
-function renderHeat(){ if(S.view!=="heat") return; $("heat").innerHTML=sorted().map(s=>{const r=ret(s,S.tf);return `<button class="tile" data-sym="${esc(s)}" style="${heatColor(r)}"><b>${esc(s)}</b><div><div class="num">${fmtP(r)}</div><small class="num">${fmt$(price(s))}</small></div></button>`;}).join(""); }
+function renderHeat(){ if(S.view!=="heat") return; setHTML($("heat"),sorted().map(s=>{const r=ret(s,S.tf);return `<button class="tile" data-sym="${esc(s)}" style="${heatColor(r)}"><b>${esc(s)}</b><div><div class="num">${fmtP(r)}</div><small class="num">${fmt$(price(s))}</small></div></button>`;}).join("")); }
 function renderBoard(){
   const rows=S.list.map(s=>({s,r:ret(s,S.tf)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r); $("boardTf").textContent=TF[S.tf];
-  if(!rows.length){ $("board").innerHTML=`<div class="empty">Loading…</div>`; return; }
+  if(!rows.length){ setHTML($("board"),`<div class="empty">Loading…</div>`); return; }
   const mx=Math.max(...rows.map(x=>Math.abs(x.r)))||1;
-  $("board").innerHTML=rows.map(x=>{const w=Math.abs(x.r)/mx*50, st=x.r>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row"><b>${esc(x.s)}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(x.r)}">${fmtP(x.r)}</span></div>`;}).join("");
+  setHTML($("board"),rows.map(x=>{const w=Math.abs(x.r)/mx*50, st=x.r>=0?`left:50%;width:${w}%;background:var(--gain)`:`right:50%;width:${w}%;background:var(--loss)`; return `<div class="bar-row"><b>${esc(x.s)}</b><div class="bar-track"><i style="${st}"></i></div><span class="num ${tcls(x.r)}">${fmtP(x.r)}</span></div>`;}).join(""));
 }
 function renderFoot(){
   $("foot").innerHTML=`<b>${S.wsState==="on"?"Streaming live trades":"Live stream paused"}</b>${S.lastTick?` · last trade ${ago(S.lastTick)} · ${S.tickCount.toLocaleString()} trades this session`:""}. Live prices from Finnhub${S.tdKey?", price history from Twelve Data":""}. Not investment advice. <button data-open-settings>Settings</button> · <button data-open-versions>v${APP_VERSION} · What's new</button>`;
@@ -1325,7 +1339,7 @@ function renderExtMovers(){
   el.innerHTML=`<div class="section-h"><h2>${title}</h2><small>vs ${ph==="pre"?"last close":"today's close"}</small></div><div class="feed">${rows.slice(0,8).map(({x,e})=>`<div class="er" data-sym="${esc(x)}" role="button" tabindex="0">${logo(x)}<div style="flex:1;min-width:0"><b>${esc(IDX.find(i=>i[0]===x)?IDX.find(i=>i[0]===x)[1]:x)}</b><br><span>${e.label} · ${new Date(e.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})} · close ${fmt$(e.ref)}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><b class="num">${fmt$(e.p)}</b><span class="pill ${cls(e.chg)}" style="min-width:0">${fmtP(e.chg)}</span></div></div>`).join("")}</div>`;
 }
 function renderIdx(){
-  $("idx").innerHTML=IDX.map(([sym,name])=>{ const p=price(sym), r=r1d(sym); return `<button data-idx="${sym}" aria-label="${name}"><small>${name}</small><span class="num ${tcls(r)}">${fmtP(r)}</span><small class="num" style="font-weight:400">${p?fmt$(p):"—"}</small>${(e=>e?`<small class="num" style="color:var(--blue)">${e.sess==="pre"?"PRE":"AH"} <span class="${tcls(e.chg)}">${fmtP(e.chg)}</span></small>`:"")(extOf(sym))}</button>`; }).join("");
+  setHTML($("idx"),IDX.map(([sym,name])=>{ const p=price(sym), r=r1d(sym); return `<button data-idx="${sym}" aria-label="${name}"><small>${name}</small><span class="num ${tcls(r)}">${fmtP(r)}</span><small class="num" style="font-weight:400">${p?fmt$(p):"—"}</small>${(e=>e?`<small class="num" style="color:var(--blue)">${e.sess==="pre"?"PRE":"AH"} <span class="${tcls(e.chg)}">${fmtP(e.chg)}</span></small>`:"")(extOf(sym))}</button>`; }).join(""));
 }
 function renderEarnings(){
   const map=S.earnings.map||{}, now=today(), lim=etISO(new Date(Date.now()+30*864e5));
@@ -1376,15 +1390,15 @@ function retAudit(s){
 }
 function patchDetail(s){
   const p=price(s), q=S.quotes[s]; if(p==null) return;
-  const big=$("dBig"); if(big){ const old=parseFloat(big.dataset.v); big.textContent=fmt$(p); big.dataset.v=p; if(old&&old!==p){ big.classList.remove("tu","td"); void big.offsetWidth; big.classList.add(p>old?"tu":"td"); setTimeout(()=>big.classList.remove("tu","td"),350);} }
+  const big=$("dBig"); if(big){ const old=parseFloat(big.dataset.v); big.textContent=fmt$(p); big.dataset.v=p; if(old&&old!==p) flash(big,p>old?1:-1); }
   const r=r1d(s), pill=$("dPill"); if(pill){ pill.textContent=fmtP(r)+(marketState().phase==="open"?" today":" at close"); pill.className="pill "+cls(r); }
-  const dx=$("dExt"); if(dx) dx.innerHTML=extDetail(s);
-  const pf=$("dPerf"); if(pf) pf.innerHTML=perfTiles(s);
+  setHTML($("dExt"),extDetail(s));
+  setHTML($("dPerf"),perfTiles(s));
   const au=$("dAudit"); if(au&&!S.scrubbing&&Date.now()-(au._t||0)>3000){ au._t=Date.now(); au.innerHTML=retAudit(s); }
   redrawChart(false);
   const m=S.metric[s]&&S.metric[s].m||{}; const upd=(id,lo,hi)=>{ const el=$(id); if(el&&lo&&hi&&hi>lo){ const pct=Math.max(0,Math.min(100,(p-lo)/(hi-lo)*100)); el.style.left=pct+"%"; $(id+"P").textContent=pct.toFixed(0)+"% of range"; } };
   upd("r52",m["52WeekLow"],m["52WeekHigh"]); if(q) upd("rDay",Math.min(q.l,p),Math.max(q.h,p));
-  const pos=$("dPos"); if(pos) pos.innerHTML=posHTML(s);
+  setHTML($("dPos"),posHTML(s));
 }
 function posHTML(s){ const sh=S.holdings[s], cb=S.cost[s], p=price(s); if(!sh) return ""; return `<div class="kv"><span>Position value</span><b class="num">${money(fmt$(p*sh))}</b></div>`+(cb?`<div class="kv"><span>Gain / loss</span><b class="num ${tcls(p-cb)}">${money(fmt$((p-cb)*sh))} (${fmtP((p/cb-1)*100)})</b></div>`:""); }
 async function openDetail(s){
@@ -2056,8 +2070,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.33";
+const APP_VERSION="3.34";
 const CHANGELOG=[
+  {v:"3.34",date:"2026-10-22",title:"Smoother while prices stream",items:["Fixed the app freezing or feeling unresponsive on iPhone during market hours with a large watchlist","Live prices now update the screen 4 times a second instead of on every trade, and the price flash no longer forces the whole page to re-layout","Sections that refresh every few seconds skip the redraw when nothing changed"]},
   {v:"3.33",date:"2026-10-22",title:"StockPlotter tab",items:["New StockPlotter tab: paste your holdings once (ticker and shares per line) and see what they're worth, with today's change, best and worst movers and an allocation bar","Plot the whole portfolio or any one stock over 1M, 3M, 6M, YTD, 1Y or Max, with the S&P 500 for comparison","Look back: drag the slider, tap or drag on the chart, step a day with the arrows, or pick a date; the table shows every holding's price and value on that day and how it has done since","After each close the day's value is added to a close log","Your holdings are saved only on this device (and in your private setup link), never in the app's code"]},
   {v:"3.31",date:"2026-10-22",title:"Tab bar fits wide screens",items:["On a computer or wide window, the bottom tabs (Home, Sectors, AI, Space, Picks, Trends) now line up under the main column instead of spreading across the whole screen","Tabs light up when you hover over them with a mouse","Phones look the same as before"]},
   {v:"3.29",date:"2026-10-22",title:"Listen & watch links checked",items:["Every link in Listen & watch was checked by hand","Apple buttons now open each podcast's own page instead of a search","Motley Fool Money was renamed by the Fool; it now shows as Motley Fool Hidden Gems with its current page","Fixed Odd Lots, Animal Spirits and Bloomberg Radio links, and CNBC and Fox Business now open their TuneIn stations directly"]},
