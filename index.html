@@ -168,6 +168,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pkit-row>div{display:flex;flex-wrap:wrap;gap:4px}
 .pkit-row button{padding:0 6px;font-size:12px;flex:auto;justify-content:center;background:var(--panel2);border:1px solid var(--line);display:inline-flex;align-items:center;gap:5px}
 .pkit-row button[aria-pressed="true"]{border-color:var(--text)}
+.pkit-row button i.lw{display:inline-block;width:14px;border-radius:2px;background:currentColor}
+.pcalrow{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.pcal{min-width:0;height:30px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font:inherit;font-size:12px;font-weight:600;padding:0 8px;cursor:pointer}
+.pcal:has(option[selected]:checked){border-color:var(--text);color:var(--text)}
 .pkit-row button i{width:8px;height:8px;border-radius:50%;flex:none}
 .pkit-go{display:grid;grid-template-columns:auto 1fr;gap:6px}
 .pkit-go button{height:34px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--panel2);font-size:12.5px}
@@ -218,6 +222,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pidea>span{font-size:16px}
 .pidea p{margin:2px 0 0;font-size:12px;color:#AEB9C7}
 .pai{background:var(--panel);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.card.pai{display:grid;grid-template-columns:1fr 1fr}
 .pai p{grid-column:1/-1}
 .paibtn{display:flex;flex-direction:column;gap:3px;padding:12px 12px 11px;border-radius:14px;text-decoration:none;color:var(--text);background:linear-gradient(150deg,rgba(212,175,55,.16),rgba(110,168,255,.08));border:1px solid rgba(212,175,55,.28);transition:transform .12s,border-color .12s}
 .paibtn:active{transform:scale(.97)}
@@ -270,6 +275,28 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .prep-grade.dn{color:var(--loss)}
 .prep-grade b{font-size:24px;line-height:1}
 .prep-grade small{font-size:9px;color:var(--muted)}
+.prep-gradebox{display:flex;flex-direction:column;align-items:center;gap:4px;flex:none}
+.prep-rank{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(217,180,122,.16);border:1px solid rgba(217,180,122,.45);color:#E9C98F;white-space:nowrap}
+.prep-lw{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;font-size:11px;color:var(--faint)}
+.prep-lw>span{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:10px;margin-right:2px}
+.prep-lw button{height:26px;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:600;color:var(--muted);background:var(--panel2);border:1px solid var(--line);display:inline-flex;align-items:center;gap:5px}
+.prep-lw button[aria-pressed="true"]{border-color:var(--text);color:var(--text)}
+.prep-lw i.lw{display:inline-block;width:14px;border-radius:2px;background:currentColor}
+.prepbtns .pcalrow{margin-top:-2px}
+#prep .pcalrow{max-width:520px}
+.ptrail-in{display:flex;gap:6px;align-items:flex-start;overflow-x:auto}
+.pposters{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pposter{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:12px 10px;border-radius:10px;background:#F6E7C8;color:#3B2A14;border:2px solid #8A6A3B;box-shadow:inset 0 0 0 3px #F6E7C8,inset 0 0 0 4px rgba(138,106,59,.5);font-family:Georgia,"Times New Roman",serif}
+.pposter small{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#7A5A2B}
+.pposter.wanted small{font-size:18px;letter-spacing:.22em;color:#8B1E1E}
+.pposter b{font-size:22px;font-weight:800;letter-spacing:.04em;font-family:var(--mono)}
+.pposter span{font-size:12.5px}
+.pposter em{font-style:normal;font-size:11px;color:#6B5233}
+.pposter .money{color:inherit}
+.pmon2 i{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:3px 0;line-height:1.15}
+.pmon2 i b{font-size:8.5px;font-weight:700}
+.pmon2 i small{font-size:7.5px;opacity:.85}
+.prank thead th{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);text-align:right;padding:0 4px 2px}
 .pawards{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
 .paward{display:flex;flex-direction:column;align-items:center;gap:1px;padding:10px 6px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);text-align:center}
 .paward>span{font-size:24px}
@@ -336,7 +363,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .card.prep2{display:grid!important;grid-template-columns:1fr 1fr;column-gap:24px}
   body.printing .pinsight{border-left:4px solid #6EA8FF!important}
   body.printing .pinsight p{color:#111820!important;font-size:11.5px!important;line-height:1.5!important}
-  body.printing .pawards{grid-template-columns:repeat(6,1fr);gap:6px}
+  body.printing .pawards{gap:6px}
   body.printing .paward{padding:6px 4px}
   body.printing .paward>span{font-size:18px}
   body.printing .paward small{font-size:8.5px}
@@ -354,6 +381,17 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .stats div{background:#fff;border-color:#DDE1E6}
   body.printing .chart{background:#fff;border-color:var(--line)}
   body.printing .d-head h3{color:#111820}
+  body.printing .prep-rank{background:#FBF3E4;border-color:#C9A46A;color:#6B4A1B}
+  body.printing .pposter{background:#FBF1DC!important;break-inside:avoid;padding:8px}
+  body.printing .pposter b{font-size:18px}
+  body.printing .pawards{grid-template-columns:repeat(4,1fr)}
+  body.printing .ptrail svg{max-height:90px}
+  body.printing .prisk{display:grid!important;grid-template-columns:1fr 1fr;column-gap:6px}
+  body.printing .prisk>h4,body.printing .prisk>p{grid-column:1/-1;margin:0}
+  body.printing .prisk .stats div{padding:4px 6px;font-size:9.5px}
+  body.printing .pmon2 i{padding:2px 0}
+  body.printing .pmon2 i b{font-size:9px}
+  body.printing .pmon2 i small{font-size:8px}
 }
 }
 .prep-hero{text-align:center;gap:6px}
@@ -2315,8 +2353,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.45";
+const APP_VERSION="3.46";
 const CHANGELOG=[
+  {v:"3.46",date:"2026-10-22",title:"Wild West reports",items:["Reports: monthly returns show % and $ together in one grid, plus a new month-by-month bar chart with 🏆 and 🌵 for the best and worst months","Western and wolf theme: a desert skyline and full moon on the chart, 🐺 at the high and 🌵 at the low, a trail rank next to your grade, new awards (Top gun, Pack leader, Howl day, Bucking bronco, Campfire streak), a Hero of the trail poster and a WANTED poster","🐾 Wolf tracks: every trading day as a green or red paw print","Biggest Nasdaq 100 days next to the biggest S&P 500 days, with your own move those days","Pick a calendar week, month or year for reports and for the StockPlotter chart","Line thickness for the StockPlotter and report charts: thin, normal, bold or extra bold","Ask Claude buttons sit two per row"]},
   {v:"3.45",date:"2026-10-22",title:"Richer portfolio reports",items:["Report chart: month (or day) ticks, the high and low marked with their values, and Fed decision days","Top 5 best and worst returns, and top 5 that made or cost you the most, each with % and $","Best and worst 3 days with their dollar moves","Market events show how your portfolio moved that day next to the S&P 500","The reference page fits on one page: holdings in two side-by-side tables, monthly % and $ grids side by side","The PDF header shows the GoldRabbit version","StockPlotter: Best and Worst today show the full dollar amount"]},
   {v:"3.44",date:"2026-10-22",title:"Production check fixes",items:["Fixed 📊 Reports on Home, which stopped opening after the StockPlotter reports were added","Ask Claude from Home no longer sends share counts or your portfolio's dollar value, only percentages","Mutual fund prices refresh reliably again (the nightly job had been timing out)","Setup links only accept ticker-shaped symbols"]},
   {v:"3.43",date:"2026-10-22",title:"Printer-friendly report PDF",items:["Printing with Ctrl+P or the browser menu while a report is open now prints the clean white report, not the dark app","New print layout: a title header, white cards with a colored edge, two-column market events and a compact award row","Reference tables (holdings, monthly returns, risk) start on their own page","Printing any other page uses white paper and dark ink too"]},
@@ -3153,7 +3192,37 @@ function opticsExtraHTML(){
 /* ---------- StockPlotter: your holdings plotted from daily closes. Holdings are typed or pasted in and stay on this device. ---------- */
 S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pcross=LS.get("pcross",true); S.psort=LS.get("psort","value"); S.pview=LS.get("pview","list"); S.pheatN=LS.get("pheatN",0); S.pmonD=LS.get("pmonD",false); S.pHideIdeas=LS.get("phideideas",[]); S.raceMute=LS.get("racemute",false); S.raceMode=LS.get("racemode","fast"); S.raceTop=LS.get("racetop",5); S.pOpen={}; S.pIdx=null; S.pSym=null; S.pBusy=0;
 const PRANGES=[["1d","1D",1],["1w","1W",5],["2w","2W",10],["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
-if(!PRANGES.some(r=>r[0]===S.prange)) S.prange="1y";
+// calendar periods: a week (Monday to Friday), a month or a year, keyed cw:2026-10-19, cm:2026-10, cy:2026
+const isCal=k=>/^c[wmy]:/.test(k||"");
+function calSpan(k){
+  const [t,v]=k.split(":"), now=today();
+  if(t==="cw"){ const a=new Date(v+"T12:00:00"), b=new Date(a); b.setDate(b.getDate()+7); return {a:v,b:ymdLocal(b),unit:"week",name:`Week of ${a.toLocaleDateString([], {month:"short",day:"numeric"})}`,short:`Wk ${a.toLocaleDateString([], {month:"short",day:"numeric"})}`,now:now>=v&&now<ymdLocal(b)}; }
+  if(t==="cm"){ const [y,m]=v.split("-").map(Number), b=`${m===12?y+1:y}-${String(m===12?1:m+1).padStart(2,"0")}-01`, d=new Date(y,m-1,1); return {a:v+"-01",b,unit:"month",name:d.toLocaleDateString([], {month:"long",year:"numeric"}),short:d.toLocaleDateString([], {month:"short",year:"numeric"}),now:now>=v+"-01"&&now<b}; }
+  return {a:v+"-01-01",b:(+v+1)+"-01-01",unit:"year",name:now.slice(0,4)===v?`${v} so far`:v,short:v,now:now.slice(0,4)===v};
+}
+// the days in a calendar period, plus the close before it so the first day's move counts
+function calSlice(days,k){
+  const c=calSpan(k); let i0=-1, i1=-1; days.forEach((o,i)=>{ if(o.day<c.a) i0=i; if(o.day<c.b) i1=i; });
+  return i1<0||i1<=i0?[]:days.slice(Math.max(0,i0),i1+1);
+}
+// the weeks, months and years the price history covers, newest first
+function calOptions(days){
+  if(!days||days.length<3) return {w:[],m:[],y:[]}; const first=days[0].day, last=days[days.length-1].day, w=[], m=[], y=[];
+  const d=new Date(last+"T12:00:00"); d.setDate(d.getDate()-((d.getDay()+6)%7));
+  for(let i=0;i<26&&ymdLocal(d)>=first;i++){ w.push("cw:"+ymdLocal(d)); d.setDate(d.getDate()-7); }
+  const e=new Date(last.slice(0,7)+"-01T12:00:00"); for(let i=0;i<36&&ymdLocal(e).slice(0,7)>=first.slice(0,7);i++){ m.push("cm:"+ymdLocal(e).slice(0,7)); e.setMonth(e.getMonth()-1); }
+  for(let v=+last.slice(0,4);v>=+first.slice(0,4);v--) y.push("cy:"+v);
+  return {w,m,y};
+}
+// three drop-downs to pick a calendar week, month or year; attr names what a pick sets
+function calPickHTML(days,cur,attr){
+  const O=calOptions(days), sel=(t,lab,list)=>list.length?`<select class="pcal" ${attr} aria-label="Pick a calendar ${lab.toLowerCase()}"><option value="">📅 ${lab}</option>${list.map(k=>`<option value="${k}"${k===cur?" selected":""}>${esc(calSpan(k).short)}</option>`).join("")}</select>`:"";
+  return `<div class="pcalrow">${sel("w","Week",O.w)}${sel("m","Month",O.m)}${sel("y","Year",O.y)}</div>`;
+}
+const prLabel=()=>isCal(S.prange)?calSpan(S.prange).name:((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"");
+if(!PRANGES.some(r=>r[0]===S.prange)&&!isCal(S.prange)) S.prange="1y";
+S.plw=LS.get("plw",2);
+const LINEW=[["1","Thin"],["2","Normal"],["3","Bold"],["4","Extra bold"]];
 // indexes to compare against, through the ETFs that track them
 const BMS=[["SPY","S&P 500"],["ONEQ","Nasdaq"],["QQQ","Nasdaq 100"],["DIA","Dow"]];
 if(S.pbm&&!BMS.some(b=>b[0]===S.pbm)) S.pbm="SPY";
@@ -3205,6 +3274,7 @@ function plotSeries(){
 }
 function dayInfoNow(){ const p=etParts(new Date()); return dayInfo(p.y,p.mo,p.d); }
 function plotRange(days){
+  if(isCal(S.prange)){ const c=calSlice(days,S.prange); if(c.length>=2) return c; }
   const r=PRANGES.find(x=>x[0]===S.prange)||PRANGES[7];
   if(r[0]==="ytd"){ const y=new Date().getFullYear(), i=days.findIndex(o=>new Date(o.t).getFullYear()===y); return days.slice(Math.max(0,i-1)); }
   return days.slice(Math.max(0,days.length-1-r[2]));
@@ -3252,7 +3322,7 @@ function plotChart(pts,idx,bench,marks,mas,crosses){
   // buys (green) and sells (red) along the bottom
   const tm=(marks||[]).filter(m=>m.t>=t0-864e5/2&&m.t<=t1+864e5/2).map(m=>`<circle cx="${X(Math.min(t1,Math.max(t0,m.t))).toFixed(1)}" cy="${H-B-3}" r="3" fill="${m.q>0?"#2BD99A":"#FF5C72"}" stroke="#070B10" stroke-width="1"><title>${m.q>0?"Bought":"Sold"} ${esc(fmtQ(Math.abs(m.q)))} ${esc(m.s)} · ${esc(m.d)}</title></circle>`).join("");
   return `<svg class="chart" id="pSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Value over time" style="touch-action:pan-y">${grid}<defs><linearGradient id="plg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".26"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
-    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}${(mas||[]).filter(m=>m.pts.length>1).map(m=>`<path d="${path(m.pts)}" fill="none" stroke="${m.c}" stroke-width="${m.dash?1:1.2}" opacity="${m.dash?.7:.9}"${m.dash?` stroke-dasharray="2 3"`:""}/>`).join("")}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>${hl}${tm}${(crosses||[]).map(c=>`<g transform="translate(${X(c.t).toFixed(1)} ${Y(c.v).toFixed(1)})"><circle r="7" fill="${c.g?"rgba(255,213,74,.25)":"rgba(255,92,114,.25)"}" stroke="${c.g?"#FFD54A":"#FF5C72"}" stroke-width="1"/><text y="4" text-anchor="middle" font-size="10">${c.g?"⭐":"💀"}</text><title>${c.g?"Golden":"Death"} cross · ${pdL(c.t)}</title></g>`).join("")}
+    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}${(mas||[]).filter(m=>m.pts.length>1).map(m=>`<path d="${path(m.pts)}" fill="none" stroke="${m.c}" stroke-width="${m.dash?1:1.2}" opacity="${m.dash?.7:.9}"${m.dash?` stroke-dasharray="2 3"`:""}/>`).join("")}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="${[1.2,2.1,3.2,4.6][S.plw-1]||2.1}" stroke-linejoin="round" stroke-linecap="round"/>${hl}${tm}${(crosses||[]).map(c=>`<g transform="translate(${X(c.t).toFixed(1)} ${Y(c.v).toFixed(1)})"><circle r="7" fill="${c.g?"rgba(255,213,74,.25)":"rgba(255,92,114,.25)"}" stroke="${c.g?"#FFD54A":"#FF5C72"}" stroke-width="1"/><text y="4" text-anchor="middle" font-size="10">${c.g?"⭐":"💀"}</text><title>${c.g?"Golden":"Death"} cross · ${pdL(c.t)}</title></g>`).join("")}
     <line x1="${X(sel[0])}" x2="${X(sel[0])}" y1="${T-4}" y2="${H-B}" stroke="#FFB547" stroke-dasharray="2 3"/><circle cx="${X(sel[0])}" cy="${Y(sel[1])}" r="4.5" fill="#FFB547" stroke="#070B10" stroke-width="2"/>
     <text x="6" y="${H-6}" font-size="9.5" fill="#8392A6" font-family="Sora">${dl(t0)}</text><text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">${pts[pts.length-1]===sel&&new Date(t1).toDateString()===new Date().toDateString()?"Today":dl(t1)}</text></svg>`;
 }
@@ -3399,7 +3469,7 @@ function raceSVG(P,R,opt){
 function raceHTML(P,R){
   const xs=P.have.filter(x=>R[0].px[x]>0); if(xs.length<2||R.length<2) return "";
   const ret=x=>(R[R.length-1].px[x]/R[0].px[x]-1)*100, ranked=xs.map(x=>({x,r:ret(x)})).sort((a,b)=>b.r-a.r);
-  const lead=ranked[0], last=ranked[ranked.length-1], rng=(PRANGES.find(r=>r[0]===S.prange)||[])[1]||"", lame=S.raceMode==="lame", n=Math.min(S.raceTop,xs.length);
+  const lead=ranked[0], last=ranked[ranked.length-1], rng=prLabel(), lame=S.raceMode==="lame", n=Math.min(S.raceTop,xs.length);
   return `<div class="section-h"><h2>${lame?"🐴 Pony race":"🏇 Horse race"}</h2><small>every holding from the same start, ${esc(rng)}</small></div>
     <div class="card" style="background:var(--panel);gap:8px">
       <p class="hint" style="margin:0">Fastest horse: <b style="color:${hue(lead.x)}">${esc(lead.x)}</b> <span class="tup">${fmtP(lead.r)}</span>. Slowest: <b>${esc(last.x)}</b> <span class="${tcls(last.r)}">${fmtP(last.r)}</span>.</p>
@@ -3416,7 +3486,7 @@ function openRaceBig(){
   const draw=()=>{ const box=$("raceBox"); if(!box) return; const n=Math.min(S.raceN,P.have.length), bw=box.clientWidth||340, W=520, avail=Math.max(300,window.innerHeight-250), H=Math.round(Math.min(W*1.5,Math.max(W*.55,W*avail/bw)));
     box.innerHTML=`<div style="width:${S.raceZ*100}%">${raceSVG(P,R,{W,H,nl:n,id:"raceZ",fs:13,lame:S.raceMode==="lame"})}</div>`;
     $("raceZl").textContent=S.raceZ===1?"Fit":S.raceZ+"×"; $("raceNl").textContent=`Top ${n}`; };
-  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>${S.raceMode==="lame"?"🐴 Pony race":"🏇 Horse race"}</h3><p>${esc((PRANGES.find(r=>r[0]===S.prange)||[])[1]||"")} · ${pdL(R[0].t)} – ${pdL(R[R.length-1].t)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>${S.raceMode==="lame"?"🐴 Pony race":"🏇 Horse race"}</h3><p>${esc(prLabel())} · ${pdL(R[0].t)} – ${pdL(R[R.length-1].t)}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
     <div class="prace-ctl"><div class="pseg"><button data-rz="-1" aria-label="Zoom out">−</button><button disabled id="raceZl"></button><button data-rz="1" aria-label="Zoom in">+</button></div><div class="pseg"><button data-rn="-5" aria-label="Fewer labels">−</button><button disabled id="raceNl"></button><button data-rn="5" aria-label="More labels">+</button></div><button class="ghost pcta" data-rplay>🏇 Start</button><button class="ghost" data-rmute aria-label="Race sound">${S.raceMute?"🔇":"🔊"}</button></div>
     <div id="raceBox" class="racebox"></div><p class="hint" style="font-size:11.5px">Zoom in and scroll sideways to read crowded stretches. ${bmName()} dashed.</p>`;
   $("sheetIn").querySelector(".prace-ctl").addEventListener("click",e=>{ const z=e.target.closest("[data-rz]"), n=e.target.closest("[data-rn]"), m=e.target.closest("[data-rmute]");
@@ -3466,12 +3536,41 @@ function ddHTML(pts){
       ${eps.length?`<div class="pdd"><h4 style="margin:4px 0">Biggest dips</h4>${eps.slice(0,3).map((o,i)=>`<div class="kv"><span>${["🥇","🥈","🥉"][i]} ${pdS(o.s)} → bottom ${pdS(o.b)}<small>${o.e?`recovered ${pdS(o.e)} · ${days(o.s,o.e)} days`:`not recovered yet · ${days(o.s)} days so far`}</small></span><b class="num tdown">${o.d.toFixed(1)}%</b></div>`).join("")}</div>`:""}</div>`;
 }
 // month-by-month returns across all the history on file, as % or as dollars gained
-function monthsHTML(all,P,x,rep){
-  if(all.length<40) return ""; const end={}; all.forEach(q=>{ const d=new Date(q[0]); end[d.getFullYear()*12+d.getMonth()]=q[1]; });
+// monthly returns keyed year*12+month: % from month-end values, $ from each day's market move on the shares held that day
+function monthData(all,P,x){
+  if(all.length<40) return null; const end={}; all.forEach(q=>{ const d=new Date(q[0]); end[d.getFullYear()*12+d.getMonth()]=q[1]; });
   const ks=Object.keys(end).map(Number).sort((a,b)=>a-b), ret={}; for(let i=1;i<ks.length;i++) if(ks[i]-ks[i-1]===1) ret[ks[i]]=(end[ks[i]]/end[ks[i-1]]-1)*100;
-  // dollars: each day's market move on the shares held that day, added up per month
   const usd={}; if(P){ const D=P.days, xs=x?[x]:P.have; for(let i=1;i<D.length;i++){ const a=D[i-1], o=D[i], d=new Date(o.t), k=d.getFullYear()*12+d.getMonth(); if(ret[k]==null) continue; usd[k]=(usd[k]||0)+xs.reduce((s,y)=>s+(a.q[y]||0)*((o.px[y]??0)-(a.px[y]??0)),0); } }
-  const useD=rep?rep==="$"&&P:S.pmonD&&P, val=useD?usd:ret, yrs=[...new Set(Object.keys(ret).map(k=>Math.floor(k/12)))].sort(); if(!yrs.length) return "";
+  const yrs=[...new Set(Object.keys(ret).map(k=>Math.floor(k/12)))].sort(); return yrs.length?{ret,usd,yrs}:null;
+}
+const kfmt=v=>{ const a=Math.abs(v); return (v<0?"−":"")+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e4?(a/1e3).toFixed(0)+"k":a>=1e3?(a/1e3).toFixed(1)+"k":a.toFixed(0)); };
+const monName=k=>new Date(Math.floor(k/12),k%12,1).toLocaleDateString([], {month:"short",year:"numeric"});
+// report: one grid with each month's % and, under it, the dollars
+function monthsBothHTML(all,P){
+  const M0=monthData(all,P,null); if(!M0) return ""; const {ret,usd,yrs}=M0, showD=!S.priv, mx=Math.max(...Object.values(ret).map(Math.abs))||1;
+  const cell=k=>{ const v=ret[k]; if(v==null) return `<i class="na"></i>`; return `<i style="background:${v>=0?`rgba(43,217,154,${(.15+.75*Math.min(1,v/mx)).toFixed(2)})`:`rgba(255,92,114,${(.15+.75*Math.min(1,-v/mx)).toFixed(2)})`}"><b>${Math.abs(v)>=10?v.toFixed(0):v.toFixed(1)}%</b>${showD&&usd[k]!=null?`<small>${kfmt(usd[k])}</small>`:""}</i>`; };
+  const vals=Object.entries(ret).sort((a,b)=>b[1]-a[1]), best=vals[0], worst=vals[vals.length-1], tot=Object.values(usd).reduce((s,v)=>s+v,0);
+  return `<div class="card" style="gap:6px"><h4>📅 Monthly returns · % and $</h4><div class="pmon pmon2"><span></span>${[..."JFMAMJJASOND"].map(c=>`<span>${c}</span>`).join("")}${yrs.map(y=>`<span>${String(y).slice(2)}</span>${[...Array(12).keys()].map(m=>cell(y*12+m)).join("")}`).join("")}</div>
+    <p class="hint" style="font-size:11.5px;margin:0">Top: the month's return. ${showD?"Bottom: dollars gained or lost from price moves (buys and sells not counted). ":""}Best ${monName(+best[0])} <span class="tup">${fmtP(best[1])}</span>${showD?` (${sgn$(usd[best[0]]||0)})`:""}, worst ${monName(+worst[0])} <span class="tdown">${fmtP(worst[1])}</span>${showD?` (${sgn$(usd[worst[0]]||0)})`:""}. Up in ${vals.filter(v=>v[1]>0).length} of ${vals.length} months.${showD?` Total ${sgn$(tot)}.`:""}</p></div>`;
+}
+// report: the same months as a bar chart, with the best month's trophy and the worst month's cactus
+function monthBarsHTML(all,P){
+  const M0=monthData(all,P,null); if(!M0) return ""; const ks=Object.keys(M0.ret).map(Number).sort((a,b)=>a-b).slice(-24), v=ks.map(k=>M0.ret[k]); if(ks.length<2) return "";
+  const W=760,H=160,L=34,Rt=8,T=24,B=28, mx=Math.max(...v.map(Math.abs))*1.1||1, lo=Math.min(0,...v)<0?-mx:0, hi=Math.max(0,...v)>0?mx:0, Y=x=>T+(hi-x)/(hi-lo||1)*(H-T-B), bw=(W-L-Rt)/ks.length, y0=Y(0);
+  const bi=v.indexOf(Math.max(...v)), wi=v.indexOf(Math.min(...v)), lab=x=>(x>0?"+":"")+(Math.abs(x)>=10?x.toFixed(0):x.toFixed(1));
+  const grid=[hi,hi/2,0,lo/2,lo].filter((q,i,a)=>a.indexOf(q)===i).map(q=>`<line x1="${L}" x2="${W-Rt}" y1="${Y(q).toFixed(1)}" y2="${Y(q).toFixed(1)}" stroke="#8392A6" stroke-opacity="${q===0?.6:.15}"/><text x="${L-4}" y="${(Y(q)+3.5).toFixed(1)}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora,system-ui,sans-serif">${q.toFixed(0)}%</text>`).join("");
+  const bars=ks.map((k,i)=>{ const x=L+i*bw+bw*.16, w=bw*.68, r=v[i], y=Y(Math.max(0,r)), h=Math.max(1,Math.abs(Y(r)-y0)), m=k%12, cx=x+w/2;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="${r>=0?"#22B07D":"#E0475E"}"${i===bi||i===wi?"":` fill-opacity=".8"`}><title>${monName(k)} ${fmtP(r)}${S.priv||M0.usd[k]==null?"":" · "+(M0.usd[k]>=0?"+":"−")+fmt$(Math.abs(M0.usd[k]),0)}</title></rect>`
+      +(ks.length<=14||i===bi||i===wi?`<text x="${cx.toFixed(1)}" y="${(r>=0?y-4:y+h+10).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="${r>=0?"#0B8A5C":"#C8243C"}" font-family="Sora,system-ui,sans-serif">${lab(r)}</text>`:"")
+      +(i===bi?`<text x="${cx.toFixed(1)}" y="${(y-15).toFixed(1)}" text-anchor="middle" font-size="13">🏆</text>`:i===wi&&r<0?`<text x="${cx.toFixed(1)}" y="${(y+h+25).toFixed(1)}" text-anchor="middle" font-size="13">🌵</text>`:"")
+      +`<text x="${cx.toFixed(1)}" y="${H-14}" text-anchor="middle" font-size="9.5" fill="#8392A6" font-family="Sora,system-ui,sans-serif">${"JFMAMJJASOND"[m]}</text>`+(m===0||i===0?`<text x="${(x-bw*.16).toFixed(1)}" y="${H-2}" font-size="9.5" font-weight="700" fill="#4A5563" font-family="Sora,system-ui,sans-serif">${Math.floor(k/12)}</text>`:""); }).join("");
+  const up=v.filter(q=>q>0).length, avg=v.reduce((a,b)=>a+b,0)/v.length;
+  return `<div class="card" style="gap:6px"><h4>📊 Month by month</h4><svg class="chart pspark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly returns as bars">${grid}${bars}</svg>
+    <p class="hint" style="font-size:11.5px;margin:0">🏆 best month ${monName(ks[bi])} ${fmtP(v[bi])}${v[wi]<0?` · 🌵 worst ${monName(ks[wi])} ${fmtP(v[wi])}`:""} · ${up} green month${up===1?"":"s"} of ${v.length} · average ${fmtP(avg)} a month.</p></div>`;
+}
+function monthsHTML(all,P,x,rep){
+  const M0=monthData(all,P,x); if(!M0) return ""; const {ret,usd,yrs}=M0;
+  const useD=rep?rep==="$"&&P:S.pmonD&&P, val=useD?usd:ret;
   const mx=Math.max(...Object.values(val).map(Math.abs))||1, M="JFMAMJJASOND", kf=v=>{ const a=Math.abs(v); return (v<0?"−":"")+(a>=1e6?(a/1e6).toFixed(1)+"M":a>=1e4?(a/1e3).toFixed(0)+"k":a>=1e3?(a/1e3).toFixed(1)+"k":a.toFixed(0)); };
   const cell=v=>v==null?`<i class="na"></i>`:`<i style="background:${v>=0?`rgba(43,217,154,${(.15+.75*Math.min(1,v/mx)).toFixed(2)})`:`rgba(255,92,114,${(.15+.75*Math.min(1,-v/mx)).toFixed(2)})`}" title="${useD?(v>=0?"+":"−")+fmt$(Math.abs(v),0):v.toFixed(1)+"%"}">${useD?(S.priv?"•":kf(v)):Math.abs(v)>=10?v.toFixed(0):v.toFixed(1)}</i>`;
   const vals=Object.entries(val).sort((a,b)=>b[1]-a[1]), best=vals[0], worst=vals[vals.length-1], mn=k=>new Date(Math.floor(k/12),k%12,1).toLocaleDateString([], {month:"short",year:"numeric"}), f=v=>useD?sgn$(v):fmtP(v), tot=useD?Object.values(usd).reduce((s,v)=>s+v,0):null;
@@ -3492,13 +3591,13 @@ function riskHTML(pts,R,P,rep){
   if(sp.length>20){ const mx=sp.reduce((s,q)=>s+q[0],0)/sp.length, my=sp.reduce((s,q)=>s+q[1],0)/sp.length; let cv=0,vx=0; sp.forEach(q=>{ cv+=(q[0]-mx)*(q[1]-my); vx+=(q[0]-mx)**2; }); beta=vx?cv/vx:null; }
   const tile=(l,v,c="")=>`<div>${l}<span class="num ${c}">${v}</span></div>`;
   return {vol,beta,html:`${rep?"":`<div class="section-h"><h2>📐 Risk &amp; return</h2><small>daily moves over the range</small></div>`}
-    <div class="card" style="${rep?"":"background:var(--panel);"}gap:8px">${rep?"<h4>📐 Risk &amp; return</h4>":""}<div class="stats">${tile("Best day",fmtP(best.r)+`<small>${pdS(best.t)}</small>`,"tup")}${tile("Worst day",fmtP(worst.r)+`<small>${pdS(worst.t)}</small>`,"tdown")}${tile("Up days",Math.round(up/ch.length*100)+"%")}</div>
+    <div class="card${rep?" prisk":""}" style="${rep?"":"background:var(--panel);"}gap:8px">${rep?"<h4>📐 Risk &amp; return</h4>":""}<div class="stats">${tile("Best day",fmtP(best.r)+`<small>${pdS(best.t)}</small>`,"tup")}${tile("Worst day",fmtP(worst.r)+`<small>${pdS(worst.t)}</small>`,"tdown")}${tile("Up days",Math.round(up/ch.length*100)+"%")}</div>
       <div class="stats">${tile("Volatility / yr",vol.toFixed(0)+"%")}${tile("Beta vs "+bmName(),beta==null?"—":beta.toFixed(2))}${tile("Yearly pace",ann==null?"—":fmtP(ann),tcls(ann))}</div>
       <p class="hint" style="font-size:11.5px">Volatility is how much the value typically swings in a year (the S&amp;P is usually 15–20%). Beta 1.3 means it has tended to move about 1.3× as much as the ${bmName()}. Yearly pace is the range's return stretched to a full year.</p></div>`};
 }
 // plain-English takeaways
 function takeawaysHTML(P,R,pts,risk){
-  const out=[], z=R[R.length-1], a=R[0], r=(pts[pts.length-1][1]/pts[0][1]-1)*100, s0=spyAt(a.t), s1=z.live?price(bmSym())??spyAt(z.t):spyAt(z.t), sr=s0&&s1?(s1/s0-1)*100:null, rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"").replace("Max","the full history");
+  const out=[], z=R[R.length-1], a=R[0], r=(pts[pts.length-1][1]/pts[0][1]-1)*100, s0=spyAt(a.t), s1=z.live?price(bmSym())??spyAt(z.t):spyAt(z.t), sr=s0&&s1?(s1/s0-1)*100:null, rng=prLabel().replace("Max","the full history");
   const hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0), off=(pts[pts.length-1][1]/pts[hiI][1]-1)*100;
   if(sr!=null) out.push(`${S.pSym?esc(S.pSym):"Your portfolio"} is ${r>=0?"up":"down"} <b class="${tcls(r)}">${fmtP(r)}</b> over ${esc(rng)}, ${r>=sr?"beating":"trailing"} the ${bmName()} (${fmtP(sr)}) by <b>${Math.abs(r-sr).toFixed(1)} pts</b>.`);
   out.push(off>-0.05?`It's at the high for this range right now.`:`It's <b class="tdown">${off.toFixed(1)}%</b> below the range high of ${S.pSym?fmt$(pts[hiI][1]):money(fmt$(pts[hiI][1],0))} on ${pdL(pts[hiI][0])}; the low was ${S.pSym?fmt$(pts[loI][1]):money(fmt$(pts[loI][1],0))} on ${pdL(pts[loI][0])}.`);
@@ -3524,11 +3623,13 @@ function vsHTML(pts,R){
 // range and index chips, shown under the hero and again above the heat map
 function plotChips(){ return `<div class="pkit">
     <div class="pkit-rng">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}</div>
+    ${S.plotP?calPickHTML(S.plotP.days,S.prange,"data-pcal"):""}
     <div class="pkit-row"><span>vs</span><div>${BMS.map(([x,n])=>`<button data-pbm="${x}" aria-pressed="${S.pbm===x}">${esc(n)}</button>`).join("")}<button data-pbm="" aria-pressed="${!S.pbm}">Off</button></div></div>
     <div class="pkit-row"><span>Avg</span><div>${MAS.map(([n,c])=>`<button data-pma="${n}" aria-pressed="${S.pmas.includes(n)}"><i style="background:${c}"></i>${n}d</button>`).join("")}</div></div>
+    <div class="pkit-row"><span>Line</span><div>${LINEW.map(([v,l])=>`<button data-plw="${v}" aria-pressed="${String(S.plw)===v}" title="${l} line"><i class="lw" style="height:${v}px"></i>${l}</button>`).join("")}</div></div>
     <div class="pkit-go"><button data-pcross aria-pressed="${!!S.pcross}" title="Golden and death crosses">⭐💀 Crosses</button><button class="pcta" data-pcmp>🔎 Analyze this chart</button></div></div>`; }
 const PREPI={w:["🗓️","last 7 days"],m:["📆","last month"],"6m":["🌗","last 6 months"],"1y":["🎆","last 12 months"]};
-const reportBtnsHTML=()=>`<div class="card prepbtns"><h4>📄 Reports</h4><div class="prepgrid">${Object.entries(PREP).map(([k,v])=>`<button data-preport="${k}"><span>${PREPI[k][0]}</span><b>${v[0]}</b><small>${PREPI[k][1]}</small></button>`).join("")}</div><p class="hint" style="font-size:11.5px;margin:0">A grade, awards, your best and worst stocks, your trades and the market events of the period. Save as PDF or share.</p></div>`;
+const reportBtnsHTML=()=>`<div class="card prepbtns"><h4>📄 Reports</h4><div class="prepgrid">${Object.entries(PREP).map(([k,v])=>`<button data-preport="${k}"><span>${PREPI[k][0]}</span><b>${v[0]}</b><small>${PREPI[k][1]}</small></button>`).join("")}</div>${S.plotP?calPickHTML(S.plotP.days,"","data-prepcal"):""}<p class="hint" style="font-size:11.5px;margin:0">A grade, awards, your best and worst stocks, your trades and the market events of the period. Save as PDF or share.</p></div>`;
 /* ---------- ideas to consider: simple rules over the holdings, worked out on this device ---------- */
 const LEVERAGED=new Set(["TQQQ","SQQQ","SOXL","SOXS","UPRO","SPXL","SPXU","TNA","TZA","FAS","LABU","TECL","FNGU","NVDL","NVDU","TSLL","TSLT","MSTU","MSTX","CONL","QLD","SSO","USD","ROM","BITX","ETHU"]);
 const INDEXF=new Set(["SPY","VOO","IVV","QQQ","QQQM","VTI","ONEQ","DIA","RSP","VUG","SCHG","VGT","XLK","TQQQ","QLD","UPRO","SPXL","SSO","VFIAX","VTSAX","VFTAX","VIGIX","VIGAX","VIIIX","VINIX","FXAIX","FSKAX","FZROX","SWPPX","SWTSX","FSPGX"]);
@@ -3559,7 +3660,7 @@ function ideasPlotHTML(P){
 }
 /* ---------- Ask Claude: opens claude.ai with the numbers filled in; nothing is sent until you press send there ---------- */
 function aiContext(P,R,pts){
-  const z=R[R.length-1], a=R[0], rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"").replace("Max","full history"), me=(pts[pts.length-1][1]/pts[0][1]-1)*100, hideV=true; // what goes to Claude never has share counts or dollar amounts
+  const z=R[R.length-1], a=R[0], rng=prLabel().replace("Max","full history"), me=(pts[pts.length-1][1]/pts[0][1]-1)*100, hideV=true; // what goes to Claude never has share counts or dollar amounts
   const vals=P.syms.map(x=>({x,v:(pxNow(x)||0)*S.plot[x]})).sort((p,q)=>q.v-p.v), tot=vals.reduce((s,o)=>s+o.v,0), cs={}; contribs(P,R).forEach(o=>{ cs[o.x]=o; });
   const yr=x=>{ const c=S.daily[x]&&S.daily[x].c; if(!c||c.length<200) return null; const t=agoDate("y1"); let p=null; for(const b of c){ if(b[0]>t) break; p=b[1]; } return p&&pxNow(x)?(pxNow(x)/p-1)*100:null; };
   const L=[`My stock portfolio as of ${new Date().toLocaleDateString([], {month:"long",day:"numeric",year:"numeric"})}${hideV?"":`, worth about ${fmt$(tot,0)}`}.`,
@@ -3572,10 +3673,10 @@ function aiContext(P,R,pts){
   return L.join("\n");
 }
 function aiHTML(P,R,pts){
-  if(S.pSym) return ""; const ctx=aiContext(P,R,pts), rng=((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"");
+  if(S.pSym) return ""; const ctx=aiContext(P,R,pts), rng=prLabel();
   const asks=[["🔍","Analyze my portfolio","diversification, drivers, risks","Analyze this portfolio: diversification, concentration, sector and theme exposure, overlap between funds and stocks, what has driven performance, and the biggest risks. Be specific to these holdings and keep it practical."],
     ["⚖️","Rebalancing ideas","what to trim or add","Suggest concrete rebalancing ideas for this portfolio with example target weights, what to trim or add and why, and the tradeoffs (taxes, risk, conviction). I know this isn't personal financial advice."],
-    ["📰","Explain this period",`what drove the ${rng}`,`Explain what drove this portfolio over the ${rng} period: which holdings and which market events (Fed, inflation, earnings, sector rotation) mattered most, and how it compares with the indexes.`],
+    ["📰","Explain this period",`what drove ${isCal(S.prange)?"":"the "}${rng}`,`Explain what drove this portfolio over the ${rng} period: which holdings and which market events (Fed, inflation, earnings, sector rotation) mattered most, and how it compares with the indexes.`],
     ["🔭","What to watch next","earnings, Fed, key levels","What should I watch over the next month for these holdings: earnings dates, Fed and economic releases, key price levels, and the scenarios that would hurt or help the most?"]];
   return `<div class="section-h"><h2>🤖 Ask Claude</h2><small>AI analysis with your numbers filled in</small></div>
     <div class="card pai">${asks.map(([i,l,sub,q])=>`<a class="paibtn" href="${esc(claudeURL(ctx+"\n\n"+q))}" target="_blank" rel="noopener"><span>${i}</span><b>${l}</b><small>${esc(sub)}</small></a>`).join("")}
@@ -3586,27 +3687,32 @@ const PREP={w:["Weekly","m0",7],m:["Monthly","m1"],"6m":["6-month","m6"],"1y":["
 const prepFrom=k=>k==="w"?agoDate(7):agoDate(PREP[k][1]);
 function spyMoveOn(day){ const c=S.daily.SPY&&S.daily.SPY.c; if(!c) return null; for(let i=1;i<c.length;i++) if(etISO(new Date(c[i][0]))===day) return (c[i][1]/c[i-1][1]-1)*100; return null; }
 function plotReportData(k){
-  const P=S.plotP; if(!P||P.days.length<3) return null; const days=P.days, t=prepFrom(k); let i0=0; days.forEach((o,i)=>{ if(o.t<=t+864e5/2) i0=i; });
-  const R=days.slice(i0); if(R.length<2) return null; const a=R[0], z=R[R.length-1], ret=(z.g/a.g-1)*100, gain=marketGain(a,z), flow=netFlow(a,z);
+  const P=S.plotP; if(!P||P.days.length<3) return null; const days=P.days, cal=isCal(k)?calSpan(k):null; let R;
+  if(cal) R=calSlice(days,k); else { const t=prepFrom(k); let i0=0; days.forEach((o,i)=>{ if(o.t<=t+864e5/2) i0=i; }); R=days.slice(i0); }
+  if(R.length<2) return null; const a=R[0], z=R[R.length-1], ret=(z.g/a.g-1)*100, gain=marketGain(a,z), flow=netFlow(a,z);
   const bms=BMS.map(([x,n])=>{ const s0=bmAt(x,a.t), s1=z.live?price(x)??bmAt(x,z.t):bmAt(x,z.t); return {x,n,r:s0&&s1?(s1/s0-1)*100:null}; });
   const cs=contribs(P,R).filter(o=>o.r!=null&&(R[0].q[o.x]>0||z.q[o.x]>0)), byR=cs.slice().sort((p,q)=>q.r-p.r), byD=cs.slice().sort((p,q)=>q.d-p.d);
   const ch=R.slice(1).map((o,i)=>({t:o.t,day:o.day,r:(o.g/R[i].g-1)*100,d:marketGain(R[i],o)})), best=ch.length?ch.reduce((p,q)=>q.r>p.r?q:p):null, worst=ch.length?ch.reduce((p,q)=>q.r<p.r?q:p):null;
   const pts=R.map(o=>[o.t,o.v]), hiI=pts.reduce((b,q,i)=>q[1]>pts[b][1]?i:b,0), loI=pts.reduce((b,q,i)=>q[1]<pts[b][1]?i:b,0);
   const tx=S.ptx.filter(x=>x.d>a.day&&x.d<=z.day);
   const events=marketEvents(etISO(new Date(a.t+864e5)),z.day).filter(e=>e.kind==="fed"||e.kind==="macro"||e.kind==="earn"||/Quad/.test(e.title)).map(e=>{ const j=R.findIndex(o=>o.day>=e.date&&o.t-parseET(e.date)<4*864e5); return {...e,m:spyMoveOn(e.date),me:j>0?(R[j].g/R[j-1].g-1)*100:null}; });
-  const sc=S.daily.SPY&&S.daily.SPY.c, big=[]; if(sc) for(let i=1;i<sc.length;i++){ const d=etISO(new Date(sc[i][0])); if(d>a.day&&d<=z.day) big.push({day:d,r:(sc[i][1]/sc[i-1][1]-1)*100}); }
-  big.sort((p,q)=>Math.abs(q.r)-Math.abs(p.r));
+  // the index's biggest days in the period, with your own move those days
+  const meOn={}; ch.forEach(c=>{ meOn[c.day]=c.r; });
+  const bigOf=x=>{ const c=S.daily[x]&&S.daily[x].c, out=[]; if(c) for(let i=1;i<c.length;i++){ const d=etISO(new Date(c[i][0])); if(d>a.day&&d<=z.day) out.push({day:d,r:(c[i][1]/c[i-1][1]-1)*100,me:meOn[d]??null}); }
+    return out.sort((p,q)=>Math.abs(q.r)-Math.abs(p.r)).slice(0,5); }, big=bigOf("SPY"), bigN=bigOf("QQQ");
+
   const sp=bms[0].r, beat=bms.filter(b=>b.r!=null&&ret>=b.r).length, nb=bms.filter(b=>b.r!=null).length;
   let st=0, streak=0; ch.forEach(c=>{ st=c.r>0?st+1:0; streak=Math.max(streak,st); });
   const wild=cs.map(o=>{ const r=[]; for(let i=1;i<R.length;i++) if(R[i-1].px[o.x]) r.push(R[i].px[o.x]/R[i-1].px[o.x]-1); return {x:o.x,v:stdev(r)*Math.sqrt(252)*100}; }).sort((p,q)=>q.v-p.v)[0]||null;
   const bsym=S.pbm||"SPY", b0=bmAt(bsym,a.t), spark=R.map(o=>[o.t,o.g/a.g*100]), bspark=b0?R.map(o=>{ const b=o.live?(price(bsym)??bmAt(bsym,o.t)):bmAt(bsym,o.t); return [o.t,b?b/b0*100:100]; }):null;
   const byDay=ch.slice().sort((p,q)=>q.r-p.r), up3=byDay.slice(0,3).filter(c=>c.r>0), dn3=byDay.slice(-3).reverse().filter(c=>c.r<0);
-  return {k,name:PREP[k][0],R,a,z,ret,gain,flow,bms,byR,byD,best,worst,up3,dn3,hi:pts[hiI],lo:pts[loI],tx,events,big:big.slice(0,4),sp,beat,nb,green:ch.filter(c=>c.r>0).length,ndays:ch.length,streak,wild,spark,bspark,bname:bmName(bsym)};
+  const unit=cal?cal.unit:{w:"week",m:"month","6m":"6 months","1y":"year"}[k], top=z.v?cs.map(o=>({x:o.x,w:(z.q[o.x]||0)*(z.px[o.x]||0)/z.v*100})).sort((p,q)=>q.w-p.w)[0]:null;
+  return {k,name:cal?cal.name:PREP[k][0],from:cal&&R.length>2&&R[0].day<cal.a?R[1].t:a.t,unit,cal:!!cal,bigN,top,ch,R,a,z,ret,gain,flow,bms,byR,byD,best,worst,up3,dn3,hi:pts[hiI],lo:pts[loI],tx,events,big,sp,beat,nb,green:ch.filter(c=>c.r>0).length,ndays:ch.length,streak,wild,spark,bspark,bname:bmName(bsym)};
 }
 // hide: leave out dollar amounts and share counts (always on for anything sent to Claude)
 function reportSummary(D,hide){
   const f=(v,d=0)=>hide?"":` (${(v>=0?"+":"−")+fmt$(Math.abs(v),d)})`, s=[];
-  s.push(`Your portfolio ${D.ret>=0?"gained":"lost"} ${Math.abs(D.ret).toFixed(2)}%${f(D.gain)} from ${pdL(D.a.t)} to ${pdL(D.z.t)}${D.sp!=null?`, ${D.ret>=D.sp?"ahead of":"behind"} the S&P 500 (${fmtP(D.sp)})`:""}${D.nb?` and beating ${D.beat} of the ${D.nb} major indexes`:""}.`);
+  s.push(`Your portfolio ${D.ret>=0?"gained":"lost"} ${Math.abs(D.ret).toFixed(2)}%${f(D.gain)} from ${pdL(D.from)} to ${pdL(D.z.t)}${D.sp!=null?`, ${D.ret>=D.sp?"ahead of":"behind"} the S&P 500 (${fmtP(D.sp)})`:""}${D.nb?` and beating ${D.beat} of the ${D.nb} major indexes`:""}.`);
   if(D.byD.length){ const t=D.byD[0], b=D.byD[D.byD.length-1]; s.push(t.d>0?`${t.x} did the most for you${f(t.d)}${b.d<0?`, while ${b.x} hurt the most${f(b.d)}`:""}.`:`Every holding lost ground; ${b.x} hurt the most${f(b.d)} and ${t.x} held up best${f(t.d)}.`); }
   if(D.byR.length>1) s.push(`The fastest horse was ${D.byR[0].x} (${fmtP(D.byR[0].r)}); the slowest was ${D.byR[D.byR.length-1].x} (${fmtP(D.byR[D.byR.length-1].r)}).`);
   if(D.best&&D.worst&&D.best!==D.worst) s.push(`Best day ${pdS(D.best.t)} (${fmtP(D.best.r)}), worst day ${pdS(D.worst.t)} (${fmtP(D.worst.r)}).`);
@@ -3615,7 +3721,7 @@ function reportSummary(D,hide){
   return s.join(" ");
 }
 function plotReportText(D,hide){
-  const G=reportGrade(D), L=[`📄 ${D.name} portfolio report · ${pdL(D.a.t)} – ${pdL(D.z.t)}`,`${G.mood} · Grade ${G.g}`,"",reportSummary(D,hide),"","vs the indexes: "+D.bms.map(b=>`${b.n} ${fmtP(b.r)}`).join(" · ")];
+  const G=reportGrade(D), L=[`📄 ${D.name} portfolio report · ${pdL(D.from)} – ${pdL(D.z.t)}`,`${G.mood} · Grade ${G.g}`,"",reportSummary(D,hide),"","vs the indexes: "+D.bms.map(b=>`${b.n} ${fmtP(b.r)}`).join(" · ")];
   if(D.byR.length) L.push("","Best: "+D.byR.slice(0,3).map(o=>`${o.x} ${fmtP(o.r)}`).join(", "),"Worst: "+D.byR.slice(-3).reverse().map(o=>`${o.x} ${fmtP(o.r)}`).join(", "));
   L.push(`Green days: ${D.green} of ${D.ndays}, longest winning streak ${D.streak} day${D.streak===1?"":"s"}.`);
   if(D.tx.length) L.push("","Trades: "+D.tx.map(t=>`${t.d} ${t.q>0?"bought":"sold"} ${hide?"":fmtQ(Math.abs(t.q))+" "}${t.s}`).join("; "));
@@ -3628,13 +3734,14 @@ function reportRefHTML(D){
   const tbl=list=>`<table class="prep-tab"><thead><tr><th>Stock</th><th>Weight</th><th>Return</th><th>Gain</th></tr></thead><tbody>${list.map(o=>`<tr><td>${esc(o.x)}</td><td class="num">${o.w<0.1?o.w.toFixed(2):o.w.toFixed(1)}%</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table>`, half=Math.ceil(rows.length/2);
   const tab=rows.length?`<div class="card pbreak"><h4>📋 Your holdings this period · ${rows.length}</h4><div class="prep-ref2">${tbl(rows.slice(0,half))}${rows.length>1?tbl(rows.slice(half)):""}</div></div>`:"";
   const all=proSeries(P.days,null), pts=proSeries(D.R,null);
-  return `<div class="prep-refh">📎 Reference</div>${tab}<div class="prep-ref2">${monthsHTML(all,P,null,"%")}${S.priv?"":monthsHTML(all,P,null,"$")}</div>${riskHTML(pts,D.R,P,1).html}`;
+  return `<div class="prep-refh">📎 Reference</div>${tab}${monthsBothHTML(all,P)}${monthBarsHTML(all,P)}${riskHTML(pts,D.R,P,1).html}`;
 }
 // a school grade from how you did against the S&P 500, and a weather mood from the return
 function reportGrade(D){
   const d=D.sp!=null?D.ret-D.sp:0, g=d>=5?"A+":d>=2?"A":d>=0?"B+":d>=-2?"B":d>=-5?"C":"D", r=D.ret;
-  const mood=r>=5?"🚀 Rocket "+D.name.toLowerCase().replace("ly","").replace("weeke","week"):r>=1?"☀️ Sunny stretch":r>=-1?"⛅ Sideways shuffle":r>=-5?"🌧️ Rainy patch":"⛈️ Stormy ride";
-  return {g,mood,cls:d>=0?"up":"dn"};
+  const mood=r>=5?"🚀 Rocket "+D.unit:r>=1?"☀️ Sunny stretch":r>=-1?"⛅ Sideways shuffle":r>=-5?"🌧️ Rainy patch":"⛈️ Stormy ride";
+  const rank={"A+":["🐺","Alpha wolf"],A:["🤠","Sheriff"],"B+":["⭐","Deputy"],B:["🐎","Ranch hand"],C:["🌵","Greenhorn"],D:["🦴","Tumbleweed"]}[g];
+  return {g,mood,rank,cls:d>=0?"up":"dn"};
 }
 // the report's growth chart: you vs the index, date ticks, the high and low, and Fed decision days
 function sparkSVG(a,b,o={}){
@@ -3645,42 +3752,62 @@ function sparkSVG(a,b,o={}){
     for(;+d<=t1;d.setMonth(d.getMonth()+(span>400?2:1))) tk.push([+d,d.getMonth()===0?String(d.getFullYear()):d.toLocaleDateString([], {month:"short"})]); }
   else { const n=span>20?5:Math.min(6,a.length-1); for(let i=0;i<=n;i++){ const q=a[Math.round(i*(a.length-1)/n)]; tk.push([q[0],pdS(q[0])]); } }
   const at=t=>{ let v=a[0]; for(const q of a){ if(q[0]>t) break; v=q; } return v; }, txt=(x,y,s,anc,col,w)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anc}" font-size="11" fill="${col}"${w?` font-weight="700"`:""} font-family="Sora,system-ui,sans-serif">${s}</text>`;
-  const anc=x=>x<70?"start":x>W-70?"end":"middle";
+  const anc=x=>x<70?"start":x>W-70?"end":"middle", lw=o.lw||2.4;
+  // a faint desert skyline along the bottom: mesas and two saguaros
+  const gy=H-B, desert=`<path d="M${L} ${gy} L${L} ${gy-10} L${W*.08} ${gy-12} L${W*.1} ${gy-24} L${W*.2} ${gy-24} L${W*.22} ${gy-12} L${W*.5} ${gy-9} L${W*.62} ${gy-14} L${W*.66} ${gy-30} L${W*.8} ${gy-30} L${W*.83} ${gy-15} L${W-Rt} ${gy-11} L${W-Rt} ${gy}Z" fill="#D9B47A" fill-opacity=".14"/>`
+    +[[.36,18],[.9,14]].map(([f,h])=>{ const x=W*f; return `<g fill="#6E9B5A" fill-opacity=".28"><rect x="${x-2}" y="${gy-h}" width="4" height="${h}" rx="2"/><rect x="${x-7}" y="${gy-h*.7}" width="3" height="${h*.35}" rx="1.5"/><rect x="${x-7}" y="${gy-h*.4}" width="6" height="3" rx="1.5"/><rect x="${x+4}" y="${gy-h*.85}" width="3" height="${h*.4}" rx="1.5"/><rect x="${x+1}" y="${gy-h*.5}" width="6" height="3" rx="1.5"/></g>`; }).join("");
   const mark=(pt,lab,isHi)=>{ if(!pt) return ""; const q=at(pt[0]), x=X(q[0]), y=Y(q[1]); const ly=isHi?(y-9<T-4?y+17:y-9):(y+17>H-B-3?y-9:y+17), ax=anc(x), lx=ax==="start"?x+6:ax==="end"?x-6:x;
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${isHi?"#0B8A5C":"#C8243C"}" stroke="#fff" stroke-width="1.5"/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${ax}" font-size="11" font-weight="700" fill="${isHi?"#0B8A5C":"#C8243C"}" stroke="#fff" stroke-width="3" paint-order="stroke" font-family="Sora,system-ui,sans-serif">${lab}</text>`; };
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3+lw*.5).toFixed(1)}" fill="${isHi?"#0B8A5C":"#C8243C"}" stroke="#fff" stroke-width="1.5"/><text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${ax}" font-size="11" font-weight="700" fill="${isHi?"#0B8A5C":"#C8243C"}" stroke="#fff" stroke-width="3" paint-order="stroke" font-family="Sora,system-ui,sans-serif">${lab}</text>`; };
   return `<svg class="chart pspark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Growth over the period"><defs><linearGradient id="spkg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".30"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs>
     ${tk.map(([t,l])=>{ const x=X(t); return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#8392A6" stroke-opacity=".18"/>${txt(Math.min(Math.max(x,14),W-14),H-8,l,"middle","#8392A6")}`; }).join("")}
     ${(o.fed||[]).map(t=>{ const x=X(t); return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="14" y2="${H-B}" stroke="#B48CFF" stroke-opacity=".55" stroke-dasharray="2 3"/>${txt(x,11,"Fed","middle","#9A6BEA")}`; }).join("")}
     <line x1="${L}" x2="${W-Rt}" y1="${Y(100).toFixed(1)}" y2="${Y(100).toFixed(1)}" stroke="#8392A6" stroke-opacity=".6" stroke-dasharray="3 3"/>
-    <path d="${P(a)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="1.6" stroke-dasharray="5 4"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="2.4" stroke-linejoin="round"/>
-    ${mark(o.hi,`High${o.hiV?" "+o.hiV:""} · ${o.hi?pdS(o.hi[0]):""}`,1)}${mark(o.lo,`Low${o.loV?" "+o.loV:""} · ${o.lo?pdS(o.lo[0]):""}`,0)}</svg>`;
+    ${desert}<path d="${P(a)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#spkg)"/>${b?`<path d="${P(b)}" fill="none" stroke="#6EA8FF" stroke-width="${Math.max(1.2,lw*.6).toFixed(1)}" stroke-dasharray="5 4"/>`:""}<path d="${P(a)}" fill="none" stroke="${c}" stroke-width="${lw}" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="${W-Rt-2}" y="13" text-anchor="end" font-size="13">${up?"🌕🐺":"🌑🌵"}</text>
+    ${mark(o.hi,`🐺 High${o.hiV?" "+o.hiV:""} · ${o.hi?pdS(o.hi[0]):""}`,1)}${mark(o.lo,`🌵 Low${o.loV?" "+o.loV:""} · ${o.lo?pdS(o.lo[0]):""}`,0)}</svg>`;
+}
+// the report's growth chart, redrawn on its own when the line thickness changes
+const prepChart=D=>sparkSVG(D.spark,D.bspark,{hi:D.hi,lo:D.lo,hiV:S.priv?"":fmt$(D.hi[1],0),loV:S.priv?"":fmt$(D.lo[1],0),lw:[1.6,2.4,3.6,5][S.plw-1]||2.4,fed:D.events.filter(e=>e.kind==="fed"&&!e.est).map(e=>parseET(e.date))});
+const prepLwHTML=()=>`<div class="prep-actions prep-lw"><span>Line</span>${LINEW.map(([v,l])=>`<button data-prepw="${v}" aria-pressed="${String(S.plw)===v}" title="${l} line"><i class="lw" style="height:${v}px"></i>${l}</button>`).join("")}</div>`;
+// wolf tracks: one paw print per trading day, green up and red down, a column per week
+function pawTrailHTML(D){
+  const ch=D.ch; if(!ch||ch.length<2) return ""; const mx=Math.max(...ch.map(c=>Math.abs(c.r)))||1, cols=[]; let col=null, last=null;
+  ch.forEach(c=>{ const d=new Date(c.day+"T12:00:00"), wd=(d.getDay()+6)%7, mon=new Date(d); mon.setDate(mon.getDate()-wd); const wk=ymdLocal(mon); if(wk!==last){ col=[]; cols.push(col); last=wk; } col.push({...c,wd}); });
+  const S2=15, L0=14, W=Math.max(cols.length*S2+4+L0,60), H=5*S2+4, paw=(x,y,c,o,t)=>`<g fill="${c}" fill-opacity="${o}"><title>${t}</title><ellipse cx="${x}" cy="${y+2.2}" rx="3.6" ry="3"/><circle cx="${x-4}" cy="${y-1.6}" r="1.45"/><circle cx="${x-1.4}" cy="${y-3.9}" r="1.45"/><circle cx="${x+1.4}" cy="${y-3.9}" r="1.45"/><circle cx="${x+4}" cy="${y-1.6}" r="1.45"/></g>`;
+  const svg=[..."MTWTF"].map((l,i)=>`<text x="2" y="${2+i*S2+S2/2+4}" font-size="9" fill="#8392A6" font-family="Sora,system-ui,sans-serif">${l}</text>`).join("")+cols.map((cl,i)=>cl.map(c=>paw(L0+2+i*S2+S2/2,2+c.wd*S2+S2/2+1,c.r>=0?"#16A374":"#DC3D55",(.35+.65*Math.min(1,Math.abs(c.r)/mx)).toFixed(2),`${pdS(c.t)} ${fmtP(c.r)}`)).join("")).join("");
+  return `<div class="card ptrail" style="gap:6px"><h4>🐾 Wolf tracks · every trading day</h4><div class="ptrail-in"><svg viewBox="0 0 ${W} ${H}" style="width:${Math.min(100,W/5.6).toFixed(1)}%;min-width:${Math.min(W,140)}px;height:auto" role="img" aria-label="Each trading day as a paw print">${svg}</svg></div>
+    <p class="hint" style="font-size:11px;margin:0">${D.green} green paws, ${D.ndays-D.green} red. Darker paws are bigger moves. Longest run: ${D.streak} green day${D.streak===1?"":"s"} in a row.</p></div>`;
 }
 function openPlotReport(k){
   S.open="__preport"; const D=plotReportData(k), si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
-  const head=`<div class="d-head"><div><h3>📄 ${D?D.name:"Portfolio"} report</h3><p>${D?`${pdL(D.a.t)} – ${pdL(D.z.t)}`:"Not enough price history yet"}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
-    <div class="chipbar prep-actions">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${PREPI[key][0]} ${v[0]}</button>`).join("")}</div>`;
+  const head=`<div class="d-head"><div><h3>📄 ${D?D.name:"Portfolio"} report</h3><p>${D?`${pdL(D.from)} – ${pdL(D.z.t)}`:"Not enough price history yet"}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="chipbar prep-actions">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${PREPI[key][0]} ${v[0]}</button>`).join("")}</div>
+    ${S.plotP?`<div class="prep-actions">${calPickHTML(S.plotP.days,k,"data-prepcal")}</div>`:""}`;
   if(!D){ si.innerHTML=`<div id="prep">${head}<p class="hint">Reports need price history. Add the free Twelve Data key in Settings and give it a few minutes.</p></div>`; wireReport(null); showSheet(); return; }
   const G=reportGrade(D), mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
   // ranked lists show both the % move and the dollars it made or cost
   const rank=(t,list,empty)=>`<div><h4>${t}</h4>${list.length?`<table class="prank"><tbody>${list.map((o,i)=>`<tr><td class="rk">${i+1}</td><td class="nm">${esc(o.x)}</td><td class="num ${tcls(o.r)}">${fmtP(o.r)}</td><td class="num ${tcls(o.d)}">${sgn$(o.d)}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">${empty}</p>`}</div>`;
   const dayRows=(t,list)=>`<div><h4>${t}</h4>${list.length?`<table class="prank"><tbody>${list.map(c=>`<tr><td class="nm">${pdS(c.t)}</td><td class="num ${tcls(c.r)}">${fmtP(c.r)}</td><td class="num ${tcls(c.d)}">${sgn$(c.d)}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">None</p>`}</div>`;
   const evIcon={fed:"🏛️",macro:"📊",earn:"📣",options:"🎯"}, mvp=D.byD.length&&D.byD[0].d>0?D.byD[0]:null, fast=D.byR[0], slow=D.byR.length>1?D.byR[D.byR.length-1]:null;
+  const wanted=D.byD.length&&D.byD[D.byD.length-1].d<0?D.byD[D.byD.length-1]:null;
   const award=(i,t,x,v)=>`<div class="paward"><span>${i}</span><small>${t}</small><b>${esc(x)}</b><em class="num">${v}</em></div>`;
   si.innerHTML=`<div id="prep">${head}
-    <div class="print-only print-head"><div><b>📄 ${D.name} portfolio report</b><small>${pdL(D.a.t)} – ${pdL(D.z.t)}</small></div><div class="ph-r">🐰 GoldRabbit v${APP_VERSION}<br>created ${pdL(Date.now())}</div></div>
+    <div class="print-only print-head"><div><b>📄 ${D.name} portfolio report</b><small>${pdL(D.from)} – ${pdL(D.z.t)}</small></div><div class="ph-r">🐰 GoldRabbit v${APP_VERSION}<br>created ${pdL(Date.now())}</div></div>
     <div class="card prep-hero ${G.cls}"><div class="prep-mood">${G.mood}</div>
-      <div class="prep-top"><div><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div></div><div class="prep-grade ${G.cls}" title="Grade vs the S&P 500"><b>${G.g}</b><small>vs S&amp;P</small></div></div>
-      ${sparkSVG(D.spark,D.bspark,{hi:D.hi,lo:D.lo,hiV:S.priv?"":fmt$(D.hi[1],0),loV:S.priv?"":fmt$(D.lo[1],0),fed:D.events.filter(e=>e.kind==="fed"&&!e.est).map(e=>parseET(e.date))})}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
+      <div class="prep-top"><div><div class="big num ${tcls(D.ret)}">${fmtP(D.ret)}</div><div class="hint">${D.gain>=0?"Market gain":"Market loss"} ${sgn$(D.gain)}${D.flow?` · net ${D.flow>=0?"added":"taken out"} ${money(fmt$(Math.abs(D.flow),0))}`:""}</div></div><div class="prep-gradebox"><div class="prep-grade ${G.cls}" title="Grade vs the S&P 500"><b>${G.g}</b><small>vs S&amp;P</small></div><div class="prep-rank" title="Trail rank from your grade">${G.rank[0]} ${G.rank[1]}</div></div></div>
+      <div id="prepChart">${prepChart(D)}</div>${prepLwHTML()}<div class="plegend" style="justify-content:center"><span><i style="background:${D.ret>=0?"var(--gain)":"var(--loss)"}"></i>You</span>${D.bspark?`<span><i style="background:#6EA8FF"></i>${D.bname}</span>`:""}</div>
       <div class="prep2">${li("Start",money(fmt$(D.a.v,0)))}${li("Now",money(fmt$(D.z.v,0)))}${li("High",money(fmt$(D.hi[1],0))+` <small>${pdS(D.hi[0])}</small>`)}${li("Low",money(fmt$(D.lo[1],0))+` <small>${pdS(D.lo[0])}</small>`)}</div></div>
     <div class="card pinsight"><h4>💡 The story</h4><p style="margin:0;font-size:13.5px;line-height:1.55">${esc(reportSummary(D,S.priv))}</p></div>
-    <div class="pawards">${mvp?award("🏆","MVP",mvp.x,sgn$(mvp.d)):""}${fast?award("🚀","Fastest horse",fast.x,fmtP(fast.r)):""}${slow?award("🐌","Slowpoke",slow.x,fmtP(slow.r)):""}${D.wild?award("🎢","Wildest ride",D.wild.x,D.wild.v.toFixed(0)+"% vol"):""}${award("🔥","Win streak",D.streak+" day"+(D.streak===1?"":"s"),"in a row")}${award("☀️","Green days",D.green+" of "+D.ndays,Math.round(D.green/Math.max(1,D.ndays)*100)+"%")}</div>
-    <div class="card" style="gap:6px"><h4>🏁 vs the indexes</h4>${bar("You",D.ret,1)}${D.bms.filter(b=>b.r!=null).map(b=>bar(esc(b.n),b.r)).join("")}</div>
-    ${D.byR.length?`<div class="card prep2">${rank("🚀 Best returns",D.byR.slice(0,5),"")}${rank("🐌 Worst returns",D.byR.slice(-5).reverse(),"")}</div>
-    <div class="card prep2">${rank("💰 Made you the most",D.byD.slice(0,5).filter(o=>o.d>0),"Nothing gained")}${rank("💸 Cost you the most",D.byD.slice(-5).reverse().filter(o=>o.d<0),"Nothing lost")}</div>`:""}
-    ${D.best?`<div class="card prep2">${dayRows("😄 Best days",D.up3)}${dayRows("😬 Worst days",D.dn3)}</div>`:""}
+    <div class="pawards">${mvp?award("🤠","Top gun",mvp.x,sgn$(mvp.d)):""}${fast?award("🐎","Fastest horse",fast.x,fmtP(fast.r)):""}${slow?award("🐌","Slowpoke",slow.x,fmtP(slow.r)):""}${D.wild?award("🐂","Bucking bronco",D.wild.x,D.wild.v.toFixed(0)+"% vol"):""}${D.top?award("🐺","Pack leader",D.top.x,D.top.w.toFixed(0)+"% of you"):""}${D.best&&D.best.r>0?award("🌕","Howl day",pdS(D.best.t),fmtP(D.best.r)):""}${award("🔥","Campfire streak",D.streak+" day"+(D.streak===1?"":"s"),"green in a row")}${award("🌵","Green days",D.green+" of "+D.ndays,Math.round(D.green/Math.max(1,D.ndays)*100)+"%")}</div>
+    ${pawTrailHTML(D)}
+    ${mvp||wanted?`<div class="pposters">${mvp?`<div class="pposter hero"><small>⭐ Hero of the trail ⭐</small><b>${esc(mvp.x)}</b><span>made you ${sgn$(mvp.d)}</span><em class="num">${fmtP(mvp.r)} this ${esc(D.unit)}</em></div>`:""}${wanted?`<div class="pposter wanted"><small>WANTED</small><b>${esc(wanted.x)}</b><span>for costing you ${sgn$(wanted.d)}</span><em class="num">${fmtP(wanted.r)} · reward: patience</em></div>`:""}</div>`:""}
+    <div class="card" style="gap:6px"><h4>🏇 Race vs the indexes</h4>${bar("You",D.ret,1)}${D.bms.filter(b=>b.r!=null).map(b=>bar(esc(b.n),b.r)).join("")}</div>
+    ${D.byR.length?`<div class="card prep2">${rank("🐎 Best returns",D.byR.slice(0,5),"")}${rank("🐌 Worst returns",D.byR.slice(-5).reverse(),"")}</div>
+    <div class="card prep2">${rank("💰 Struck gold",D.byD.slice(0,5).filter(o=>o.d>0),"Nothing gained")}${rank("🦴 Cost you the most",D.byD.slice(-5).reverse().filter(o=>o.d<0),"Nothing lost")}</div>`:""}
+    ${D.best?`<div class="card prep2">${dayRows("🌕 Best days",D.up3)}${dayRows("⛈️ Worst days",D.dn3)}</div>`:""}
+    ${D.big.length||D.bigN.length?`<div class="card prep2">${[["⚡ Biggest S&amp;P 500 days",D.big,"S&amp;P"],["🚀 Biggest Nasdaq 100 days",D.bigN,"NDX"]].map(([t,l,n])=>`<div><h4>${t}</h4>${l.length?`<table class="prank"><thead><tr><th></th><th>${n}</th><th>You</th></tr></thead><tbody>${l.map(b=>`<tr><td class="nm">${pdS(parseET(b.day))}</td><td class="num ${tcls(b.r)}">${fmtP(b.r)}</td><td class="num ${tcls(b.me)}">${b.me!=null?fmtP(b.me):"—"}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">No data yet</p>`}</div>`).join("")}</div>`:""}
     ${D.tx.length?`<div class="card"><h4>🧾 Your trades</h4>${D.tx.map(t=>li(`${pdS(parseET(t.d))} · ${t.q>0?"Bought":"Sold"} ${esc(t.s)}`,money(fmtQ(Math.abs(t.q)))+" sh",t.q>0?"tup":"tdown")).join("")}</div>`:""}
     ${D.events.length?`<div class="card"><h4>🗓️ Market events</h4><div class="pevs">${D.events.slice(-16).map(e=>`<div class="pev"><span>${evIcon[e.kind]||"🎯"}</span><div><b>${esc(e.title)}</b><small>${pdS(parseET(e.date))}${e.est?" · date estimated":""}</small></div><span class="pev-r">${e.me!=null?`<b class="num ${tcls(e.me)}">You ${fmtP(e.me)}</b>`:""}${e.m!=null?`<small class="num ${tcls(e.m)}">S&amp;P ${fmtP(e.m)}</small>`:""}</span></div>`).join("")}</div>${D.events.length>16?`<p class="hint">Showing the latest 16 of ${D.events.length}.</p>`:""}</div>`:""}
-    ${D.big.length?`<div class="card"><h4>⚡ Biggest S&amp;P 500 days</h4>${D.big.map(b=>li(pdL(parseET(b.day)),fmtP(b.r),tcls(b.r))).join("")}</div>`:""}
     ${reportRefHTML(D)}
     <div class="prep-actions prep-btns"><button class="ghost" data-prepcopy>📋 Copy</button>${navigator.share?`<button class="ghost" data-prepshare>📤 Share</button>`:""}<button class="ghost" data-preppdf>📄 Save PDF</button><a class="primary" href="${esc(claudeURL(plotReportText(D,true)+"\n\nTurn this into a full portfolio report: what drove the result, how the market events and sector moves played in, what went right and wrong, risks I'm carrying now, and what to watch next period."))}" target="_blank" rel="noopener">🤖 Ask Claude to expand it</a></div>
     <p class="hint" style="font-size:11px">Returns ignore money added or taken out with buys and sells. Ask Claude gets percentages only, never dollar amounts or share counts. Event dates marked estimated follow the usual schedule. Not investment advice.</p></div>`;
@@ -3695,7 +3822,9 @@ function printSheet(title){
 window.addEventListener("beforeprint",()=>{ if(!$("sheet").hidden&&!document.body.classList.contains("printing")){ document.body.classList.add("printing","printing-auto"); document.documentElement.classList.add("printing"); } });
 window.addEventListener("afterprint",()=>{ if(document.body.classList.contains("printing-auto")){ document.body.classList.remove("printing","printing-auto"); document.documentElement.classList.remove("printing"); } });
 function wireReport(D){
+  $("prep").addEventListener("change",e=>{ if(e.target.matches("[data-prepcal]")&&e.target.value) openPlotReport(e.target.value); });
   $("prep").addEventListener("click",e=>{ const r=e.target.closest("[data-preport]"); if(r){ openPlotReport(r.dataset.preport); return; }
+    const w=e.target.closest("[data-prepw]"); if(w&&D){ S.plw=+w.dataset.prepw; LS.set("plw",S.plw); $("prepChart").innerHTML=prepChart(D); $("prep").querySelectorAll("[data-prepw]").forEach(b=>b.setAttribute("aria-pressed",b===w)); return; }
     if(D&&e.target.closest("[data-prepcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(plotReportText(D,S.priv)).then(()=>toast("Report copied"),()=>toast("Couldn't copy")); return; }
     if(D&&e.target.closest("[data-prepshare]")){ navigator.share({title:`${D.name} portfolio report`,text:plotReportText(D,S.priv)}).catch(()=>{}); return; }
     if(D&&e.target.closest("[data-preppdf]")){ printSheet(`GoldRabbit ${D.name} report ${ymdLocal(D.z.t)}`); return; } });
@@ -3714,7 +3843,7 @@ function plotCompareData(){
   let gi=0, gb=0, gw=0, wi=0; const gap=me.map((v,i)=>(v/me[0])/(ix[i]/ix[0]));
   for(let i=1;i<gap.length;i++){ if(gap[i]<gap[gi]) gi=i; if(gap[i]/gap[gi]-1>gb){ gb=gap[i]/gap[gi]-1; gw=i; wi=gi; } }
   return {x,bs,bn,R,rMe,rIx,beta,corr,volMe:sm*Math.sqrt(252)*100,volIx:si*Math.sqrt(252)*100,ddMe:dd(me),ddIx:dd(ix),upCap:cap(upD),dnCap:cap(dnD),
-    beatDays:rm.filter((v,i)=>v>ri[i]).length,n,run:gb>0.02?{a:R[wi].t,b:R[gw].t,r:gb*100}:null,mas:plotMAs(P,R,x,[50,200]),rng:((PRANGES.find(q=>q[0]===S.prange)||[])[1]||"")};
+    beatDays:rm.filter((v,i)=>v>ri[i]).length,n,run:gb>0.02?{a:R[wi].t,b:R[gw].t,r:gb*100}:null,mas:plotMAs(P,R,x,[50,200]),rng:prLabel()};
 }
 function plotCompareText(C){
   const who=C.x||"Your portfolio", L=[], d=C.rMe-C.rIx;
@@ -3905,6 +4034,7 @@ function wirePlot(){
     const rm=e.target.closest("[data-pracemode]"); if(rm){ S.raceMode=rm.dataset.pracemode; LS.set("racemode",S.raceMode); bust(); return; }
     const rt=e.target.closest("[data-pracetop]"); if(rt){ S.raceTop=+rt.dataset.pracetop; LS.set("racetop",S.raceTop); bust(); return; }
     if(e.target.closest("[data-pracemute]")){ S.raceMute=!S.raceMute; LS.set("racemute",S.raceMute); bust(); return; }
+    const lw=e.target.closest("[data-plw]"); if(lw){ S.plw=+lw.dataset.plw; LS.set("plw",S.plw); renderPlot(true); return; }
     const rg=e.target.closest("[data-prange]"); if(rg){ S.prange=rg.dataset.prange; LS.set("prange",S.prange); S.pIdx=null; renderPlot(true); return; }
     const bm=e.target.closest("[data-pbm]"); if(bm){ S.pbm=bm.dataset.pbm||null; LS.set("pbm",S.pbm); renderPlot(true); return; }
     if(e.target.closest("[data-ppriv]")){ S.priv=!S.priv; LS.set("priv",S.priv); render(); renderPlot(true); return; }
@@ -3920,6 +4050,8 @@ function wirePlot(){
   });
   el.addEventListener("input",e=>{ if(e.target.id==="pSlide"){ S.pBusy=Date.now(); const n=S.plotP.rng.length, v=+e.target.value; S.pIdx=v>=n-1?null:v; plotSel(); } });
   el.addEventListener("change",e=>{ if(e.target.id==="pSlide") S.pBusy=0;
+    if(e.target.matches("[data-pcal]")&&e.target.value){ S.prange=e.target.value; LS.set("prange",S.prange); S.pIdx=null; renderPlot(true); return; }
+    if(e.target.matches("[data-prepcal]")&&e.target.value){ openPlotReport(e.target.value); e.target.value=""; return; }
     if(e.target.id==="pDate"&&e.target.value&&S.plotP){ const t=+new Date(e.target.value+"T23:59:59"), R=S.plotP.rng; let i=0; R.forEach((o,k)=>{ if(o.t<=t) i=k; }); S.pIdx=i>=R.length-1?null:i; plotSel(); } });
   // drag or tap on the chart to pick a day
   const pick=e=>{ const sv=e.target.closest&&e.target.closest("#pSvg"); if(!sv||!S.plotP) return; const R=S.plotP.rng; if(R.length<2) return; const b=sv.getBoundingClientRect(), f=Math.max(0,Math.min(1,(e.clientX-b.left)/b.width)), t=R[0].t+f*(R[R.length-1].t-R[0].t);
