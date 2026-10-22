@@ -31,7 +31,7 @@ const r4 = v => Math.round(v * 1e4) / 1e4;
 async function get(url, asText) {
   const errs = [];
   try {
-    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15000);
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000);
     try {
       const r = await fetch(url, { signal: ctl.signal, headers: { "User-Agent": UA, "Accept": "application/json,text/csv,*/*", "Accept-Language": "en-US,en;q=0.9" } });
       const body = await r.text();
@@ -40,7 +40,7 @@ async function get(url, asText) {
     } finally { clearTimeout(t); }
   } catch (e) { errs.push("fetch " + why(e)); }
   try {
-    const body = execFileSync("curl", ["-sS", "--fail-with-body", "--compressed", "--max-time", "20", "-A", UA, "-H", "Accept: application/json,text/csv,*/*", url],
+    const body = execFileSync("curl", ["-sS", "--fail-with-body", "--compressed", "--max-time", "12", "-A", UA, "-H", "Accept: application/json,text/csv,*/*", url],
       { encoding: "utf8", maxBuffer: 16 << 20, stdio: ["ignore", "pipe", "pipe"] });
     return asText ? body : JSON.parse(body);
   } catch (e) { errs.push("curl " + (String(e.stderr || "").trim() || why(e)).slice(0, 120)); }
@@ -71,15 +71,21 @@ async function stooq(sym) {
 
 let old = {}; try { old = JSON.parse(readFileSync(OUT, "utf8")).funds || {}; } catch {}
 const funds = {}, errors = {};
-for (const [sym, name] of FUNDS) {
+// a few funds at a time, and stop starting new ones after 3 minutes so a slow or blocking source can't time the job out
+const DEADLINE = Date.now() + 180000;
+async function one(sym, name) {
   const errs = [];
   let c = null;
-  try { c = await yahoo(sym); } catch (e) { errs.push("yahoo " + why(e).slice(0, 120)); }
-  if (!c) try { c = await stooq(sym); } catch (e) { errs.push("stooq " + why(e).slice(0, 120)); }
+  if (Date.now() < DEADLINE) {
+    try { c = await yahoo(sym); } catch (e) { errs.push("yahoo " + why(e).slice(0, 120)); }
+    if (!c && Date.now() < DEADLINE) try { c = await stooq(sym); } catch (e) { errs.push("stooq " + why(e).slice(0, 120)); }
+  } else errs.push("skipped, out of time");
   if (c) funds[sym] = { n: name, c: c.slice(-510) };
   else if (old[sym]) { funds[sym] = { ...old[sym], stale: 1 }; errors[sym] = errs.join("; "); }
   else errors[sym] = errs.join("; ");
 }
+const queue = FUNDS.slice();
+await Promise.all(Array.from({ length: 5 }, async () => { while (queue.length) { const [sym, name] = queue.shift(); await one(sym, name); } }));
 const ok = Object.values(funds).filter(f => !f.stale).length;
 console.log(`mutual funds: ${ok} fresh, ${Object.keys(funds).length - ok} stale, ${FUNDS.length - Object.keys(funds).length} missing`);
 for (const [k, v] of Object.entries(errors)) console.log(" ", k, v);
