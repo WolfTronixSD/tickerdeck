@@ -151,11 +151,36 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .ptr{transition:transform .2s,opacity .2s}
 .ptr.show{transform:translate(-50%,0);opacity:1}
 /* tabs */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(7,1fr);padding:6px max(4px,calc((100% - 560px)/2)) calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
 .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;color:var(--faint);font-size:10.5px;font-weight:600;letter-spacing:.02em;transition:color .2s}
 .tabbar svg{width:22px;height:22px}
 .tabbar button[aria-selected="true"]{color:var(--text)}
+@media (hover:hover){.tabbar button:hover{color:var(--text)}}
 .tabbar button[aria-selected="true"] svg{color:var(--accent);filter:drop-shadow(0 0 8px rgba(255,181,71,.45))}
+/* StockPlotter */
+.tabbar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabbar button[data-tab="plot"] span{font-size:9px;letter-spacing:-.01em}
+.palloc{display:flex;height:10px;border-radius:6px;overflow:hidden;gap:2px}
+.palloc i{min-width:2px}
+.plegend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:#AEB9C7}
+.plegend span{display:flex;align-items:center;gap:5px}
+.plegend i{width:8px;height:8px;border-radius:2px}
+.prd{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.prd div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.prd b{font-size:10.5px;color:var(--faint);font-weight:600;line-height:1.25}
+.prd span{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pctl{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}
+.pctl input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+.pctl2{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pctl2 label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint)}
+.pctl2 .field{width:auto;padding:6px 10px;color-scheme:dark}
+.prow{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid var(--line);width:100%;text-align:left}
+.prow:first-child{border-top:0}
+.prow.on{background:rgba(255,181,71,.08)}
+.prow .who{display:flex;flex-direction:column;gap:2px;min-width:0}
+.prow .who span{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .px{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.prow .px small{font-size:10.5px;color:var(--faint)}
 .tab{display:flex;flex-direction:column;gap:16px;animation:tabin .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes tabin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .thero{position:relative;overflow:hidden;border-radius:22px;padding:20px 18px;border:1px solid var(--line);display:flex;flex-direction:column;gap:12px;isolation:isolate}
@@ -577,6 +602,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="tab" id="tab-space" hidden></div>
   <div class="tab" id="tab-trends" hidden></div>
   <div class="tab" id="tab-picks" hidden></div>
+  <div class="tab" id="tab-plot" hidden></div>
   <p class="foot" id="foot"></p>
 </div>
 
@@ -587,6 +613,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <button data-tab="space" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 2.3 4.5 5.6 4.5 9.5v4.5h-9V12c0-3.9 1.5-7.2 4.5-9.5z"/><circle cx="12" cy="10" r="1.6"/><path d="M7.5 13.5 5 16v3l2.5-1.5M16.5 13.5 19 16v3l-2.5-1.5M10 19.5c.5 1.3 1.2 2 2 2s1.5-.7 2-2"/></svg><span>Space</span></button>
   <button data-tab="picks" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span>Picks</span></button>
   <button data-tab="trends" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Trends</span></button>
+  <button data-tab="plot" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5v17h17"/><path d="M7 15.5l3.5-4 3 2.5 5-6.5"/><circle cx="18.5" cy="7.5" r="1.3"/></svg><span>StockPlotter</span></button>
 </nav>
 <div class="scrim" id="scrim" hidden></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details" hidden><div class="sheet-in" id="sheetIn"></div></div>
@@ -612,7 +639,7 @@ function mirrorKeys(){ try{ IDB.set("keys",{key:LS.get("key",""),tdkey:LS.get("t
 async function restoreKeys(){ try{ const k=await IDB.get("keys"); if(!k||typeof k!=="object") return; if(k.key&&!LS.get("key","")){ try{ localStorage.setItem("tdl.key",JSON.stringify(k.key)); }catch(e){} S.key=k.key; } if(k.tdkey&&!LS.get("tdkey","")){ try{ localStorage.setItem("tdl.tdkey",JSON.stringify(k.tdkey)); }catch(e){} S.tdKey=k.tdkey; } }catch(e){} }
 // Setup link (#setup=...): copies keys and lists from GoldRabbit on one screen (home-screen app, Safari, the hub)
 // to another, since iPhone gives each of them its own storage. Lives only in the address after #, never sent to a server.
-const SETUP_KEYS=["key","tdkey","list","hold","cost","alerts","targets","divs"];
+const SETUP_KEYS=["key","tdkey","list","hold","cost","alerts","targets","divs","plot"];
 (function importSetup(){
   const m=location.hash.match(/setup=([A-Za-z0-9_-]+)/); if(!m) return;
   history.replaceState(null,"",location.pathname+location.search);
@@ -2043,9 +2070,11 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.32";
+const APP_VERSION="3.34";
 const CHANGELOG=[
-  {v:"3.32",date:"2026-10-22",title:"Smoother while prices stream",items:["Fixed the app freezing or feeling unresponsive on iPhone during market hours with a large watchlist","Live prices now update the screen 4 times a second instead of on every trade, and the price flash no longer forces the whole page to re-layout","Sections that refresh every few seconds skip the redraw when nothing changed"]},
+  {v:"3.34",date:"2026-10-22",title:"Smoother while prices stream",items:["Fixed the app freezing or feeling unresponsive on iPhone during market hours with a large watchlist","Live prices now update the screen 4 times a second instead of on every trade, and the price flash no longer forces the whole page to re-layout","Sections that refresh every few seconds skip the redraw when nothing changed"]},
+  {v:"3.33",date:"2026-10-22",title:"StockPlotter tab",items:["New StockPlotter tab: paste your holdings once (ticker and shares per line) and see what they're worth, with today's change, best and worst movers and an allocation bar","Plot the whole portfolio or any one stock over 1M, 3M, 6M, YTD, 1Y or Max, with the S&P 500 for comparison","Look back: drag the slider, tap or drag on the chart, step a day with the arrows, or pick a date; the table shows every holding's price and value on that day and how it has done since","After each close the day's value is added to a close log","Your holdings are saved only on this device (and in your private setup link), never in the app's code"]},
+  {v:"3.31",date:"2026-10-22",title:"Tab bar fits wide screens",items:["On a computer or wide window, the bottom tabs (Home, Sectors, AI, Space, Picks, Trends) now line up under the main column instead of spreading across the whole screen","Tabs light up when you hover over them with a mouse","Phones look the same as before"]},
   {v:"3.29",date:"2026-10-22",title:"Listen & watch links checked",items:["Every link in Listen & watch was checked by hand","Apple buttons now open each podcast's own page instead of a search","Motley Fool Money was renamed by the Fool; it now shows as Motley Fool Hidden Gems with its current page","Fixed Odd Lots, Animal Spirits and Bloomberg Radio links, and CNBC and Fox Business now open their TuneIn stations directly"]},
   {v:"3.28",date:"2026-10-21",title:"Timeframe bar moved up",items:["The 1D–5Y timeframe bar now sits near the top of Home, right under the index tiles and above the watchlist summary it controls","It still sticks to the top of the screen as you scroll"]},
   {v:"3.27",date:"2026-10-21",title:"Stock wisdom",items:["New 🦉 Stock wisdom button on Home: 20 lessons from market history, as 10 traps to avoid, 6 habits that work and 4 signals to watch, each with what history shows and what to do","Wisdom of the day, plus a mind map: tap any box to jump to that lesson","Before you buy: an 8-point checklist to go through before any new purchase","Crash plan: write down what you'll do in a 20% or 30% drop; it saves on this device as you type"]},
@@ -2752,7 +2781,7 @@ const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communicati
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
 S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); if(!TF[S.ttf]) S.ttf="1d"; S.mtf=LS.get("mtf","1d"); if(!TF[S.mtf]) S.mtf="1d"; S.trend=LS.get("trend","power"); S.extra=new Set();
 const themeSyms=k=>[...new Set(Object.values(THEMES[k].groups).flat())];
-function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); return []; }
+function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); if(t==="plot") return plotSyms(); return []; }
 const loading={};
 async function ensureData(list,{daily=false,gen=null,metric=null}={}){
   const live=()=>gen==null||gen===S.gen;
@@ -2865,21 +2894,199 @@ function opticsExtraHTML(){
       <li><b>What moves them</b>: very sensitive to bond yields and AI spending news. Watch hyperscaler capex in Meta, Microsoft and Alphabet earnings.</li>
     </ul><p class="hint">Not investment advice.</p></details>`;
 }
+/* ---------- StockPlotter: your holdings plotted from daily closes. Holdings are typed or pasted in and stay on this device. ---------- */
+S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbench=LS.get("pbench",true); S.ptrack=LS.get("ptrack",{}); S.pIdx=null; S.pSym=null; S.pBusy=0;
+const PRANGES=[["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
+if(!PRANGES.some(r=>r[0]===S.prange)) S.prange="1y";
+const plotSyms=()=>Object.keys(S.plot).filter(x=>S.plot[x]>0);
+const lastClose=x=>{ const d=S.daily[x]; return d&&d.c&&d.c.length?d.c[d.c.length-1][1]:null; };
+const pxNow=x=>price(x)??lastClose(x);
+const fmtQ=n=>Number(n).toLocaleString("en-US",{maximumFractionDigits:3});
+// one holding per line: "AAPL 820.301", "AAPL,820.301" or "AAPL<tab>820.301"; header lines are skipped and repeated tickers add up
+function parseHoldings(txt){
+  const out={}, bad=[];
+  String(txt).split(/\r?\n|;/).forEach(line=>{ const l=line.trim(); if(!l) return;
+    const m=l.match(/^([A-Za-z][A-Za-z0-9.\-]{0,9})[\s,:=]+\$?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:sh|shares)?$/i);
+    if(!m){ if(!/symbol|qty|quantity|shares|ticker/i.test(l)) bad.push(l); return; }
+    const s=m[1].toUpperCase(), q=parseFloat(m[2].replace(/,/g,"")); if(q>0) out[s]=+((out[s]||0)+q).toFixed(6); else bad.push(l); });
+  return {out,bad};
+}
+const holdingsText=()=>plotSyms().sort().map(x=>`${x} ${S.plot[x]}`).join("\n");
+// the value of today's shares on each trading day; a stock listed later than the rest is held flat at its first close
+function plotSeries(){
+  const syms=plotSyms(), have=syms.filter(x=>S.daily[x]&&S.daily[x].c&&S.daily[x].c.length>5), miss=syms.filter(x=>!have.includes(x));
+  if(!have.length) return {days:[],have,miss,flat:[]};
+  const map={}; have.forEach(x=>S.daily[x].c.forEach(b=>{ const k=new Date(b[0]).toDateString(); (map[k]=map[k]||{t:b[0],px:{}}).px[x]=b[1]; }));
+  const first=x=>S.daily[x].c[0][0], longs=have.filter(x=>S.daily[x].c.length>=120);
+  const start=longs.length?Math.max(...longs.map(first)):Math.min(...have.map(first));
+  const days=Object.values(map).filter(o=>o.t>=start-864e5/2).sort((a,b)=>a.t-b.t), flat=have.filter(x=>first(x)>start+864e5);
+  const last={}; have.forEach(x=>{ last[x]=S.daily[x].c[0][1]; });
+  days.forEach(o=>{ have.forEach(x=>{ if(o.px[x]!=null) last[x]=o.px[x]; else o.px[x]=last[x]; }); });
+  // today: live prices when the last close on file isn't today's
+  const tail=days[days.length-1];
+  if(tail&&new Date(tail.t).toDateString()!==new Date().toDateString()&&have.some(x=>price(x)!=null)&&dayInfoNow().open&&marketState().m>=570){
+    const px={}; have.forEach(x=>{ px[x]=price(x)??tail.px[x]; }); days.push({t:Date.now(),px,live:1}); }
+  days.forEach(o=>{ o.v=have.reduce((a,x)=>a+o.px[x]*S.plot[x],0); });
+  return {days,have,miss,flat};
+}
+function dayInfoNow(){ const p=etParts(new Date()); return dayInfo(p.y,p.mo,p.d); }
+function plotRange(days){
+  const r=PRANGES.find(x=>x[0]===S.prange)||PRANGES[4];
+  if(r[0]==="ytd"){ const y=new Date().getFullYear(), i=days.findIndex(o=>new Date(o.t).getFullYear()===y); return days.slice(Math.max(0,i-1)); }
+  return days.slice(Math.max(0,days.length-1-r[2]));
+}
+// after the close, each trading day's value is logged here, so the close log builds up on its own
+function plotLog(){
+  const syms=plotSyms(); if(!syms.length||!dayInfoNow().open) return; const st=marketState(); if(st.m<st.t.close) return;
+  if(syms.some(x=>pxNow(x)==null)) return;
+  const v=syms.reduce((a,x)=>a+pxNow(x)*S.plot[x],0), d=today();
+  if(S.ptrack[d]&&Math.abs(S.ptrack[d].v-v)<0.005) return;
+  S.ptrack[d]={v:+v.toFixed(2),spy:price("SPY")||null}; const keys=Object.keys(S.ptrack).sort(); while(keys.length>500) delete S.ptrack[keys.shift()];
+  LS.set("ptrack",S.ptrack);
+}
+async function loadPlot(gen){
+  const syms=plotSyms(); if(!syms.length) return; const live=()=>gen===S.gen;
+  await loadSavedDaily(); scheduleTab();
+  for(const x of syms.concat(["SPY"])){ if(!live()) return; const q=S.quotes[x]; if(!q||(!q.bad&&(!q.at||Date.now()-q.at>120000))){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } }
+  if(S.tdKey){ const nd=syms.concat(["SPY"]).filter(x=>!failedRecently(x)&&(!S.daily[x]||S.daily[x].day!==today()||!S.daily[x].v4));
+    for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) S.tdFail[x]=Date.now(); else S.daily[x]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{ LS.set("daily",S.daily); }catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
+  if(live()) ensureData(syms,{gen});
+}
+function plotChart(pts,idx,bench){
+  const W=340,H=190,T=12,B=22; if(pts.length<2) return `<p class="hint">Not enough price history yet.</p>`;
+  const t0=pts[0][0], t1=pts[pts.length-1][0], all=pts.map(q=>q[1]).concat(bench?bench.map(q=>q[1]):[]);
+  let lo=Math.min(...all), hi=Math.max(...all); const pad=(hi-lo)*.08||1; lo-=pad; hi+=pad;
+  const X=t=>4+(t-t0)/(t1-t0||1)*(W-8), Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B), path=a=>a.map((q,i)=>(i?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)).join(" ");
+  const up=pts[pts.length-1][1]>=pts[0][1], col=up?"#2BD99A":"#FF5C72", sel=pts[idx];
+  let grid=""; for(let i=0;i<4;i++){ const y=T+i*(H-T-B)/3, v=hi-(i/3)*(hi-lo); grid+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="#1F2A37"/>`+(S.priv||i===3?"":`<text x="4" y="${y+11}" font-size="8.5" fill="#566377" font-family="JetBrains Mono">${fmt$(v,v>=1000?0:2)}</text>`); }
+  const dl=t=>new Date(t).toLocaleDateString([], t1-t0>200*864e5?{month:"short",year:"2-digit"}:{month:"short",day:"numeric"});
+  return `<svg class="chart" id="pSvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Value over time" style="touch-action:pan-y">${grid}<defs><linearGradient id="plg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".26"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${path(pts)} L${X(t1)} ${H-B} L${X(t0)} ${H-B}Z" fill="url(#plg)"/>${bench?`<path d="${path(bench)}" fill="none" stroke="#6EA8FF" stroke-width="1.3" stroke-dasharray="4 3"/>`:""}<path d="${path(pts)}" fill="none" stroke="${col}" stroke-width="2.1"/>
+    <line x1="${X(sel[0])}" x2="${X(sel[0])}" y1="${T-4}" y2="${H-B}" stroke="#FFB547" stroke-dasharray="2 3"/><circle cx="${X(sel[0])}" cy="${Y(sel[1])}" r="4.5" fill="#FFB547" stroke="#070B10" stroke-width="2"/>
+    <text x="6" y="${H-6}" font-size="9.5" fill="#8392A6" font-family="Sora">${dl(t0)}</text><text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9.5" fill="#8392A6" font-family="Sora">${pts[pts.length-1]===sel&&new Date(t1).toDateString()===new Date().toDateString()?"Today":dl(t1)}</text></svg>`;
+}
+// everything that follows the slider: chart, readout and the holdings table for the chosen day
+function plotSel(){
+  const P=S.plotP; if(!P) return; const R=P.rng, n=R.length; if(!n) return;
+  const idx=S.pIdx==null||S.pIdx>=n?n-1:Math.max(0,S.pIdx), d=R[idx], now=R[n-1], isNow=idx===n-1;
+  const dateL=d.live?"Today (live)":new Date(d.t).toLocaleDateString([], {weekday:"short",month:"short",day:"numeric",year:"numeric"});
+  const spy=S.daily.SPY&&S.daily.SPY.c, spyAt=t=>{ if(!spy) return null; let v=null; for(const b of spy){ if(b[0]>t+864e5/2) break; v=b[1]; } return v; };
+  let pts, bench=null, read;
+  if(S.pSym&&P.have.includes(S.pSym)){
+    const x=S.pSym; pts=R.map(o=>[o.t,o.px[x]]); const p=d.px[x], p0=R[0].px[x], pn=pxNow(x)??now.px[x];
+    read=`<div class="prd"><div><b>${esc(x)} on ${dateL}</b><span class="num">${fmt$(p)}</span></div><div><b>Your ${money(fmtQ(S.plot[x]))} sh</b><span class="num">${money(fmt$(p*S.plot[x],0))}</span></div><div><b>${isNow?"Since range start":"From then to now"}</b><span class="num ${tcls(isNow?p/p0-1:pn/p-1)}">${fmtP(isNow?(p/p0-1)*100:(pn/p-1)*100)}</span></div></div>`;
+  } else {
+    pts=R.map(o=>[o.t,o.v]);
+    if(S.pbench&&spy){ const s0=spyAt(R[0].t); if(s0) bench=R.map(o=>{ const s=o.live?(price("SPY")??spyAt(o.t)):spyAt(o.t); return [o.t,s?R[0].v*s/s0:R[0].v]; }); }
+    const ch=isNow?d.v-R[0].v:now.v-d.v, base=isNow?R[0].v:d.v;
+    read=`<div class="prd"><div><b>Value on ${dateL}</b><span class="num">${money(fmt$(d.v,0))}</span></div><div><b>${isNow?"Since range start":"From then to now"}</b><span class="num ${tcls(ch)}">${money((ch>=0?"+":"−")+fmt$(Math.abs(ch),0))}</span></div><div><b>Change</b><span class="num ${tcls(ch)}">${fmtP(base?ch/base*100:null)}</span></div></div>`;
+  }
+  $("pChart").innerHTML=plotChart(pts,idx,bench); $("pRead").innerHTML=read;
+  const sl=$("pSlide"); if(sl&&+sl.value!==idx) sl.value=idx;
+  const dt=$("pDate"); if(dt) dt.value=ymdLocal(d.t);
+  // table: each holding's price and value on the chosen day, and how it has done since
+  const rows=P.syms.map(x=>{ const has=P.have.includes(x), p=has?d.px[x]:pxNow(x), pn=pxNow(x)??(has?now.px[x]:null), q=S.quotes[x];
+    const r=isNow?(r1d(x)??(has&&idx>0&&!d.live?(d.px[x]/R[idx-1].px[x]-1)*100:null)):(p&&pn?(pn/p-1)*100:null);
+    return {x,p,v:p!=null?p*S.plot[x]:null,r}; }).sort((a,b)=>(b.v??-1)-(a.v??-1));
+  const tot=rows.reduce((a,o)=>a+(o.v||0),0);
+  $("pTable").innerHTML=`<div class="section-h"><h2>${isNow?"Your holdings today":"Holdings on "+dateL}</h2><small>${isNow?"day change":"change since then"}</small></div>
+    <div class="list">${rows.map(o=>`<button class="prow${S.pSym===o.x?" on":""}" data-psym="${esc(o.x)}">${logo(o.x)}<div class="who"><b>${esc(o.x)}</b><span>${money(fmtQ(S.plot[o.x]))} sh · ${fmt$(o.p)}</span></div><div class="px"><span class="num">${money(fmt$(o.v,0))}</span><small>${tot&&o.v?(o.v/tot*100).toFixed(1)+"%":""}</small></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></button>`).join("")}</div>
+    <p class="hint">Tap a stock to plot its price with the same slider; tap it again to go back to the whole portfolio.</p>`;
+}
+const ymdLocal=t=>{ const d=new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+function renderPlot(force){
+  const el=$("tab-plot"); if(!el) return; if(!force&&(S.pDrag||S.pBusy&&Date.now()-S.pBusy<1500)) return; S.pBusy=0; plotLog();
+  const syms=plotSyms();
+  const head=`<section class="thero" style="--tbg:radial-gradient(120% 90% at 0% 0%,rgba(110,168,255,.22),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(43,217,154,.18),transparent 60%),#0B1015"><h2>StockPlotter</h2>`;
+  if(!syms.length){ el.innerHTML=`${head}<p>Plot what your holdings were worth on any day: drag the slider or pick a date to look back, tap a stock to plot it on its own.</p>
+      <p>🔒 Your stocks and share counts are saved only on this device, never in the app's code or on a server. Paste them once here.</p>
+      <button class="primary" data-pedit style="align-self:flex-start">Paste my holdings</button></section>`; return; }
+  const P=S.plotP=plotSeries(); P.syms=syms; P.rng=plotRange(P.days);
+  let val=0,prev=0; syms.forEach(x=>{ const p=pxNow(x), q=S.quotes[x]; if(p==null) return; val+=p*S.plot[x]; prev+=((q&&q.pc)||p)*S.plot[x]; });
+  const dch=val-prev, mv=syms.filter(x=>price(x)!=null&&S.quotes[x]&&S.quotes[x].pc).map(x=>({x,d:(price(x)-S.quotes[x].pc)*S.plot[x]})).sort((a,b)=>b.d-a.d);
+  const alloc=syms.map(x=>({x,v:(pxNow(x)||0)*S.plot[x]})).sort((a,b)=>b.v-a.v), top=alloc.slice(0,8), other=alloc.slice(8).reduce((a,o)=>a+o.v,0);
+  const n=P.rng.length, idx=S.pIdx==null||S.pIdx>=n?n-1:S.pIdx;
+  const loading=P.miss.filter(x=>!failedRecently(x)), noHist=P.miss.filter(x=>failedRecently(x));
+  const log=Object.entries(S.ptrack).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,10);
+  el.innerHTML=`${head}
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big">${money(fmt$(val,0))}</span><span class="num ${tcls(dch)}">${money((dch>=0?"+":"−")+fmt$(Math.abs(dch),0))} (${fmtP(prev?dch/prev*100:null)}) today</span></div>
+      <div class="row3"><div><b>Positions</b><span>${syms.length}</span></div><div><b>Best today</b><span class="tup">${mv.length&&mv[0].d>0?esc(mv[0].x)+" "+money("+"+fmt$(mv[0].d,0)):"—"}</span></div><div><b>Worst today</b><span class="tdown">${mv.length&&mv[mv.length-1].d<0?esc(mv[mv.length-1].x)+" "+money("−"+fmt$(-mv[mv.length-1].d,0)):"—"}</span></div></div>
+      <div class="palloc">${top.map(o=>`<i style="flex:${o.v||0.0001};background:${hue(o.x)}" title="${esc(o.x)}"></i>`).join("")}${other?`<i style="flex:${other};background:#2A3646"></i>`:""}</div>
+      <div class="plegend">${top.map(o=>`<span><i style="background:${hue(o.x)}"></i>${esc(o.x)} ${val?(o.v/val*100).toFixed(0):0}%</span>`).join("")}${other?`<span><i style="background:#2A3646"></i>Other ${(other/val*100).toFixed(0)}%</span>`:""}</div>
+    </section>
+    <div class="chipbar">${PRANGES.map(([k,l])=>`<button data-prange="${k}" aria-pressed="${S.prange===k}">${l}</button>`).join("")}<button data-pbench aria-pressed="${!!S.pbench}">vs S&amp;P</button></div>
+    <div class="card" style="background:var(--panel);gap:10px">
+      ${S.pSym?`<div class="section-h"><h2 style="font-size:16px">${esc(S.pSym)} price</h2><div style="display:flex;gap:6px"><button class="ghost" data-pdetail="${esc(S.pSym)}">Details</button><button class="ghost" data-pall>All holdings</button></div></div>`:""}
+      <div id="pChart"></div><div id="pRead"></div>
+      ${n>1?`<div class="pctl"><button class="iconbtn" data-pstep="-1" aria-label="Previous day">◀</button><input type="range" id="pSlide" min="0" max="${n-1}" value="${idx}" aria-label="Pick a day"><button class="iconbtn" data-pstep="1" aria-label="Next day">▶</button></div>
+      <div class="pctl2"><label>Go to date <input type="date" class="field" id="pDate" min="${ymdLocal(P.rng[0].t)}" max="${ymdLocal(P.rng[n-1].t)}"></label><button class="ghost" data-pnow>Today</button></div>`:""}
+      ${!S.tdKey?`<p class="hint">Add the free Twelve Data key in Settings to plot past prices. Until then this shows today's values only.</p><button class="ghost" data-open-settings style="align-self:flex-start">Add key</button>`:""}
+      ${S.tdKey&&loading.length?`<p class="hint">Loading price history: ${P.have.length} of ${syms.length} stocks so far. The free data plan loads about 8 a minute, so the full list takes about ${Math.ceil(loading.length/8)} more min. It's saved after that.</p>`:""}
+      ${noHist.length?`<p class="hint">No price history for ${noHist.map(esc).join(", ")}; ${noHist.length>1?"they're":"it's"} left out of the chart but counted in today's value.</p>`:""}
+      ${P.flat.length?`<p class="hint">${P.flat.map(esc).join(", ")} started trading after the chart begins, so ${P.flat.length>1?"they're":"it's"} held at the first close before then.</p>`:""}
+    </div>
+    <div id="pTable"></div>
+    ${log.length?`<div class="section-h"><h2>Close log</h2><small>logged after each close</small></div><div class="card" style="background:var(--panel)">${log.map(([d,o],i)=>{ const pv=log[i+1], ch=pv?(o.v/pv[1].v-1)*100:null; return `<div class="kv"><span>${new Date(d+"T12:00:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</span><b class="num">${money(fmt$(o.v,0))}${ch!=null?` <span class="${tcls(ch)}">${fmtP(ch)}</span>`:""}</b></div>`; }).join("")}</div>`:""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-pedit>✎ Edit holdings</button><button class="ghost" data-ppriv>${S.priv?"Show $":"Hide $"}</button><button class="ghost" data-pcopy>Copy list</button></div>
+    <p class="hint">🔒 Holdings are saved only on this device (and in your private setup link), never in the app's code or sent anywhere except the ticker symbols needed to fetch prices. Not investment advice.</p>`;
+  if(n) plotSel(); else { $("pTable").innerHTML=""; plotSelNoHist(); }
+}
+// no history yet: the table still lists today's values
+function plotSelNoHist(){ const P=S.plotP; P.rng=[{t:Date.now(),px:{},v:0,live:1}]; P.have=[]; plotSel(); $("pChart").innerHTML=""; $("pRead").innerHTML=""; }
+function openPlotEdit(){
+  S.open="__plot";
+  $("sheetIn").innerHTML=`<div class="d-head"><div><h3>Your holdings</h3><p>Saved only on this device</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="card"><p class="hint">One stock per line: ticker, then number of shares, like <span class="num">AAPL 820.301</span>. Commas or tabs work too, so you can paste straight from a spreadsheet. Header lines are skipped and repeated tickers are added up.</p>
+      <textarea class="field" id="pText" rows="12" spellcheck="false" autocapitalize="characters" autocomplete="off" style="font-family:var(--mono);font-size:13px;resize:vertical;min-height:200px">${esc(holdingsText())}</textarea>
+      <p class="hint" id="pParse"></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="pSave">Save</button>${Object.keys(S.holdings).length?`<button class="ghost" id="pWatch">Add my watchlist shares</button>`:""}${plotSyms().length?`<button class="ghost" id="pClear" style="color:var(--loss)">Remove all</button>`:""}</div></div>`;
+  const upd=()=>{ const {out,bad}=parseHoldings($("pText").value), k=Object.keys(out).length; $("pParse").innerHTML=`${k} stock${k===1?"":"s"} found${bad.length?` · <span class="tdown">couldn't read: ${bad.slice(0,4).map(esc).join(", ")}${bad.length>4?"…":""}</span>`:""}`; };
+  $("pText").addEventListener("input",upd); upd();
+  $("pSave").addEventListener("click",()=>{ const {out}=parseHoldings($("pText").value); S.plot=out; LS.set("plot",S.plot); S.pIdx=null; if(S.pSym&&!out[S.pSym]) S.pSym=null; closeSheet(); setTab("plot"); toast(`Saved ${Object.keys(out).length} holdings on this device`); });
+  const w=$("pWatch"); if(w) w.addEventListener("click",()=>{ const t=$("pText"); t.value=(t.value.trim()?t.value.trim()+"\n":"")+Object.entries(S.holdings).filter(([,n])=>n>0).map(([s,n])=>`${s} ${n}`).join("\n"); upd(); });
+  const c=$("pClear"); if(c) c.addEventListener("click",()=>{ if(!confirm("Remove all StockPlotter holdings from this device?")) return; S.plot={}; S.ptrack={}; LS.set("plot",S.plot); LS.set("ptrack",S.ptrack); S.pSym=null; closeSheet(); renderPlot(true); toast("Holdings removed"); });
+  showSheet();
+}
+function wirePlot(){
+  const el=$("tab-plot");
+  el.addEventListener("click",e=>{
+    if(e.target.closest("[data-pedit]")){ openPlotEdit(); return; }
+    const rg=e.target.closest("[data-prange]"); if(rg){ S.prange=rg.dataset.prange; LS.set("prange",S.prange); S.pIdx=null; renderPlot(true); return; }
+    if(e.target.closest("[data-pbench]")){ S.pbench=!S.pbench; LS.set("pbench",S.pbench); renderPlot(true); return; }
+    if(e.target.closest("[data-ppriv]")){ S.priv=!S.priv; LS.set("priv",S.priv); render(); renderPlot(true); return; }
+    if(e.target.closest("[data-pcopy]")){ navigator.clipboard&&navigator.clipboard.writeText(holdingsText()).then(()=>toast("Holdings copied"),()=>toast("Couldn't copy")); return; }
+    if(e.target.closest("[data-pnow]")){ S.pIdx=null; plotSel(); return; }
+    if(e.target.closest("[data-pall]")){ S.pSym=null; renderPlot(true); return; }
+    const dt=e.target.closest("[data-pdetail]"); if(dt){ if(price(dt.dataset.pdetail)!=null) openDetail(dt.dataset.pdetail); else toast("No live price for "+dt.dataset.pdetail); return; }
+    const st=e.target.closest("[data-pstep]"); if(st&&S.plotP){ const n=S.plotP.rng.length, cur=S.pIdx==null||S.pIdx>=n?n-1:S.pIdx; S.pIdx=Math.max(0,Math.min(n-1,cur+ +st.dataset.pstep)); if(S.pIdx===n-1) S.pIdx=null; plotSel(); return; }
+    const ps=e.target.closest("[data-psym]"); if(ps){ const x=ps.dataset.psym; if(!S.plotP||!S.plotP.have.includes(x)){ toast(`No price history for ${x} yet`); return; } S.pSym=S.pSym===x?null:x; renderPlot(true); window.scrollTo({top:0,behavior:"smooth"}); return; }
+  });
+  el.addEventListener("input",e=>{ if(e.target.id==="pSlide"){ S.pBusy=Date.now(); const n=S.plotP.rng.length, v=+e.target.value; S.pIdx=v>=n-1?null:v; plotSel(); } });
+  el.addEventListener("change",e=>{ if(e.target.id==="pSlide") S.pBusy=0;
+    if(e.target.id==="pDate"&&e.target.value&&S.plotP){ const t=+new Date(e.target.value+"T23:59:59"), R=S.plotP.rng; let i=0; R.forEach((o,k)=>{ if(o.t<=t) i=k; }); S.pIdx=i>=R.length-1?null:i; plotSel(); } });
+  // drag or tap on the chart to pick a day
+  const pick=e=>{ const sv=e.target.closest&&e.target.closest("#pSvg"); if(!sv||!S.plotP) return; const R=S.plotP.rng; if(R.length<2) return; const b=sv.getBoundingClientRect(), f=Math.max(0,Math.min(1,(e.clientX-b.left)/b.width)), t=R[0].t+f*(R[R.length-1].t-R[0].t);
+    let i=0,best=Infinity; R.forEach((o,k)=>{ const d=Math.abs(o.t-t); if(d<best){ best=d; i=k; } }); S.pBusy=Date.now(); S.pIdx=i>=R.length-1?null:i; plotSel(); };
+  el.addEventListener("pointerdown",e=>{ if(e.target.closest("#pSvg")){ S.pDrag=1; pick(e); } });
+  el.addEventListener("pointermove",e=>{ if(S.pDrag) pick(e); });
+  window.addEventListener("pointerup",()=>{ if(S.pDrag){ S.pDrag=0; S.pBusy=0; } });
+}
 function renderTab(){
   if(S.tab==="home"){ renderSignals(); renderSeasonHome(); renderPortfolio(); renderDividends(); const a=$("askList"); if(a) a.href=claudeURL(listPrompt()); return; }
-  if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else if(S.tab==="picks") renderPicks(); else renderTheme(S.tab);
+  if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else if(S.tab==="picks") renderPicks(); else if(S.tab==="plot") renderPlot(); else renderTheme(S.tab);
 }
 function setTab(t){
   S.tab=t; LS.set("tab",t);
-  ["home","sectors","ai","space","trends","picks"].forEach(k=>{ const el=$("tab-"+k); if(el){ el.hidden=k!==t; if(k===t){ el.style.animation="none"; void el.offsetWidth; el.style.animation=""; } } });
+  ["home","sectors","ai","space","trends","picks","plot"].forEach(k=>{ const el=$("tab-"+k); if(el){ el.hidden=k!==t; if(k===t){ el.style.animation="none"; void el.offsetWidth; el.style.animation=""; } } });
   document.querySelectorAll("#tabbar button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
   window.scrollTo({top:0,behavior:"instant"});
   setActiveSubs(); renderTab();
   S.gen=(S.gen||0)+1;
-  if(t==="picks") loadPicks(); else if(t!=="home") ensureData(tabSyms(t).concat(["SPY"]),{daily:true,gen:S.gen});
+  if(t==="picks") loadPicks(); else if(t==="plot") loadPlot(S.gen); else if(t!=="home") ensureData(tabSyms(t).concat(["SPY"]),{daily:true,gen:S.gen});
 }
 function wireTabs(){
   $("tabbar").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(b) setTab(b.dataset.tab); });
+  wirePlot();
   $("tab-picks").addEventListener("click",e=>{
     const h=e.target.closest("[data-hz]"); if(h){ S.hz=h.dataset.hz; LS.set("hz",S.hz); renderPicks(); loadPicks(); return; }
     const sc=e.target.closest("[data-scope]"); if(sc){ S.pscope=sc.dataset.scope; LS.set("pscope",S.pscope); renderPicks(); loadPicks(); return; }
