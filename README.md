@@ -21,7 +21,7 @@ GoldRabbit (formerly TickerDeck) is a real-time stock watchlist for iPhone. Pric
 - **Listen & watch:** top 5 financial podcasts, business radio streams and YouTube channels (with live streams), plus latest videos for your tickers
 - **Reports:** weekly, monthly and yearly reports to share or expand with Claude
 - **Daily briefing:** overnight moves, this week's earnings, dividends and holidays, alerts you're close to
-- **StockPlotter:** paste your holdings once (they stay on your device) to plot their value over time; a slider, date picker and day-step buttons look back at any past day, and each stock can be plotted on its own
+- **StockPlotter:** paste your holdings once (they stay on your device) to plot their value over time; a slider, date picker and day-step buttons look back at any past day, and each stock can be plotted on its own. Mutual funds get their daily closes from `mutual_funds.json` (about 40 popular funds, refreshed each weekday evening)
 - **Compare:** two stocks on one chart plus a side-by-side scorecard
 - **Stock detail:** tap-to-set price targets on the chart, charts with S&P 500 comparison and a statistical forecast cone, trend signals, RSI, volatility, beta, insider trades, analyst ratings, and an "Ask Claude" button
 

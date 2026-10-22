@@ -1,0 +1,30 @@
+name: mutual-funds
+on:
+  schedule:
+    - cron: "40 23 * * 1-5"   # weekdays, after funds publish the day's NAV (closes for StockPlotter)
+    - cron: "40 13 * * 1-5"   # weekday mornings, catches late NAVs
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scripts/mutual_funds.mjs", ".github/workflows/mutual-funds.yml"]
+permissions:
+  contents: write
+concurrency: { group: mutual-funds, cancel-in-progress: false }
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/mutual_funds.mjs
+        timeout-minutes: 5
+      - name: Save mutual_funds.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          [ -f mutual_funds.json ] || exit 0
+          git add mutual_funds.json
+          git diff --cached --quiet && exit 0
+          git commit -m "mutual funds: refresh"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 5; done

@@ -844,7 +844,7 @@ function api(path,opt={}){
     S.apiErr=null; return r.json(); };
   const p=queue.then(run,run); queue=p.catch(()=>{}); return p;
 }
-async function loadQuote(s){ try{ const q=await api(`/quote?symbol=${encodeURIComponent(s)}`); if(q&&q.c){ S.quotes[s]=q; seedTicks(s); } else if(q&&q.c===0&&q.pc===0) S.quotes[s]={bad:true}; }catch(e){} }
+async function loadQuote(s){ try{ const q=await api(`/quote?symbol=${encodeURIComponent(s)}`); if(q&&q.c){ S.quotes[s]=q; seedTicks(s); } else if(q&&q.c===0&&q.pc===0&&!(S.quotes[s]&&S.quotes[s].mf)) S.quotes[s]={bad:true}; }catch(e){} }
 async function loadStatic(s,{metric=true,profile=true}={}){
   const fresh=o=>o&&o.at&&Date.now()-o.at<12*3600e3;
   if(profile&&(!fresh(S.profile[s])||S.profile[s].ex===undefined)){ try{ const p=await api(`/stock/profile2?symbol=${encodeURIComponent(s)}`); S.profile[s]={name:p.name||"",logo:p.logo||"",industry:p.finnhubIndustry||"",cap:p.marketCapitalization||null,web:p.weburl||"",ex:p.exchange||"",at:Date.now()}; LS.set("profile",S.profile);}catch(e){} }
@@ -2056,8 +2056,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.33";
+const APP_VERSION="3.34";
 const CHANGELOG=[
+  {v:"3.34",date:"2026-10-22",title:"Mutual funds in StockPlotter",items:["Mutual funds like VFTAX and VIGIX now show a price, value and chart in StockPlotter","Their daily closing prices (NAV) come from a list of about 40 popular Vanguard, Fidelity, Schwab, T. Rowe Price and American Funds funds, refreshed each weekday evening","Mutual funds price once a day, so they move after the close rather than live"]},
   {v:"3.33",date:"2026-10-22",title:"StockPlotter tab",items:["New StockPlotter tab: paste your holdings once (ticker and shares per line) and see what they're worth, with today's change, best and worst movers and an allocation bar","Plot the whole portfolio or any one stock over 1M, 3M, 6M, YTD, 1Y or Max, with the S&P 500 for comparison","Look back: drag the slider, tap or drag on the chart, step a day with the arrows, or pick a date; the table shows every holding's price and value on that day and how it has done since","After each close the day's value is added to a close log","Your holdings are saved only on this device (and in your private setup link), never in the app's code"]},
   {v:"3.31",date:"2026-10-22",title:"Tab bar fits wide screens",items:["On a computer or wide window, the bottom tabs (Home, Sectors, AI, Space, Picks, Trends) now line up under the main column instead of spreading across the whole screen","Tabs light up when you hover over them with a mouse","Phones look the same as before"]},
   {v:"3.29",date:"2026-10-22",title:"Listen & watch links checked",items:["Every link in Listen & watch was checked by hand","Apple buttons now open each podcast's own page instead of a search","Motley Fool Money was renamed by the Fool; it now shows as Motley Fool Hidden Gems with its current page","Fixed Odd Lots, Animal Spirits and Bloomberg Radio links, and CNBC and Fox Business now open their TuneIn stations directly"]},
@@ -2929,10 +2930,21 @@ function plotLog(){
   S.ptrack[d]={v:+v.toFixed(2),spy:price("SPY")||null}; const keys=Object.keys(S.ptrack).sort(); while(keys.length>500) delete S.ptrack[keys.shift()];
   LS.set("ptrack",S.ptrack);
 }
+// mutual funds aren't in the live price feeds: their daily closes come from mutual_funds.json, refreshed each weekday evening
+let fundsP=null;
+async function loadFunds(syms){
+  const want=syms.filter(x=>/^[A-Z]{4}X$/.test(x)); if(!want.length) return;
+  fundsP=fundsP||fetch("mutual_funds.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).catch(()=>null);
+  const F=((await fundsP)||{}).funds; if(!F) return;
+  want.forEach(x=>{ const f=F[x]; if(!f||!f.c||f.c.length<2) return; const n=f.c.length;
+    S.daily[x]={day:today(),v4:1,c:f.c.map(([d,v])=>[parseET(d),v,0])}; S.quotes[x]={c:f.c[n-1][1],pc:f.c[n-2][1],at:Date.now(),mf:1}; });
+  try{ LS.set("daily",S.daily); }catch(e){} scheduleTab();
+}
 async function loadPlot(gen){
   const syms=plotSyms(); if(!syms.length) return; const live=()=>gen===S.gen;
   await loadSavedDaily(); scheduleTab();
   for(const x of syms.concat(["SPY"])){ if(!live()) return; const q=S.quotes[x]; if(!q||(!q.bad&&(!q.at||Date.now()-q.at>120000))){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } }
+  await loadFunds(syms); if(!live()) return;
   if(S.tdKey){ const nd=syms.concat(["SPY"]).filter(x=>!failedRecently(x)&&(!S.daily[x]||S.daily[x].day!==today()||!S.daily[x].v4));
     for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) S.tdFail[x]=Date.now(); else S.daily[x]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{ LS.set("daily",S.daily); }catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
   if(live()) ensureData(syms,{gen});
