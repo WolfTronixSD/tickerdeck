@@ -300,6 +300,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pmon2 i small{font-size:10px;opacity:.9}
 .pwarn{border:1px solid rgba(255,181,71,.6);background:rgba(255,181,71,.10);font-size:13px;line-height:1.5}
 .pwarn h4{color:#FFB547}
+.pwait{height:6px;border-radius:3px;background:rgba(255,181,71,.18);overflow:hidden;margin:8px 0 4px}.pwait i{display:block;height:100%;background:#FFB547;border-radius:3px;transition:width .6s}
 .pbig h5,.pexec h5{margin:0 0 4px;font-size:12.5px;font-weight:700}
 .pbul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5}
 .pbul li{padding-left:2px}
@@ -2387,8 +2388,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.54";
+const APP_VERSION="3.55";
 const CHANGELOG=[
+  {v:"3.55",date:"2026-10-23",title:"Reports open on their own",items:["When a report is waiting for price history, it shows a progress bar and a countdown and opens by itself as soon as the last stock is in, no more tapping Try again"]},
   {v:"3.54",date:"2026-10-23",title:"Top dogs first",items:["StockPlotter loads your biggest holdings first, so the total is close to right within seconds","The holdings that make up 90% of your money refresh every 2 minutes and get the live price stream; the next 8% every 10 minutes; the smallest 2% every 30 minutes","Far fewer data lookups, so the free plan's limit is hit less often"]},
   {v:"3.53",date:"2026-10-23",title:"iPhone PDF pages fixed",items:["Saved PDFs on iPhone no longer cut award cards in half or spill each page onto the next","The header line repeats on every page; Safari adds its own footer with the page number"]},
   {v:"3.52",date:"2026-10-22",title:"Footer line on every page on iPhone",items:["Saved PDFs on iPhone and Safari now have the footer line and \"Page X of Y\" at the bottom of every page, not just the last one"]},
@@ -3885,7 +3887,19 @@ function execSummaryHTML(D){
   L.push(`<b>Bottom line:</b> Grade ${G.g}, rank ${G.rank[0]} ${G.rank[1]}. ${d!=null&&d>=0?"Keep riding, partner.":"Tighten the saddle and stick to the plan, partner."}`);
   return `<div class="card pexec"><h4>🤠 Executive summary</h4><ul class="pbul">${L.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
 }
+// while a report waits for price history: show progress and a countdown, then open it as soon as the last stock is in
+// (or as soon as loading stops, in which case the report warns about whatever never came)
+function prepWait(k,n0){
+  clearInterval(S.prepWaitT); const eta=Date.now()+Math.ceil(n0/8)*61000;
+  S.prepWaitT=setInterval(()=>{ const el=$("prepWait"); if(S.open!=="__preport"||!el){ clearInterval(S.prepWaitT); return; }
+    const miss=plotSyms().filter(x=>!(S.daily[x]&&S.daily[x].c&&S.daily[x].c.length>5)&&!failedRecently(x));
+    if(!miss.length||!S.plotBusy){ clearInterval(S.prepWaitT); const P=S.plotP=plotSeries(); P.syms=plotSyms(); P.rng=plotRange(P.days); openPlotReport(k); return; }
+    const done=Math.max(0,n0-miss.length), sec=Math.max(0,Math.round((Math.max(eta,Date.now()+Math.ceil(miss.length/8)*1000)-Date.now())/1000));
+    el.textContent=`${done} of ${n0} loaded · `+(sec>5?`about ${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")} left`:"almost there…");
+    const b=$("prepBar"); if(b) b.style.width=(done/n0*100).toFixed(0)+"%"; },1000);
+}
 function openPlotReport(k){
+  clearInterval(S.prepWaitT);
   S.open="__preport"; const D=plotReportData(k), si=$("sheetIn"), li=(a,b,c="")=>`<div class="kv"><span>${a}</span><b class="num ${c}">${b}</b></div>`;
   const head=`<div class="d-head"><div><h3>📄 ${D?D.name:"Portfolio"} report</h3><p>${D?`${pdL(D.from)} – ${pdL(D.z.t)}`:"Not enough price history yet"}</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
     <div class="chipbar prep-actions">${Object.entries(PREP).map(([key,v])=>`<button data-preport="${key}" aria-pressed="${key===k}">${PREPI[key][0]} ${v[0]}</button>`).join("")}</div>
@@ -3893,7 +3907,7 @@ function openPlotReport(k){
   // a report with missing prices would be wrong: block it while prices are still loading, warn about any that never came
   const P0=S.plotP, syms0=plotSyms(), val0=x=>(pxNow(x)||0)*(S.plot[x]||0), tot0=syms0.reduce((a,x)=>a+val0(x),0)||1, pct0=l=>(l.reduce((a,x)=>a+val0(x),0)/tot0*100).toFixed(0)+"%";
   const loading0=P0&&S.tdKey&&S.plotBusy?P0.miss.filter(x=>!failedRecently(x)):[], noHist0=P0?P0.miss.filter(x=>!loading0.includes(x)):[], part0=D&&P0?P0.have.filter(x=>(D.z.q[x]||D.a.q[x])&&S.daily[x].c[0][0]>D.a.t+3*864e5):[];
-  if(D&&loading0.length){ si.innerHTML=`<div id="prep">${head}<div class="card pwarn"><h4>⏳ Prices still loading</h4><p style="margin:0">Price history is still loading for <b>${loading0.length} of ${syms0.length}</b> stocks (${pct0(loading0)} of your portfolio): ${loading0.slice(0,12).map(esc).join(", ")}${loading0.length>12?"…":""}. A report now would show wrong numbers, so it waits until they're in. That takes about ${Math.ceil(loading0.length/8)} min.</p><button class="primary" data-preport="${esc(String(k))}" style="align-self:flex-start">Try again</button></div></div>`; wireReport(null); showSheet(); return; }
+  if(D&&loading0.length){ si.innerHTML=`<div id="prep">${head}<div class="card pwarn"><h4>⏳ Prices still loading</h4><p style="margin:0">Price history is still loading for <b>${loading0.length} of ${syms0.length}</b> stocks (${pct0(loading0)} of your portfolio): ${loading0.slice(0,12).map(esc).join(", ")}${loading0.length>12?"…":""}. A report now would show wrong numbers, so it waits and opens on its own when they're in.</p><div class="pwait"><i id="prepBar" style="width:0%"></i></div><p id="prepWait" class="num" style="margin:0;font-size:12.5px">0 of ${loading0.length} loaded · about ${Math.ceil(loading0.length/8)}:00 left</p><button class="ghost" data-preport="${esc(String(k))}" style="align-self:flex-start">Check now</button></div></div>`; wireReport(null); showSheet(); prepWait(k,loading0.length); return; }
   if(!D){ si.innerHTML=`<div id="prep">${head}<p class="hint">Reports need price history. Add the free Twelve Data key in Settings and give it a few minutes.</p></div>`; wireReport(null); showSheet(); return; }
   S.prepHead=`${D.name} portfolio report · ${pdL(D.from)} – ${pdL(D.z.t)}`;
   const G=reportGrade(D), mxB=Math.max(...D.bms.map(b=>Math.abs(b.r||0)),Math.abs(D.ret))||1, bar=(n,r,me)=>`<div class="pvs${me?" me":""}"><b>${n}</b><div class="pctr-t"><i style="${r>=0?`left:50%;width:${r/mxB*50}%`:`right:50%;width:${-r/mxB*50}%`};background:${me?"var(--accent)":r>=0?"var(--gain)":"var(--loss)"}"></i></div><span class="num ${tcls(r)}">${fmtP(r)}</span></div>`;
