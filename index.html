@@ -151,7 +151,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .ptr{transition:transform .2s,opacity .2s}
 .ptr.show{transform:translate(-50%,0);opacity:1}
 /* tabs */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(7,1fr);padding:6px max(4px,calc((100% - 560px)/2)) calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(8,1fr);padding:6px max(4px,calc((100% - 560px)/2)) calc(6px + env(safe-area-inset-bottom,0px));background:rgba(9,13,19,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid var(--line)}
 .tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;color:var(--faint);font-size:10.5px;font-weight:600;letter-spacing:.02em;transition:color .2s}
 .tabbar svg{width:22px;height:22px}
 .tabbar button[aria-selected="true"]{color:var(--text)}
@@ -462,6 +462,34 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pchk .field{width:auto;padding:6px 8px}
 .ptx{display:grid;grid-template-columns:1fr auto 32px;align-items:center;gap:8px}
 .ptx .iconbtn{width:28px;height:28px;font-size:12px}
+/* MyToday */
+.tabbar button[data-tab="today"] span{font-size:9.5px;letter-spacing:-.01em}
+.tdhero{--tbg:radial-gradient(120% 90% at 0% 0%,rgba(255,170,80,.26),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(200,90,40,.22),transparent 60%),linear-gradient(180deg,#1A120B,#0D0F14)}
+.tdh-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tdtag{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:#E9D9BF;white-space:nowrap}
+.tdtag.on{color:var(--gain);border-color:rgba(43,217,154,.35)}
+.thero .tdwhen{color:#E9D9BF}
+.tdbig{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tdbig .big{font-size:34px}
+.tdbig .pill{font-size:14px;padding:5px 9px}
+.thero .tdmood{color:#F3E6D0;font-size:14px}
+.tdpaws{display:flex;height:9px;border-radius:6px;overflow:hidden;gap:2px}
+.tdpaws i{min-width:2px}
+.thero .tdcount,.thero .tdext{font-size:12.5px;color:#D9CDB8}
+.tdawards{grid-template-columns:repeat(2,1fr)}
+@media (min-width:520px){.tdawards{grid-template-columns:repeat(4,1fr)}}
+.tdflags{background:var(--panel);gap:6px}
+.tdflags p{margin:0;font-size:13px;line-height:1.45}
+.tdviews{align-self:flex-start}
+.tdlist{background:var(--panel);gap:4px;padding:10px 12px}
+.tdrow{display:grid;grid-template-columns:58px 1fr 70px 74px;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;min-height:34px}
+.tdrow>.num{text-align:right}
+.tdrow .pill{min-width:0;font-size:11.5px;padding:3px 5px}
+.tdw{display:flex;flex-direction:column;min-width:0}
+.tdw small{font-size:10.5px;color:var(--muted)}
+.tdbub{background:var(--panel);padding:6px}
+.tdbub svg{width:100%;height:auto;display:block}
+.tdsum{margin:0;font-size:13px;color:var(--muted)}
 /* StockPlotter */
 .tabbar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tabbar button[data-tab="plot"] span{font-size:9px;letter-spacing:-.01em}
@@ -916,6 +944,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <div class="tab" id="tab-trends" hidden></div>
   <div class="tab" id="tab-picks" hidden></div>
   <div class="tab" id="tab-plot" hidden></div>
+  <div class="tab" id="tab-today" hidden></div>
   <p class="foot" id="foot"></p>
 </div>
 
@@ -927,6 +956,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   <button data-tab="picks" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span>Picks</span></button>
   <button data-tab="trends" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Trends</span></button>
   <button data-tab="plot" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5v17h17"/><path d="M7 15.5l3.5-4 3 2.5 5-6.5"/><circle cx="18.5" cy="7.5" r="1.3"/></svg><span>StockPlotter</span></button>
+  <button data-tab="today" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 18.5h19"/><path d="M6.5 18.5a5.5 5.5 0 0 1 11 0"/><path d="M12 6.5v2.5M5.2 9.7l1.8 1.8M18.8 9.7 17 11.5M3 14.5h2M19 14.5h2"/></svg><span>MyToday</span></button>
 </nav>
 <div class="scrim" id="scrim" hidden></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details" hidden><div class="sheet-in" id="sheetIn"></div></div>
@@ -2388,8 +2418,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.55";
+const APP_VERSION="3.56";
 const CHANGELOG=[
+  {v:"3.56",date:"2026-10-23",title:"🐺 MyToday",items:["New MyToday tab next to StockPlotter: what your stocks did today (or in the last session when the market is closed), in dollars and percent against the previous close","Top 10, top 20 or all of them as a heat map, a list or bubbles","Today's top 5 news stories on your 20 biggest holdings","Top gun, outlaw, wild horse and pack leader of the day, you against the S&P 500 and Nasdaq, earnings today and tomorrow, new 52-week highs and lows, and pre-market or after-hours moves","Ask Claude why your stocks moved (percentages only, never dollars or share counts)"]},
   {v:"3.55",date:"2026-10-23",title:"Reports open on their own",items:["When a report is waiting for price history, it shows a progress bar and a countdown and opens by itself as soon as the last stock is in, no more tapping Try again"]},
   {v:"3.54",date:"2026-10-23",title:"Top dogs first",items:["StockPlotter loads your biggest holdings first, so the total is close to right within seconds","The holdings that make up 90% of your money refresh every 2 minutes and get the live price stream; the next 8% every 10 minutes; the smallest 2% every 30 minutes","Far fewer data lookups, so the free plan's limit is hit less often"]},
   {v:"3.53",date:"2026-10-23",title:"iPhone PDF pages fixed",items:["Saved PDFs on iPhone no longer cut award cards in half or spill each page onto the next","The header line repeats on every page; Safari adds its own footer with the page number"]},
@@ -3120,7 +3151,7 @@ const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communicati
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
 S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); if(!TF[S.ttf]) S.ttf="1d"; S.mtf=LS.get("mtf","1d"); if(!TF[S.mtf]) S.mtf="1d"; S.trend=LS.get("trend","power"); S.extra=new Set();
 const themeSyms=k=>[...new Set(Object.values(THEMES[k].groups).flat())];
-function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); if(t==="plot") return plotTiers().order; return []; }
+function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); if(t==="plot"||t==="today") return plotTiers().order; return []; }
 const loading={};
 async function ensureData(list,{daily=false,gen=null,metric=null,age=null}={}){
   const live=()=>gen==null||gen===S.gen;
@@ -4157,7 +4188,7 @@ function openPlotEdit(){
       <p class="hint" style="font-size:11.5px;margin:0">Deleting a trade also undoes its change to today's shares.</p></div>`:""}`;
   const upd=()=>{ const {out,bad}=parseHoldings($("pText").value), k=Object.keys(out).length; $("pParse").innerHTML=`${k} stock${k===1?"":"s"} found${bad.length?` · <span class="tdown">couldn't read: ${bad.slice(0,4).map(esc).join(", ")}${bad.length>4?"…":""}</span>`:""}`; };
   $("pText").addEventListener("input",upd); upd();
-  const done=msg=>{ plotSaved(); closeSheet(); setTab("plot"); renderPlot(true); toast(msg); };
+  const done=msg=>{ plotSaved(); closeSheet(); const t=S.tab==="today"?"today":"plot"; setTab(t); if(t==="plot") renderPlot(true); toast(msg); };
   let side=1; const sb=$("tSide"); if(sb) sb.addEventListener("click",e=>{ const b=e.target.closest("[data-tside]"); if(!b) return; side=+b.dataset.tside; sb.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); });
   const ta=$("tAdd"); if(ta) ta.addEventListener("click",()=>{ const x=$("tSym").value.trim().toUpperCase(), q=parseFloat($("tQty").value.replace(/,/g,"")), d=$("tDate").value||td;
     if(!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(x)){ toast("Enter a ticker"); return; } if(!(q>0)){ toast("Enter the number of shares"); return; } if(d>td){ toast("Pick today or an earlier day"); return; }
@@ -4217,22 +4248,153 @@ function wirePlot(){
   el.addEventListener("pointermove",e=>{ if(S.pDrag) pick(e); });
   window.addEventListener("pointerup",()=>{ if(S.pDrag){ S.pDrag=0; S.pBusy=0; } });
 }
+/* ---------- MyToday ---------- */
+// just today: what each holding did against the previous close (the last session when the market is closed)
+S.tdN=LS.get("tdN",10); if(![10,20,0].includes(S.tdN)) S.tdN=10; S.tdView=LS.get("tdView","heat"); if(!["list","heat","bubble"].includes(S.tdView)) S.tdView="heat"; S.tnews={};
+function todayRows(){
+  return plotSyms().map(x=>{ const q=S.quotes[x]||{}, p=price(x), pc=q.pc, n=S.plot[x]; if(p==null||!pc) return {x,n,miss:true};
+    const e=extOf(x); return {x,n,p,pc,v:p*n,d:(p-pc)*n,r:(p/pc-1)*100,h:q.h,l:q.l,mf:!!q.mf,ext:e?{d:(e.p-e.ref)*n,r:e.chg,label:e.label}:null}; })
+    .sort((a,b)=>(b.v||0)-(a.v||0)||a.x.localeCompare(b.x));
+}
+const idxDay=x=>{ const q=S.quotes[x], p=price(x); return q&&q.pc&&p!=null?(p/q.pc-1)*100:null; };
+function todayWhen(){
+  const ms=marketState(), ph=ms.phase, q=S.quotes.SPY, t=q&&q.t?q.t*1000:Date.now(), cl=ms.t.close||960;
+  const ds=new Date(t).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}), hm=m=>`${(Math.floor(m/60)+11)%12+1}${m%60?":"+String(m%60).padStart(2,"0"):""} ${m>=720?"PM":"AM"} ET`;
+  if(ph==="open") return {live:1,title:"Today so far",tag:"🟢 Market open",cdT:ms.nextClose,cdL:"closes in"};
+  if(ph==="after") return {title:"Today",tag:`🌙 Closed at ${hm(cl)}`,sub:"after-hours trading until 8 PM ET"};
+  return {title:`Last session · ${ds}`,tag:ph==="pre"?"🌅 Pre-market":"🔒 Market closed",cdT:ms.nextOpen,cdL:"opens in"};
+}
+const tdMood=r=>r>=2?["🚀","Stampede! The whole herd is running."]:r>=.75?["🤠","Yeehaw, a fine day on the trail."]:r>=.1?["☀️","Fair skies over the ranch."]:r>-.1?["🌵","Quiet day in Dodge."]:r>-.75?["🌥️","A dusty trail, nothing to fret about."]:r>-2?["🌧️","Rough ride, keep a firm grip on the reins."]:["🌪️","Twister on the prairie. Hold on to your hat."];
+const tdCol=(r,mx)=>{ const k=Math.min(1,Math.abs(r)/(mx||1)), a=.18+.7*Math.sqrt(k); return r>=0?`rgba(43,217,154,${a.toFixed(2)})`:`rgba(255,92,114,${a.toFixed(2)})`; };
+function tdHeat(rows,rest){
+  const tot=rows.concat(rest).reduce((s,o)=>s+o.v,0)||1, mx=Math.max(...rows.map(o=>Math.abs(o.r)))||1;
+  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?84:sh>2.5?60:42}px;background:${o.bg||tdCol(o.r,mx)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span>${sh>4&&o.d!=null?`<small class="num">${sgn$(o.d)}</small>`:""}</button>`; };
+  const rv=rest.reduce((s,o)=>s+o.v,0), rd=rest.reduce((s,o)=>s+o.d,0);
+  return `<div class="pheat">${rows.map(o=>tile(o,`data-sym="${esc(o.x)}"`)).join("")}${rest.length?tile({x:`+${rest.length} more`,v:rv,r:rv-rd?rd/(rv-rd)*100:0,d:rd,bg:"rgba(131,146,166,.28)"},`data-tdn="0"`):""}</div>
+    <p class="hint" style="font-size:11px;margin:0">Size = what the holding is worth, color = today's move.${rest.length?" The gray tile adds up the rest; tap it to show all.":""}</p>`;
+}
+// bubbles: area = position value, color = today's move; packed from the middle out
+function tdBubbles(rows){
+  const W=340,H=290, tot=rows.reduce((s,o)=>s+o.v,0)||1, mx=Math.max(...rows.map(o=>Math.abs(o.r)))||1; let C=[];
+  for(let k=Math.sqrt(W*H*.5/Math.PI/tot),tries=0;tries<8;tries++,k*=.9){ C=[]; let ok=true;
+    for(const o of rows){ const r=Math.max(8,Math.sqrt(o.v)*k); let at=null;
+      for(let a=0;a<120;a+=.3){ const d=a*1.4, x=W/2+Math.cos(a)*d, y=H/2+Math.sin(a)*d*.85; if(x-r<1||x+r>W-1||y-r<1||y+r>H-1) continue; if(C.every(c=>Math.hypot(c.cx-x,c.cy-y)>=c.rr+r+2)){ at={cx:x,cy:y}; break; } }
+      if(!at){ ok=false; break; } C.push({...o,...at,rr:r}); }
+    if(ok) break; }
+  const g=C.map(c=>{ const fs=Math.min(15,c.rr/2.4); return `<g data-sym="${esc(c.x)}" role="button" tabindex="0" style="cursor:pointer"><circle cx="${c.cx.toFixed(1)}" cy="${c.cy.toFixed(1)}" r="${c.rr.toFixed(1)}" fill="${tdCol(c.r,mx)}" stroke="rgba(255,255,255,.14)"><title>${esc(c.x)} ${fmtP(c.r)}</title></circle>${c.rr>=13?`<text x="${c.cx.toFixed(1)}" y="${(c.cy+(c.rr>=21?-1:fs*.35)).toFixed(1)}" text-anchor="middle" font-size="${fs.toFixed(1)}" font-weight="700" fill="#fff" font-family="Sora,system-ui,sans-serif">${esc(c.x)}</text>`:""}${c.rr>=21?`<text x="${c.cx.toFixed(1)}" y="${(c.cy+fs*.95).toFixed(1)}" text-anchor="middle" font-size="${(fs*.78).toFixed(1)}" fill="#fff" fill-opacity=".9" font-family="JetBrains Mono,monospace">${fmtP(c.r)}</text>`:""}</g>`; }).join("");
+  const y0=C.length?Math.max(0,Math.min(...C.map(c=>c.cy-c.rr))-4):0, y1=C.length?Math.min(H,Math.max(...C.map(c=>c.cy+c.rr))+4):H;
+  return `<div class="card tdbub"><svg viewBox="0 ${y0.toFixed(0)} ${W} ${(y1-y0).toFixed(0)}" role="img" aria-label="Bubble chart of today's moves">${g}</svg></div><p class="hint" style="font-size:11px;margin:0">Bubble size = what the holding is worth, color = today's move. Tap one for details.</p>`;
+}
+function tdList(rows){
+  const mx=Math.max(...rows.map(o=>Math.abs(o.d)))||1;
+  return `<div class="card tdlist">${rows.map(o=>`<div class="tdrow" data-sym="${esc(o.x)}" role="button" tabindex="0"><div class="tdw"><b>${esc(o.x)}</b><small class="num">${fmt$(o.p)}</small></div><div class="pctr-t"><i style="${o.d>=0?`left:50%;width:${o.d/mx*50}%;background:var(--gain)`:`right:50%;width:${-o.d/mx*50}%;background:var(--loss)`}"></i></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span><span class="num ${tcls(o.d)}">${sgn$(o.d)}</span></div>`).join("")}</div>`;
+}
+function todayFlags(rows){
+  const t=today(), tm=etISO(new Date(Date.now()+864e5)), map=S.earnings.map||{}, out=[];
+  rows.forEach(o=>{ const e=map[o.x]; if(e&&(e.date===t||e.date===tm)) out.push(`📣 <b>${esc(o.x)}</b> reports ${e.date===t?"today":"tomorrow"}${e.hour==="bmo"?" before the open":e.hour==="amc"?" after the close":""}`); });
+  rows.forEach(o=>{ const d=S.daily[o.x]; if(!d||!d.c||d.c.length<60) return; const yr=Date.now()-365*864e5, past=d.c.filter(c=>c[0]>=yr&&ymdLocal(c[0])<t).map(c=>c[1]); if(past.length<60) return;
+    if(o.p>Math.max(...past)) out.push(`🏔️ <b>${esc(o.x)}</b> hit a new 52-week high`); else if(o.p<Math.min(...past)) out.push(`🕳️ <b>${esc(o.x)}</b> sank to a new 52-week low`); });
+  const wild=rows.filter(o=>Math.abs(o.r)>=5).sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
+  if(wild.length) out.push(`🔥 Wild broncos: ${wild.slice(0,5).map(o=>`<b>${esc(o.x)}</b> <span class="${tcls(o.r)}">${fmtP(o.r)}</span>`).join(", ")}`);
+  return out;
+}
+function todayAsk(rows,R,W){
+  const spy=idxDay("SPY"), qqq=idxDay("QQQ");
+  return claudeURL(`Explain what moved my stocks ${W.cdT&&!W.live?"in the last trading session":"today"} (${new Date().toLocaleDateString()}). Search the web for today's news on each one and on the market.
+My portfolio: ${fmtP(R)}${spy!=null?`, S&P 500 ${fmtP(spy)}`:""}${qqq!=null?`, Nasdaq 100 ${fmtP(qqq)}`:""}.
+My biggest holdings, largest first, with today's move:
+${rows.slice(0,20).map(o=>`${o.x} ${fmtP(o.r)}`).join("\n")}
+Keep it short and friendly with a little cowboy flavor: what drove the biggest moves, anything unusual, and what to watch tomorrow. Not investment advice.`);
+}
+function renderToday(){
+  const el=$("tab-today"); if(!el) return;
+  if(!plotSyms().length){ el.innerHTML=`<section class="thero tdhero"><h2>🐺 MyToday</h2><p>Howdy, partner. Paste your holdings once and this tab shows what your stocks did today: dollars and percent against yesterday's close, the biggest movers, and today's news.</p><p>🔒 Your stocks and share counts are saved only on this device.</p><button class="primary" data-pedit style="align-self:flex-start">Paste my holdings</button></section>`; el._h=null; return; }
+  if(!$("tdMain")) el.innerHTML=`<div id="tdMain" class="pcol"></div><div class="section-h"><h2>📰 Today's news on your top 20</h2><small id="tdNewsAt"></small></div><div id="tdNews" class="feed"><p class="hint" style="padding:10px 0">Rounding up the news…</p></div><div id="tdRest" class="pcol"></div>`;
+  const all=todayRows(), rows=all.filter(o=>!o.miss), miss=all.filter(o=>o.miss), W=todayWhen();
+  const V=rows.reduce((s,o)=>s+o.v,0), D=rows.reduce((s,o)=>s+o.d,0), R=V-D?D/(V-D)*100:0, [mi,mt]=tdMood(R);
+  const up=rows.filter(o=>o.r>0.005).length, dn=rows.filter(o=>o.r<-0.005).length, fl=rows.length-up-dn;
+  const spy=idxDay("SPY"), qqq=idxDay("QQQ"), dia=idxDay("DIA"), vs=spy==null?null:R-spy;
+  const ex=rows.filter(o=>o.ext), exD=ex.reduce((s,o)=>s+o.ext.d,0), exL=ex.length?ex[0].ext.label:"";
+  const N=S.tdN, shown=N?rows.slice(0,N):rows, rest=rows.slice(shown.length), sh=V?shown.reduce((s,o)=>s+o.v,0)/V*100:0;
+  const byD=rows.slice().sort((a,b)=>b.d-a.d), byR=rows.slice().sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
+  const award=(i,t,o,v)=>o?`<div class="paward" data-sym="${esc(o.x)}" role="button" tabindex="0"><span>${i}</span><small>${t}</small><b>${esc(o.x)}</b><em class="num">${v}</em></div>`:"";
+  const best=byD[0], worst=byD[byD.length-1], wild=byR[0], lead=rows[0];
+  const idxRow=(n,r)=>r==null?"":`<div><b>${n}</b><span class="${tcls(r)}">${fmtP(r)}</span></div>`;
+  const flags=todayFlags(rows);
+  const main=`<section class="thero tdhero">
+      <div class="tdh-top"><h2>🐺 MyToday</h2><span class="tdtag${W.live?" on":""}">${W.tag}</span></div>
+      <p class="tdwhen"><b>${esc(W.title)}</b>${W.cdT?` · ${W.cdL} <span id="tdCd" class="num">${cd(W.cdT-Date.now())}</span>`:W.sub?` · ${W.sub}`:""}</p>
+      ${rows.length?`<div class="tdbig"><span class="big num ${tcls(D)}">${sgn$(D)}</span><span class="pill ${cls(R)}">${fmtP(R)}</span></div>
+      <p class="tdmood">${mi} ${mt}${vs==null?"":vs>=0?` You're ahead of the S&amp;P 500 by ${Math.abs(vs).toFixed(2)} pts. 🏇`:` The S&amp;P 500 is ahead of you by ${Math.abs(vs).toFixed(2)} pts. 🐢`}</p>
+      <div class="row3"><div><b>Worth now</b><span>${money(fmt$(V,0))}</span></div>${idxRow("S&amp;P 500",spy)}${idxRow("Nasdaq 100",qqq)}${spy==null&&qqq==null?idxRow("Dow",dia):""}</div>
+      <div class="tdpaws" aria-label="${up} up, ${dn} down, ${fl} flat"><i style="flex:${up||0.0001};background:var(--gain)"></i><i style="flex:${fl||0.0001};background:#5B6573"></i><i style="flex:${dn||0.0001};background:var(--loss)"></i></div>
+      <p class="tdcount">🐾 <b class="tup">${up} up</b> · <b class="tdown">${dn} down</b>${fl?` · ${fl} flat`:""}${miss.length?` · ⏳ ${miss.length} still loading`:""}</p>
+      ${ex.length?`<p class="tdext">${exL==="Pre-market"?"🌅":"🌙"} ${exL}: <b class="num ${tcls(exD)}">${sgn$(exD)}</b> on ${ex.length} stock${ex.length>1?"s":""} so far</p>`:""}`:`<p>⏳ Rounding up today's prices…</p>`}
+    </section>
+    ${rows.length?`<div class="pawards tdawards">${award("🤠","Top gun",best&&best.d>0?best:null,best?sgn$(best.d):"")}${award("🦹","Outlaw",worst&&worst.d<0?worst:null,worst?sgn$(worst.d):"")}${award("🐎","Wild horse",wild,wild?fmtP(wild.r):"")}${award("🐺","Pack leader",lead,lead?fmtP(lead.r):"")}</div>
+    ${flags.length?`<div class="card tdflags">${flags.map(f=>`<p>${f}</p>`).join("")}</div>`:""}
+    <div class="section-h"><h2>${S.tdView==="list"?"📋 Today's roundup":S.tdView==="bubble"?"🫧 Bubbles":"🗺️ Heat map"}</h2><div class="pseg">${[[10,"Top 10"],[20,"Top 20"],[0,"All"]].map(([n,l])=>`<button data-tdn="${n}" aria-pressed="${S.tdN===n}">${l}</button>`).join("")}</div></div>
+    <div class="pseg tdviews">${[["heat","🗺️ Heat map"],["list","📋 List"],["bubble","🫧 Bubbles"]].map(([k,l])=>`<button data-tdview="${k}" aria-pressed="${S.tdView===k}">${l}</button>`).join("")}</div>
+    ${S.tdView==="list"?tdList(shown):S.tdView==="bubble"?tdBubbles(shown):tdHeat(shown,rest)}
+    <p class="tdsum">${N&&rest.length?`Your top ${shown.length} are ${sh.toFixed(0)}% of you and moved `:"Together they moved "}<b class="num ${tcls(shown.reduce((s,o)=>s+o.d,0))}">${sgn$(shown.reduce((s,o)=>s+o.d,0))}</b> today.</p>`:""}`;
+  setHTML($("tdMain"),main);
+  setHTML($("tdRest"),rows.length?`<a class="claude" href="${todayAsk(rows,R,W)}" target="_blank" rel="noopener">✨ Ask Claude why my stocks moved</a>
+    <p class="hint" style="font-size:11.5px;margin:0">Moves are against the previous close.${rows.some(o=>o.mf)?" Mutual funds price once a day after the close.":""} Ask Claude gets percentages only, never dollar amounts or share counts. Not investment advice.</p>`:"");
+  renderTodayNews();
+}
+function todayNewsPick(){
+  const rows=todayRows().filter(o=>!o.miss).slice(0,20), seen=new Set(), out=[];
+  for(const win of [36,96]){ const since=Date.now()-win*3600e3;
+    const cand=rows.map(o=>({o,a:((S.tnews[o.x]||{}).items||[]).filter(a=>a.datetime*1000>=since)})).filter(c=>c.a.length).sort((p,q)=>Math.abs(q.o.d)-Math.abs(p.o.d));
+    for(let k=0;k<4&&out.length<5;k++) for(const c of cand){ const a=c.a[k]; if(!a||out.length>=5) continue; const key=a.headline.toLowerCase().replace(/\W+/g," ").slice(0,70); if(seen.has(key)) continue; seen.add(key); out.push({x:c.o.x,r:c.o.r,a}); }
+    if(out.length>=5) break; }
+  return out.sort((p,q)=>q.a.datetime-p.a.datetime);
+}
+function renderTodayNews(){
+  const el=$("tdNews"); if(!el) return; const L=todayNewsPick(), at=Object.values(S.tnews).reduce((m,c)=>Math.max(m,c.at),0);
+  const a=$("tdNewsAt"); if(a) a.textContent=at?"updated "+ago(at):"";
+  if(!L.length){ if(at) setHTML(el,`<p class="hint" style="padding:10px 0">No fresh news on your top 20 yet. Quiet on the range.</p>`); return; }
+  setHTML(el,L.map(o=>`<a href="${esc(o.a.url)}" target="_blank" rel="noopener"><b><span class="vtag">${esc(o.x)}</span> ${esc(o.a.headline)}</b><span>${esc(o.a.source||"")} · ${ago(o.a.datetime*1000)} · ${esc(o.x)} <span class="${tcls(o.r)}">${fmtP(o.r)}</span> today</span></a>`).join(""));
+}
+async function loadTodayNews(gen){
+  const top=todayRows().filter(o=>!o.miss).slice(0,20).map(o=>o.x), from=etISO(new Date(Date.now()-4*864e5));
+  for(const x of top){ if(gen!==S.gen||S.tab!=="today") return; const c=S.tnews[x]; if(c&&Date.now()-c.at<15*60000) continue;
+    try{ const n=await api(`/company-news?symbol=${encodeURIComponent(x)}&from=${from}&to=${today()}`); S.tnews[x]={at:Date.now(),items:(n||[]).filter(a=>a&&a.headline&&a.url&&a.datetime).sort((p,q)=>q.datetime-p.datetime).slice(0,6)}; }
+    catch(e){ if(S.apiErr==="key") return; S.tnews[x]={at:Date.now(),items:[]}; }
+    renderTodayNews(); }
+  renderTodayNews();
+}
+async function loadToday(gen){
+  const syms=plotSyms(); if(!syms.length) return; const T=plotTiers();
+  await loadSavedDaily(); scheduleTab();
+  // prices only (no company profiles), biggest holdings first, so the news can start sooner
+  const quotes=async list=>{ for(const x of list){ if(gen!==S.gen) return; const q=S.quotes[x]; if(!q||(!q.bad&&(!q.at||Date.now()-q.at>T.age(x)))){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } } };
+  await quotes(T.order.slice(0,20).concat(["SPY","QQQ","DIA"])); if(gen!==S.gen) return;
+  await loadFunds(syms); scheduleTab(); if(gen!==S.gen) return;
+  await loadTodayNews(gen);
+  await quotes(T.order.slice(20)); scheduleTab();
+}
 function renderTab(){
   if(S.tab==="home"){ renderSignals(); renderSeasonHome(); renderPortfolio(); renderDividends(); const a=$("askList"); if(a) a.href=claudeURL(listPrompt()); return; }
-  if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else if(S.tab==="picks") renderPicks(); else if(S.tab==="plot") renderPlot(); else renderTheme(S.tab);
+  if(S.tab==="sectors") renderSectors(); else if(S.tab==="trends") renderTrends(); else if(S.tab==="picks") renderPicks(); else if(S.tab==="plot") renderPlot(); else if(S.tab==="today") renderToday(); else renderTheme(S.tab);
 }
 function setTab(t){
   S.tab=t; LS.set("tab",t);
-  ["home","sectors","ai","space","trends","picks","plot"].forEach(k=>{ const el=$("tab-"+k); if(el){ el.hidden=k!==t; if(k===t){ el.style.animation="none"; void el.offsetWidth; el.style.animation=""; } } });
+  ["home","sectors","ai","space","trends","picks","plot","today"].forEach(k=>{ const el=$("tab-"+k); if(el){ el.hidden=k!==t; if(k===t){ el.style.animation="none"; void el.offsetWidth; el.style.animation=""; } } });
   document.querySelectorAll("#tabbar button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
   window.scrollTo({top:0,behavior:"instant"});
   setActiveSubs(); renderTab();
   S.gen=(S.gen||0)+1;
-  if(t==="picks") loadPicks(); else if(t==="plot") loadPlot(S.gen); else if(t!=="home") ensureData(tabSyms(t).concat(["SPY"]),{daily:true,gen:S.gen});
+  if(t==="picks") loadPicks(); else if(t==="plot") loadPlot(S.gen); else if(t==="today") loadToday(S.gen); else if(t!=="home") ensureData(tabSyms(t).concat(["SPY"]),{daily:true,gen:S.gen});
 }
 function wireTabs(){
   $("tabbar").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(b) setTab(b.dataset.tab); });
   wirePlot();
+  $("tab-today").addEventListener("click",e=>{
+    if(e.target.closest("[data-pedit]")){ openPlotEdit(); return; }
+    const n=e.target.closest("[data-tdn]"); if(n){ S.tdN=+n.dataset.tdn; LS.set("tdN",S.tdN); renderToday(); return; }
+    const v=e.target.closest("[data-tdview]"); if(v){ S.tdView=v.dataset.tdview; LS.set("tdView",S.tdView); renderToday(); return; }
+    const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   $("tab-picks").addEventListener("click",e=>{
     const h=e.target.closest("[data-hz]"); if(h){ S.hz=h.dataset.hz; LS.set("hz",S.hz); renderPicks(); loadPicks(); return; }
     const sc=e.target.closest("[data-scope]"); if(sc){ S.pscope=sc.dataset.scope; LS.set("pscope",S.pscope); renderPicks(); loadPicks(); return; }
@@ -4271,6 +4433,8 @@ async function start(){
   setInterval(async()=>{ if(document.hidden) return; const want=(S.tab==="home"?S.list:tabSyms(S.tab)).filter(x=>price(x)==null&&!(S.quotes[x]&&S.quotes[x].bad)).slice(0,8);
     for(const x of want){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); } if(want.length){ if(S.tab==="home") render(); else scheduleTab(); } },30000);
   setInterval(renderFoot,5000);
+  setInterval(()=>{ if(S.tab==="today"&&!document.hidden) loadToday(S.gen); },60000);
+  setInterval(()=>{ const c=$("tdCd"); if(!c||S.tab!=="today") return; const W=todayWhen(); if(W.cdT) c.textContent=cd(W.cdT-Date.now()); },1000);
 }
 $("keyForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$("keyIn").value.trim(); if(k.length<10){ $("keyErr").textContent="That key looks too short. Copy it from your Finnhub dashboard."; return; }
   $("keyErr").textContent="Checking…"; S.key=k;
