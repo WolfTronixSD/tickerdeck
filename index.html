@@ -331,6 +331,15 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0;background:#fff;padding:0}
   body.printing .sheet-in{max-width:none;display:block}
+  body.printing table.pg-run{width:100%;border-collapse:collapse;border:0}
+  body.printing .pg-run th,body.printing .pg-run td{padding:0;border:0;text-align:left;font-weight:400}
+  body.printing .pg-run thead{display:table-header-group}
+  body.printing .pg-run tfoot{display:table-footer-group}
+  body.printing .pg-run .pg-row+.pg-row>td{padding-top:9px}
+  body.printing .pg-h,body.printing .pg-f{display:flex;justify-content:space-between;gap:12px;font-size:8.5px;color:#4A5563}
+  body.printing .pg-h{border-bottom:1.5px solid #111820;padding-bottom:3px;margin-bottom:10px}
+  body.printing .pg-h b{color:#111820;font-weight:700}
+  body.printing .pg-f{border-top:1.5px solid #111820;padding-top:3px;margin-top:10px}
   body.printing .sheet-in>*+*,body.printing #prep>*+*{margin-top:9px}
   body.printing [data-close],body.printing .prep-actions,body.printing #prep>.d-head,body.printing .sheet-in>a.primary{display:none!important}
   body.printing .print-only{display:flex}
@@ -2373,8 +2382,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.49";
+const APP_VERSION="3.50";
 const CHANGELOG=[
+  {v:"3.50",date:"2026-10-22",title:"Solid header and footer lines on every printed page",items:["Saved PDFs and prints now have a solid line under the header and above the footer on every page, including the first","Works on iPhone/Safari too: the header and footer repeat on each page there (page numbers show in Chrome and Edge)"]},
   {v:"3.49",date:"2026-10-22",title:"Safer reports",items:["Reports wait until every stock's price history has loaded, so they never show wrong numbers, and warn when a stock has no or only partial history","The month-by-month chart shows the dollars made or lost under each month's %","Lines above and below the report title, and under the header and over the footer on every page"]},
   {v:"3.48",date:"2026-10-22",title:"Easier to read monthly returns",items:["Reports: the monthly % and $ grid, the month-by-month bar chart and the executive summary are bigger and easier to read"]},
   {v:"3.47",date:"2026-10-22",title:"Report finishing touches",items:["PDF reports have a header and footer on every page, with page numbers","🌎 The big picture: what the Fed, inflation, jobs and growth reports did to the market and to you, which part of the market led, political and policy headlines from the news feed, and an outlook for the next five weeks","🤠 A short, funny executive summary closes each report","Wolf tracks label each column with its week of the year"]},
@@ -3901,19 +3911,38 @@ function openPlotReport(k){
 }
 // print just the open sheet; the browser's print dialog has "Save as PDF"
 function printSheet(title){
-  const old=document.title, done=()=>{ document.body.classList.remove("printing"); document.documentElement.classList.remove("printing"); document.title=old; window.removeEventListener("afterprint",done); };
+  const old=document.title, done=()=>{ pageUnwrap(); document.body.classList.remove("printing"); document.documentElement.classList.remove("printing"); document.title=old; window.removeEventListener("afterprint",done); };
   document.title=title; pageBoxes(); document.body.classList.add("printing"); document.documentElement.classList.add("printing"); window.addEventListener("afterprint",done); setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
 }
 // the browser's own Print (Ctrl+P) with a sheet open prints just that sheet, the same as Save PDF
-// running header and footer on every printed page, with page numbers (the first page has its own title block)
+// running header and footer on every printed page, each with a solid rule line.
+// Chrome/Edge draw them in the page margins (with "Page X of Y"); Safari and Firefox can't, so there the sheet
+// is wrapped in a table whose header and footer rows the browser repeats on every page.
+const PG_MB=(()=>{ try{ const s=new CSSStyleSheet(); s.replaceSync("@page{@top-left{content:'a'}}"); const r=s.cssRules[0]; return !!(r&&r.cssRules&&r.cssRules.length); }catch(e){ return false; } })();
 function pageBoxes(){
   let st=$("pgStyle"); if(!st){ st=document.createElement("style"); st.id="pgStyle"; document.head.appendChild(st); }
-  const q=t=>JSON.stringify(String(t)), title=S.open==="__preport"&&S.prepHead?S.prepHead:document.title, f="font-family:Sora,system-ui,sans-serif;font-size:8.5px;color:#6B7684";
-  const tl="border-bottom:1px solid #9AA4B1;vertical-align:bottom;padding-bottom:3px", bl="border-top:1px solid #9AA4B1;vertical-align:top;padding-top:3px";
-  st.textContent=`@media print{@page{@top-left{content:${q("GoldRabbit v"+APP_VERSION)};${f};font-weight:700;${tl}}@top-center{content:"";${tl}}@top-right{content:${q(title)};${f};${tl}}@bottom-left{content:${q("Private · made on your device "+pdL(Date.now())+" · not investment advice")};${f};${bl}}@bottom-center{content:"";${bl}}@bottom-right{content:"Page " counter(page) " of " counter(pages);${f};font-weight:700;${bl}}}@page:first{@top-left{content:none;border:0}@top-center{content:none;border:0}@top-right{content:none;border:0}}}`;
+  const q=t=>JSON.stringify(String(t)), title=S.open==="__preport"&&S.prepHead?S.prepHead:document.title;
+  const left="GoldRabbit v"+APP_VERSION, foot="Private · made on your device "+pdL(Date.now())+" · not investment advice";
+  if(PG_MB){
+    const f="font-family:Sora,system-ui,sans-serif;font-size:8.5px;color:#4A5563";
+    const tl="border-bottom:1.5px solid #111820;vertical-align:bottom;padding-bottom:3px", bl="border-top:1.5px solid #111820;vertical-align:top;padding-top:3px";
+    st.textContent=`@media print{@page{@top-left{content:${q(left)};${f};font-weight:700;color:#111820;${tl}}@top-center{content:"";${tl}}@top-right{content:${q(title)};${f};${tl}}@bottom-left{content:${q(foot)};${f};${bl}}@bottom-center{content:"";${bl}}@bottom-right{content:"Page " counter(page) " of " counter(pages);${f};font-weight:700;color:#111820;${bl}}}}`;
+    return;
+  }
+  st.textContent="";
+  const inr=$("sheetIn"); if(!inr||$("pgRun")) return;
+  const t=document.createElement("table"); t.id="pgRun"; t.className="pg-run";
+  t.innerHTML=`<thead><tr><th><div class="pg-h"><b>${esc(left)}</b><span>${esc(title)}</span></div></th></tr></thead><tfoot><tr><td><div class="pg-f"><span>${esc(foot)}</span></div></td></tr></tfoot><tbody></tbody>`;
+  const tb=t.tBodies[0]; [...inr.childNodes].forEach(n=>{ const tr=document.createElement("tr"), td=document.createElement("td"); tr.className="pg-row"; td.appendChild(n); tr.appendChild(td); tb.appendChild(tr); });
+  inr.appendChild(t);
 }
-window.addEventListener("beforeprint",()=>{ pageBoxes(); if(!$("sheet").hidden&&!document.body.classList.contains("printing")){ document.body.classList.add("printing","printing-auto"); document.documentElement.classList.add("printing"); } });
-window.addEventListener("afterprint",()=>{ if(document.body.classList.contains("printing-auto")){ document.body.classList.remove("printing","printing-auto"); document.documentElement.classList.remove("printing"); } });
+function pageUnwrap(){
+  const t=$("pgRun"); if(!t) return; const inr=$("sheetIn");
+  t.querySelectorAll("tbody>tr>td").forEach(td=>{ while(td.firstChild) inr.insertBefore(td.firstChild,t); });
+  t.remove();
+}
+window.addEventListener("beforeprint",()=>{ if(!$("sheet").hidden&&!document.body.classList.contains("printing")){ document.body.classList.add("printing","printing-auto"); document.documentElement.classList.add("printing"); } pageBoxes(); });
+window.addEventListener("afterprint",()=>{ pageUnwrap(); if(document.body.classList.contains("printing-auto")){ document.body.classList.remove("printing","printing-auto"); document.documentElement.classList.remove("printing"); } });
 function wireReport(D){
   $("prep").addEventListener("change",e=>{ if(e.target.matches("[data-prepcal]")&&e.target.value) openPlotReport(e.target.value); });
   $("prep").addEventListener("click",e=>{ const r=e.target.closest("[data-preport]"); if(r){ openPlotReport(r.dataset.preport); return; }
