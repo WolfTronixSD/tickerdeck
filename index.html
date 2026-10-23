@@ -2387,8 +2387,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.53";
+const APP_VERSION="3.54";
 const CHANGELOG=[
+  {v:"3.54",date:"2026-10-23",title:"Top dogs first",items:["StockPlotter loads your biggest holdings first, so the total is close to right within seconds","The holdings that make up 90% of your money refresh every 2 minutes and get the live price stream; the next 8% every 10 minutes; the smallest 2% every 30 minutes","Far fewer data lookups, so the free plan's limit is hit less often"]},
   {v:"3.53",date:"2026-10-23",title:"iPhone PDF pages fixed",items:["Saved PDFs on iPhone no longer cut award cards in half or spill each page onto the next","The header line repeats on every page; Safari adds its own footer with the page number"]},
   {v:"3.52",date:"2026-10-22",title:"Footer line on every page on iPhone",items:["Saved PDFs on iPhone and Safari now have the footer line and \"Page X of Y\" at the bottom of every page, not just the last one"]},
   {v:"3.51",date:"2026-10-23",title:"Report print fixes",items:["Fixed stock lists jumping to the end of the report after saving a PDF on iPhone","One line between the page header and the report title instead of two, and the best and worst lists keep their layout in the PDF","Save PDF opens the print dialog right away on iPhone instead of asking to allow printing"]},
@@ -3117,11 +3118,11 @@ const SECTORS=[["XLK","Technology"],["SMH","Semiconductors"],["XLC","Communicati
 const CYCLICAL=["XLK","SMH","XLY","XLF","XLI","XLC"], DEFENSIVE=["XLP","XLU","XLV","XLRE"];
 S.tab=LS.get("tab","home"); S.ttf=LS.get("ttf","1d"); if(!TF[S.ttf]) S.ttf="1d"; S.mtf=LS.get("mtf","1d"); if(!TF[S.mtf]) S.mtf="1d"; S.trend=LS.get("trend","power"); S.extra=new Set();
 const themeSyms=k=>[...new Set(Object.values(THEMES[k].groups).flat())];
-function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); if(t==="plot") return plotSyms(); return []; }
+function tabSyms(t){ if(t==="sectors") return SECTORS.map(x=>x[0]); if(t==="ai"||t==="space") return themeSyms(t); if(t==="trends") return [...new Set(themeSyms(S.trend).concat(TREND_KEYS.flatMap(themeSyms)))]; if(t==="picks") return pickScope(); if(t==="plot") return plotTiers().order; return []; }
 const loading={};
-async function ensureData(list,{daily=false,gen=null,metric=null}={}){
+async function ensureData(list,{daily=false,gen=null,metric=null,age=null}={}){
   const live=()=>gen==null||gen===S.gen;
-  const need=list.filter(s=>{ const q=S.quotes[s]; return !q||!q.at||Date.now()-q.at>120000; });
+  const need=list.filter(s=>{ const q=S.quotes[s]; return !q||!q.at||Date.now()-q.at>(age?age(s):120000); });
   for(const s of need){ if(!live()) return; await loadQuote(s); if(S.quotes[s]) S.quotes[s].at=Date.now(); scheduleTab(); }
   for(const s of list){ if(!live()) return; if(!loading[s]){ loading[s]=1; await loadStatic(s,{metric:metric??!S.tdKey}); loading[s]=0; scheduleTab(); } }
   if(daily&&S.tdKey){ const nd=list.filter(s=>!failedRecently(s)&&(!S.daily[s]||S.daily[s].day!==today()||!S.daily[s].v4));
@@ -3278,6 +3279,16 @@ const histSyms=()=>[...new Set(plotSyms().concat(S.ptx.map(t=>t.s)))];
 const pxOn=(x,day)=>{ const c=S.daily[x]&&S.daily[x].c; if(!c) return null; let v=null; for(const b of c){ if(etISO(new Date(b[0]))>day) break; v=b[1]; } return v; };
 const lastClose=x=>{ const d=S.daily[x]; return d&&d.c&&d.c.length?d.c[d.c.length-1][1]:null; };
 const pxNow=x=>price(x)??lastClose(x);
+// top dogs first: holdings are ranked by value. The ones that make up the first 90% of the portfolio refresh every
+// 2 minutes and get the live price stream; the next 8% every 10 minutes; the smallest 2% every 30 minutes.
+// A stock without a price yet counts as a top dog until its first price comes in.
+const TIER_AGE=[120000,10*60000,30*60000];
+function plotTiers(){
+  const syms=plotSyms(), v=x=>(pxNow(x)||0)*(S.plot[x]||0), tot=syms.reduce((a,x)=>a+v(x),0);
+  const order=syms.slice().sort((a,b)=>v(b)-v(a)||a.localeCompare(b)), tier={}; let cum=0;
+  order.forEach(x=>{ tier[x]=!tot||!v(x)?0:cum<.9?0:cum<.98?1:2; cum+=tot?v(x)/tot:0; });
+  return {order,tier,age:x=>TIER_AGE[tier[x]??0]};
+}
 const fmtQ=n=>Number(n).toLocaleString("en-US",{maximumFractionDigits:3});
 // one holding per line: "AAPL 820.301", "AAPL,820.301" or "AAPL<tab>820.301"; header lines are skipped and repeated tickers add up
 function parseHoldings(txt){
@@ -3346,11 +3357,12 @@ async function loadPlot(gen){
 async function loadPlot0(gen,syms){
   const live=()=>gen===S.gen;
   await loadSavedDaily(); scheduleTab();
-  for(const x of syms.concat(BMS.map(b=>b[0]))){ if(!live()) return; const q=S.quotes[x]; if(!q||(!q.bad&&(!q.at||Date.now()-q.at>120000))){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } }
+  const T=plotTiers(); syms=T.order.concat(syms.filter(x=>!T.order.includes(x)));
+  for(const x of T.order.slice(0,15).concat(BMS.map(b=>b[0]),syms.slice(15))){ if(!live()) return; const q=S.quotes[x]; if(!q||(!q.bad&&(!q.at||Date.now()-q.at>T.age(x)))){ await loadQuote(x); if(S.quotes[x]) S.quotes[x].at=Date.now(); scheduleTab(); } }
   await loadFunds(syms); if(!live()) return;
   if(S.tdKey){ const nd=syms.concat(BMS.map(b=>b[0])).filter(x=>!failedRecently(x)&&(!S.daily[x]||S.daily[x].day!==today()||!S.daily[x].v4));
     for(const grp of chunks(nd,8)){ if(!live()) return; try{ const res=await td(grp,"interval=1day&outputsize=460"); grp.forEach(x=>{ const r=res[x]; if(!okTD(r)) S.tdFail[x]=Date.now(); else S.daily[x]={day:today(),v4:1,c:r.values.map(v=>[parseET(v.datetime),+v.close,+v.volume||0]).reverse()}; }); try{ LS.set("daily",S.daily); }catch(e){} scheduleTab(); }catch(e){ if(S.tdErr==="key") break; } } }
-  if(live()) ensureData(syms,{gen});
+  if(live()) ensureData(syms,{gen,age:T.age});
 }
 function plotChart(pts,idx,bench,marks,mas,crosses){
   const W=340,H=190,T=12,B=22; if(pts.length<2) return `<p class="hint">Not enough price history yet.</p>`;
