@@ -8,6 +8,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GoldRabbit">
 <meta name="theme-color" content="#070B10">
+<script>
+// pick the theme before the page paints; "auto" follows the clock (Desert day 7 AM-5 PM, Dusk until 8 PM, Midnight after)
+(function(){ var t="dark"; try{ t=JSON.parse(localStorage.getItem("tdl.theme"))||"dark"; }catch(e){}
+  if(t==="auto"){ var h=new Date().getHours(); t=h>=7&&h<17?"light":h>=17&&h<20||h>=6&&h<7?"dusk":"dark"; }
+  document.documentElement.dataset.theme=t; })();
+</script>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
@@ -462,6 +468,32 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pchk .field{width:auto;padding:6px 8px}
 .ptx{display:grid;grid-template-columns:1fr auto 32px;align-items:center;gap:8px}
 .ptx .iconbtn{width:28px;height:28px;font-size:12px}
+/* themes: 🌙 Midnight (the default dark), 🌆 Dusk (medium), 🌵 Desert day (light) */
+:root[data-theme="dusk"]{--ink:#182030;--panel:#212B3B;--panel2:#2A3648;--line:#384659;--text:#F3F6FA;--muted:#A7B4C6;--faint:#7E8CA1}
+:root[data-theme="dusk"] .tabbar{background:rgba(24,32,48,.88)}
+:root[data-theme="dusk"] .sbar-bg{background:rgba(24,32,48,.9)}
+:root[data-theme="light"]{color-scheme:light;--ink:#F3EEE5;--panel:#FFFFFF;--panel2:#F4EDE1;--line:#E2D8C8;--text:#1C2430;--muted:#5A6576;--faint:#8791A0;
+  --gain:#0B8A5C;--gain-bg:rgba(11,138,92,.12);--loss:#D12F4A;--loss-bg:rgba(209,47,74,.11);--flat:#6B7684;--accent:#C27A12;--accent-bg:rgba(194,122,18,.13);--blue:#2F6FD6;--blue-bg:rgba(47,111,214,.11)}
+:root[data-theme="light"] .tabbar{background:rgba(255,251,244,.92);border-top-color:#E2D8C8}
+:root[data-theme="light"] .sbar-bg{background:rgba(243,238,229,.92)}
+:root[data-theme="light"] .thero,:root[data-theme="light"] .brief-hero{color:#EAF0F6;--text:#EAF0F6;--muted:#AEB9C7;--line:rgba(255,255,255,.12);--panel2:rgba(255,255,255,.08);--gain:#2BD99A;--loss:#FF5C72}
+:root[data-theme="light"] .pheat button,:root[data-theme="light"] .tdbub{--text:#fff}
+:root[data-theme="light"] .tdbub{background:#1C2430}
+:root[data-theme="light"] .banner.alert{color:#8E1B2E}
+:root[data-theme="light"] .banner.warn{color:#7A4A06}
+:root[data-theme="light"] .banner.info{color:#1F4C9A}
+:root[data-theme="light"] .seg{background:rgba(255,251,244,.94)}
+:root[data-theme="dusk"] .seg{background:rgba(33,43,59,.94)}
+:root[data-theme="light"] .tmr-tile,:root[data-theme="light"] .tmr-chips span,:root[data-theme="light"] .tmr-list,:root[data-theme="light"] .mvchips button,:root[data-theme="light"] .mvcol,:root[data-theme="light"] .opt-ext button,:root[data-theme="light"] .confirm button{background:var(--panel2)}
+@media (max-width:440px){header.top .iconbtn{width:34px;height:34px;font-size:15px}header.top{gap:6px}.hdr-actions{gap:4px!important}.brand h1{font-size:19px;gap:5px}.live{letter-spacing:.04em;padding:3px 5px}}
+:root[data-theme="light"] .card,:root[data-theme="light"] .feed{box-shadow:0 1px 2px rgba(60,40,10,.06)}
+.thm{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.thm button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border-radius:16px;border:2px solid var(--line);text-align:left;background:var(--panel2)}
+.thm button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.thm b{font-size:15px}
+.thm small{font-size:11.5px;color:var(--muted);line-height:1.35}
+.thm i{display:flex;gap:4px;width:100%}
+.thm i span{flex:1;height:26px;border-radius:8px;border:1px solid rgba(128,128,128,.25)}
 /* MyToday */
 .tabbar button[data-tab="today"] span{font-size:9.5px;letter-spacing:-.01em}
 .tdhero{--tbg:radial-gradient(120% 90% at 0% 0%,rgba(255,170,80,.26),transparent 60%),radial-gradient(90% 90% at 100% 100%,rgba(200,90,40,.22),transparent 60%),linear-gradient(180deg,#1A120B,#0D0F14)}
@@ -481,6 +513,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .tdflags{background:var(--panel);gap:6px}
 .tdflags p{margin:0;font-size:13px;line-height:1.45}
 .tdviews{align-self:flex-start}
+.tdsort{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.tdsort .pseg button{padding:0 9px}
 .tdlist{background:var(--panel);gap:4px;padding:10px 12px}
 .tdrow{display:grid;grid-template-columns:58px 1fr 70px 74px;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;min-height:34px}
 .tdrow>.num{text-align:right}
@@ -852,6 +886,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
       <div class="status"><i class="dot" id="mktDot"></i><span id="mktText">Checking market…</span></div>
     </div>
     <div class="hdr-actions">
+      <button class="iconbtn" id="themeBtn" aria-label="Light or dark theme" title="Theme">🌙</button>
       <button class="iconbtn" id="privBtn" aria-label="Hide dollar amounts" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button class="iconbtn" id="soundBtn" aria-label="Alert sound" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></button>
       <button class="iconbtn" id="addBtn" aria-label="Add a stock">＋</button>
@@ -1852,6 +1887,7 @@ function wire(){
   $("sortSel").addEventListener("change",e=>{ S.sort=e.target.value; LS.set("sort",S.sort); render(); });
   $("editBtn").addEventListener("click",()=>{ S.editing=!S.editing; if(S.editing) S.view="list"; render(); });
   $("addBtn").addEventListener("click",openAdd);
+  $("themeBtn").addEventListener("click",openTheme); applyTheme(); setInterval(applyTheme,60000);
   $("privBtn").addEventListener("click",()=>{ S.priv=!S.priv; LS.set("priv",S.priv); render(); });
   $("soundBtn").addEventListener("click",()=>{ S.sound=!S.sound; LS.set("sound",S.sound); render(); if(S.sound){ beep(); toast("Alert chime on"); } else toast("Alert chime off"); });
   $("banners").addEventListener("click",e=>{ const b=e.target.closest("[data-dismiss]"); if(b){ S.dismissed[b.dataset.dismiss]=1; if(b.dataset.dismiss==="tdNag") LS.set("tdNag",true); renderBanners(); } if(e.target.id==="rekey") forget(); });
@@ -1914,6 +1950,21 @@ function wire(){
   window.addEventListener("online",()=>{ connect(); refreshQuotesOnly(); });
 }
 async function refreshQuotesOnly(){ for(const s of S.list.concat(IDX.map(x=>x[0]))) await loadQuote(s); render(); }
+/* ---------- themes ---------- */
+const THEMES_UI=[["dark","🌙","Midnight","The classic dark night on the range.",["#070B10","#0F151D","#FFB547","#2BD99A"]],["dusk","🌆","Dusk","Medium: lighter slate, easier on the eyes.",["#182030","#212B3B","#FFB547","#2BD99A"]],["light","🌵","Desert day","Light: warm sand and white cards for bright rooms.",["#F3EEE5","#FFFFFF","#C27A12","#0B8A5C"]],["auto","🌗","Sun clock","Follows your clock: Desert day 7 AM–5 PM, Dusk until 8 PM, Midnight at night.",["#F3EEE5","#182030","#070B10","#FFB547"]]];
+S.theme=LS.get("theme","dark");
+function themeNow(){ if(S.theme!=="auto") return S.theme; const h=new Date().getHours(); return h>=7&&h<17?"light":(h>=17&&h<20)||(h>=6&&h<7)?"dusk":"dark"; }
+function applyTheme(){ const t=themeNow(), root=document.documentElement; if(root.dataset.theme!==t) root.dataset.theme=t;
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=t==="light"?"#F3EEE5":t==="dusk"?"#182030":"#070B10";
+  const b=$("themeBtn"); if(b) b.textContent=(THEMES_UI.find(x=>x[0]===S.theme)||THEMES_UI[0])[1]; }
+function openTheme(){
+  S.open="__theme";
+  $("sheetIn").innerHTML=`<div class="grab"></div><div class="d-head"><div><h3>Pick your sky</h3><p>How bright the app looks. Saved on this device.</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="thm">${THEMES_UI.map(([k,i,n,d,c])=>`<button data-thm="${k}" aria-pressed="${S.theme===k}"><i>${c.map(x=>`<span style="background:${x}"></span>`).join("")}</i><b>${i} ${n}</b><small>${d}</small></button>`).join("")}</div>`;
+  $("sheetIn").querySelector(".thm").addEventListener("click",e=>{ const b=e.target.closest("[data-thm]"); if(!b) return; S.theme=b.dataset.thm; LS.set("theme",S.theme); applyTheme();
+    $("sheetIn").querySelectorAll("[data-thm]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.thm===S.theme)); });
+  showSheet();
+}
 function openSettings(){
   S.open="__settings";
   $("sheetIn").innerHTML=`<div class="grab"></div>
@@ -2418,8 +2469,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.56";
+const APP_VERSION="3.57";
 const CHANGELOG=[
+  {v:"3.57",date:"2026-10-23",title:"Pick your sky",items:["New theme button at the top: 🌙 Midnight (dark), 🌆 Dusk (medium), 🌵 Desert day (light), or 🌗 Sun clock, which follows the time of day","MyToday: every heat map tile and award card shows both $ and %","MyToday list sorts by $ today (biggest first) and can sort by % today, value or A–Z; tap again to flip the order"]},
   {v:"3.56",date:"2026-10-23",title:"🐺 MyToday",items:["New MyToday tab next to StockPlotter: what your stocks did today (or in the last session when the market is closed), in dollars and percent against the previous close","Top 10, top 20 or all of them as a heat map, a list or bubbles","Today's top 5 news stories on your 20 biggest holdings","Top gun, outlaw, wild horse and pack leader of the day, you against the S&P 500 and Nasdaq, earnings today and tomorrow, new 52-week highs and lows, and pre-market or after-hours moves","Ask Claude why your stocks moved (percentages only, never dollars or share counts)"]},
   {v:"3.55",date:"2026-10-23",title:"Reports open on their own",items:["When a report is waiting for price history, it shows a progress bar and a countdown and opens by itself as soon as the last stock is in, no more tapping Try again"]},
   {v:"3.54",date:"2026-10-23",title:"Top dogs first",items:["StockPlotter loads your biggest holdings first, so the total is close to right within seconds","The holdings that make up 90% of your money refresh every 2 minutes and get the live price stream; the next 8% every 10 minutes; the smallest 2% every 30 minutes","Far fewer data lookups, so the free plan's limit is hit less often"]},
@@ -4250,7 +4302,7 @@ function wirePlot(){
 }
 /* ---------- MyToday ---------- */
 // just today: what each holding did against the previous close (the last session when the market is closed)
-S.tdN=LS.get("tdN",10); if(![10,20,0].includes(S.tdN)) S.tdN=10; S.tdView=LS.get("tdView","heat"); if(!["list","heat","bubble"].includes(S.tdView)) S.tdView="heat"; S.tnews={};
+S.tdSort=LS.get("tdSort","d"); if(!["d","r","v","x"].includes(S.tdSort)) S.tdSort="d"; S.tdDir=LS.get("tdDir",-1); S.tdN=LS.get("tdN",10); if(![10,20,0].includes(S.tdN)) S.tdN=10; S.tdView=LS.get("tdView","heat"); if(!["list","heat","bubble"].includes(S.tdView)) S.tdView="heat"; S.tnews={};
 function todayRows(){
   return plotSyms().map(x=>{ const q=S.quotes[x]||{}, p=price(x), pc=q.pc, n=S.plot[x]; if(p==null||!pc) return {x,n,miss:true};
     const e=extOf(x); return {x,n,p,pc,v:p*n,d:(p-pc)*n,r:(p/pc-1)*100,h:q.h,l:q.l,mf:!!q.mf,ext:e?{d:(e.p-e.ref)*n,r:e.chg,label:e.label}:null}; })
@@ -4268,7 +4320,7 @@ const tdMood=r=>r>=2?["🚀","Stampede! The whole herd is running."]:r>=.75?["�
 const tdCol=(r,mx)=>{ const k=Math.min(1,Math.abs(r)/(mx||1)), a=.18+.7*Math.sqrt(k); return r>=0?`rgba(43,217,154,${a.toFixed(2)})`:`rgba(255,92,114,${a.toFixed(2)})`; };
 function tdHeat(rows,rest){
   const tot=rows.concat(rest).reduce((s,o)=>s+o.v,0)||1, mx=Math.max(...rows.map(o=>Math.abs(o.r)))||1;
-  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?84:sh>2.5?60:42}px;background:${o.bg||tdCol(o.r,mx)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span>${sh>4&&o.d!=null?`<small class="num">${sgn$(o.d)}</small>`:""}</button>`; };
+  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?84:sh>2.5?62:52}px;background:${o.bg||tdCol(o.r,mx)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span><small class="num">${sgn$(o.d)}</small></button>`; };
   const rv=rest.reduce((s,o)=>s+o.v,0), rd=rest.reduce((s,o)=>s+o.d,0);
   return `<div class="pheat">${rows.map(o=>tile(o,`data-sym="${esc(o.x)}"`)).join("")}${rest.length?tile({x:`+${rest.length} more`,v:rv,r:rv-rd?rd/(rv-rd)*100:0,d:rd,bg:"rgba(131,146,166,.28)"},`data-tdn="0"`):""}</div>
     <p class="hint" style="font-size:11px;margin:0">Size = what the holding is worth, color = today's move.${rest.length?" The gray tile adds up the rest; tap it to show all.":""}</p>`;
@@ -4285,6 +4337,9 @@ function tdBubbles(rows){
   const y0=C.length?Math.max(0,Math.min(...C.map(c=>c.cy-c.rr))-4):0, y1=C.length?Math.min(H,Math.max(...C.map(c=>c.cy+c.rr))+4):H;
   return `<div class="card tdbub"><svg viewBox="0 ${y0.toFixed(0)} ${W} ${(y1-y0).toFixed(0)}" role="img" aria-label="Bubble chart of today's moves">${g}</svg></div><p class="hint" style="font-size:11px;margin:0">Bubble size = what the holding is worth, color = today's move. Tap one for details.</p>`;
 }
+const TD_SORTS=[["d","$ today"],["r","% today"],["v","Value"],["x","A–Z"]];
+function tdSorted(rows){ const k=S.tdSort, dir=S.tdDir===1?1:-1, f=k==="x"?(a,b)=>a.x.localeCompare(b.x)*-dir:(a,b)=>(a[k]-b[k])*dir; return rows.slice().sort(f); }
+function tdSortBar(){ return `<div class="tdsort"><span>Sort</span><div class="pseg">${TD_SORTS.map(([k,l])=>`<button data-tdsort="${k}" aria-pressed="${S.tdSort===k}">${l}${S.tdSort===k?(S.tdDir===1?" ▲":" ▼"):""}</button>`).join("")}</div></div>`; }
 function tdList(rows){
   const mx=Math.max(...rows.map(o=>Math.abs(o.d)))||1;
   return `<div class="card tdlist">${rows.map(o=>`<div class="tdrow" data-sym="${esc(o.x)}" role="button" tabindex="0"><div class="tdw"><b>${esc(o.x)}</b><small class="num">${fmt$(o.p)}</small></div><div class="pctr-t"><i style="${o.d>=0?`left:50%;width:${o.d/mx*50}%;background:var(--gain)`:`right:50%;width:${-o.d/mx*50}%;background:var(--loss)`}"></i></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span><span class="num ${tcls(o.d)}">${sgn$(o.d)}</span></div>`).join("")}</div>`;
@@ -4295,7 +4350,7 @@ function todayFlags(rows){
   rows.forEach(o=>{ const d=S.daily[o.x]; if(!d||!d.c||d.c.length<60) return; const yr=Date.now()-365*864e5, past=d.c.filter(c=>c[0]>=yr&&ymdLocal(c[0])<t).map(c=>c[1]); if(past.length<60) return;
     if(o.p>Math.max(...past)) out.push(`🏔️ <b>${esc(o.x)}</b> hit a new 52-week high`); else if(o.p<Math.min(...past)) out.push(`🕳️ <b>${esc(o.x)}</b> sank to a new 52-week low`); });
   const wild=rows.filter(o=>Math.abs(o.r)>=5).sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
-  if(wild.length) out.push(`🔥 Wild broncos: ${wild.slice(0,5).map(o=>`<b>${esc(o.x)}</b> <span class="${tcls(o.r)}">${fmtP(o.r)}</span>`).join(", ")}`);
+  if(wild.length) out.push(`🔥 Wild broncos: ${wild.slice(0,5).map(o=>`<b>${esc(o.x)}</b> <span class="${tcls(o.r)}">${fmtP(o.r)} · ${sgn$(o.d)}</span>`).join(", ")}`);
   return out;
 }
 function todayAsk(rows,R,W){
@@ -4317,7 +4372,7 @@ function renderToday(){
   const ex=rows.filter(o=>o.ext), exD=ex.reduce((s,o)=>s+o.ext.d,0), exL=ex.length?ex[0].ext.label:"";
   const N=S.tdN, shown=N?rows.slice(0,N):rows, rest=rows.slice(shown.length), sh=V?shown.reduce((s,o)=>s+o.v,0)/V*100:0;
   const byD=rows.slice().sort((a,b)=>b.d-a.d), byR=rows.slice().sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
-  const award=(i,t,o,v)=>o?`<div class="paward" data-sym="${esc(o.x)}" role="button" tabindex="0"><span>${i}</span><small>${t}</small><b>${esc(o.x)}</b><em class="num">${v}</em></div>`:"";
+  const award=(i,t,o)=>o?`<div class="paward" data-sym="${esc(o.x)}" role="button" tabindex="0"><span>${i}</span><small>${t}</small><b>${esc(o.x)}</b><em class="num ${tcls(o.d)}">${sgn$(o.d)}</em><em class="num ${tcls(o.r)}">${fmtP(o.r)}</em></div>`:"";
   const best=byD[0], worst=byD[byD.length-1], wild=byR[0], lead=rows[0];
   const idxRow=(n,r)=>r==null?"":`<div><b>${n}</b><span class="${tcls(r)}">${fmtP(r)}</span></div>`;
   const flags=todayFlags(rows);
@@ -4331,12 +4386,12 @@ function renderToday(){
       <p class="tdcount">🐾 <b class="tup">${up} up</b> · <b class="tdown">${dn} down</b>${fl?` · ${fl} flat`:""}${miss.length?` · ⏳ ${miss.length} still loading`:""}</p>
       ${ex.length?`<p class="tdext">${exL==="Pre-market"?"🌅":"🌙"} ${exL}: <b class="num ${tcls(exD)}">${sgn$(exD)}</b> on ${ex.length} stock${ex.length>1?"s":""} so far</p>`:""}`:`<p>⏳ Rounding up today's prices…</p>`}
     </section>
-    ${rows.length?`<div class="pawards tdawards">${award("🤠","Top gun",best&&best.d>0?best:null,best?sgn$(best.d):"")}${award("🦹","Outlaw",worst&&worst.d<0?worst:null,worst?sgn$(worst.d):"")}${award("🐎","Wild horse",wild,wild?fmtP(wild.r):"")}${award("🐺","Pack leader",lead,lead?fmtP(lead.r):"")}</div>
+    ${rows.length?`<div class="pawards tdawards">${award("🤠","Top gun",best&&best.d>0?best:null)}${award("🦹","Outlaw",worst&&worst.d<0?worst:null)}${award("🐎","Wild horse",wild)}${award("🐺","Pack leader",lead)}</div>
     ${flags.length?`<div class="card tdflags">${flags.map(f=>`<p>${f}</p>`).join("")}</div>`:""}
     <div class="section-h"><h2>${S.tdView==="list"?"📋 Today's roundup":S.tdView==="bubble"?"🫧 Bubbles":"🗺️ Heat map"}</h2><div class="pseg">${[[10,"Top 10"],[20,"Top 20"],[0,"All"]].map(([n,l])=>`<button data-tdn="${n}" aria-pressed="${S.tdN===n}">${l}</button>`).join("")}</div></div>
     <div class="pseg tdviews">${[["heat","🗺️ Heat map"],["list","📋 List"],["bubble","🫧 Bubbles"]].map(([k,l])=>`<button data-tdview="${k}" aria-pressed="${S.tdView===k}">${l}</button>`).join("")}</div>
-    ${S.tdView==="list"?tdList(shown):S.tdView==="bubble"?tdBubbles(shown):tdHeat(shown,rest)}
-    <p class="tdsum">${N&&rest.length?`Your top ${shown.length} are ${sh.toFixed(0)}% of you and moved `:"Together they moved "}<b class="num ${tcls(shown.reduce((s,o)=>s+o.d,0))}">${sgn$(shown.reduce((s,o)=>s+o.d,0))}</b> today.</p>`:""}`;
+    ${S.tdView==="list"?tdSortBar()+tdList(tdSorted(shown)):S.tdView==="bubble"?tdBubbles(shown):tdHeat(shown,rest)}
+    ${(()=>{ const sd=shown.reduce((s,o)=>s+o.d,0), sv=shown.reduce((s,o)=>s+o.v,0), sr=sv-sd?sd/(sv-sd)*100:0; return `<p class="tdsum">${N&&rest.length?`Your top ${shown.length} are ${sh.toFixed(0)}% of you and moved `:"Together they moved "}<b class="num ${tcls(sd)}">${sgn$(sd)} (${fmtP(sr)})</b> today.</p>`; })()}`:""}`;
   setHTML($("tdMain"),main);
   setHTML($("tdRest"),rows.length?`<a class="claude" href="${todayAsk(rows,R,W)}" target="_blank" rel="noopener">✨ Ask Claude why my stocks moved</a>
     <p class="hint" style="font-size:11.5px;margin:0">Moves are against the previous close.${rows.some(o=>o.mf)?" Mutual funds price once a day after the close.":""} Ask Claude gets percentages only, never dollar amounts or share counts. Not investment advice.</p>`:"");
@@ -4346,7 +4401,7 @@ function todayNewsPick(){
   const rows=todayRows().filter(o=>!o.miss).slice(0,20), seen=new Set(), out=[];
   for(const win of [36,96]){ const since=Date.now()-win*3600e3;
     const cand=rows.map(o=>({o,a:((S.tnews[o.x]||{}).items||[]).filter(a=>a.datetime*1000>=since)})).filter(c=>c.a.length).sort((p,q)=>Math.abs(q.o.d)-Math.abs(p.o.d));
-    for(let k=0;k<4&&out.length<5;k++) for(const c of cand){ const a=c.a[k]; if(!a||out.length>=5) continue; const key=a.headline.toLowerCase().replace(/\W+/g," ").slice(0,70); if(seen.has(key)) continue; seen.add(key); out.push({x:c.o.x,r:c.o.r,a}); }
+    for(let k=0;k<4&&out.length<5;k++) for(const c of cand){ const a=c.a[k]; if(!a||out.length>=5) continue; const key=a.headline.toLowerCase().replace(/\W+/g," ").slice(0,70); if(seen.has(key)) continue; seen.add(key); out.push({x:c.o.x,r:c.o.r,d:c.o.d,a}); }
     if(out.length>=5) break; }
   return out.sort((p,q)=>q.a.datetime-p.a.datetime);
 }
@@ -4354,7 +4409,7 @@ function renderTodayNews(){
   const el=$("tdNews"); if(!el) return; const L=todayNewsPick(), at=Object.values(S.tnews).reduce((m,c)=>Math.max(m,c.at),0);
   const a=$("tdNewsAt"); if(a) a.textContent=at?"updated "+ago(at):"";
   if(!L.length){ if(at) setHTML(el,`<p class="hint" style="padding:10px 0">No fresh news on your top 20 yet. Quiet on the range.</p>`); return; }
-  setHTML(el,L.map(o=>`<a href="${esc(o.a.url)}" target="_blank" rel="noopener"><b><span class="vtag">${esc(o.x)}</span> ${esc(o.a.headline)}</b><span>${esc(o.a.source||"")} · ${ago(o.a.datetime*1000)} · ${esc(o.x)} <span class="${tcls(o.r)}">${fmtP(o.r)}</span> today</span></a>`).join(""));
+  setHTML(el,L.map(o=>`<a href="${esc(o.a.url)}" target="_blank" rel="noopener"><b><span class="vtag">${esc(o.x)}</span> ${esc(o.a.headline)}</b><span>${esc(o.a.source||"")} · ${ago(o.a.datetime*1000)} · ${esc(o.x)} <span class="${tcls(o.r)}">${fmtP(o.r)} · ${sgn$(o.d)}</span> today</span></a>`).join(""));
 }
 async function loadTodayNews(gen){
   const top=todayRows().filter(o=>!o.miss).slice(0,20).map(o=>o.x), from=etISO(new Date(Date.now()-4*864e5));
@@ -4393,6 +4448,7 @@ function wireTabs(){
   $("tab-today").addEventListener("click",e=>{
     if(e.target.closest("[data-pedit]")){ openPlotEdit(); return; }
     const n=e.target.closest("[data-tdn]"); if(n){ S.tdN=+n.dataset.tdn; LS.set("tdN",S.tdN); renderToday(); return; }
+    const so=e.target.closest("[data-tdsort]"); if(so){ const k=so.dataset.tdsort; if(S.tdSort===k) S.tdDir=S.tdDir===1?-1:1; else { S.tdSort=k; S.tdDir=-1; } LS.set("tdSort",S.tdSort); LS.set("tdDir",S.tdDir); renderToday(); return; }
     const v=e.target.closest("[data-tdview]"); if(v){ S.tdView=v.dataset.tdview; LS.set("tdView",S.tdView); renderToday(); return; }
     const r=e.target.closest("[data-sym]"); if(r&&price(r.dataset.sym)!=null) openDetail(r.dataset.sym); });
   $("tab-picks").addEventListener("click",e=>{
