@@ -516,9 +516,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .tdsort{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .tdsort .pseg button{padding:0 9px}
 .tdlist{background:var(--panel);gap:4px;padding:10px 12px}
-.tdrow{display:grid;grid-template-columns:58px 1fr 70px 74px;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;min-height:34px}
+.tdrow{display:grid;grid-template-columns:54px 1fr auto 58px;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;min-height:34px}
+.tdrow>.num{font-size:11px;min-width:48px}
 .tdrow>.num{text-align:right}
-.tdrow .pill{min-width:0;font-size:11.5px;padding:3px 5px}
+.tdrow .pill{min-width:0;font-size:10.5px;padding:2px 4px;text-align:right}
 .tdw{display:flex;flex-direction:column;min-width:0}
 .tdw small{font-size:10.5px;color:var(--muted)}
 .tdbub{background:var(--panel);padding:6px}
@@ -2469,8 +2470,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.57";
+const APP_VERSION="3.58";
 const CHANGELOG=[
+  {v:"3.58",date:"2026-10-23",title:"MyToday summary",items:["MyToday ends with a quick executive summary: bottom line, breadth, concentration, leader and laggard, and choppiness","Today's roundup list shows $ before %, in smaller type, so the bars get more room"]},
   {v:"3.57",date:"2026-10-23",title:"Pick your sky",items:["New theme button at the top: 🌙 Midnight (dark), 🌆 Dusk (medium), 🌵 Desert day (light), or 🌗 Sun clock, which follows the time of day","MyToday: every heat map tile and award card shows both $ and %","MyToday list sorts by $ today (biggest first) and can sort by % today, value or A–Z; tap again to flip the order"]},
   {v:"3.56",date:"2026-10-23",title:"🐺 MyToday",items:["New MyToday tab next to StockPlotter: what your stocks did today (or in the last session when the market is closed), in dollars and percent against the previous close","Top 10, top 20 or all of them as a heat map, a list or bubbles","Today's top 5 news stories on your 20 biggest holdings","Top gun, outlaw, wild horse and pack leader of the day, you against the S&P 500 and Nasdaq, earnings today and tomorrow, new 52-week highs and lows, and pre-market or after-hours moves","Ask Claude why your stocks moved (percentages only, never dollars or share counts)"]},
   {v:"3.55",date:"2026-10-23",title:"Reports open on their own",items:["When a report is waiting for price history, it shows a progress bar and a countdown and opens by itself as soon as the last stock is in, no more tapping Try again"]},
@@ -4342,7 +4344,7 @@ function tdSorted(rows){ const k=S.tdSort, dir=S.tdDir===1?1:-1, f=k==="x"?(a,b)
 function tdSortBar(){ return `<div class="tdsort"><span>Sort</span><div class="pseg">${TD_SORTS.map(([k,l])=>`<button data-tdsort="${k}" aria-pressed="${S.tdSort===k}">${l}${S.tdSort===k?(S.tdDir===1?" ▲":" ▼"):""}</button>`).join("")}</div></div>`; }
 function tdList(rows){
   const mx=Math.max(...rows.map(o=>Math.abs(o.d)))||1;
-  return `<div class="card tdlist">${rows.map(o=>`<div class="tdrow" data-sym="${esc(o.x)}" role="button" tabindex="0"><div class="tdw"><b>${esc(o.x)}</b><small class="num">${fmt$(o.p)}</small></div><div class="pctr-t"><i style="${o.d>=0?`left:50%;width:${o.d/mx*50}%;background:var(--gain)`:`right:50%;width:${-o.d/mx*50}%;background:var(--loss)`}"></i></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span><span class="num ${tcls(o.d)}">${sgn$(o.d)}</span></div>`).join("")}</div>`;
+  return `<div class="card tdlist">${rows.map(o=>`<div class="tdrow" data-sym="${esc(o.x)}" role="button" tabindex="0"><div class="tdw"><b>${esc(o.x)}</b><small class="num">${fmt$(o.p)}</small></div><div class="pctr-t"><i style="${o.d>=0?`left:50%;width:${o.d/mx*50}%;background:var(--gain)`:`right:50%;width:${-o.d/mx*50}%;background:var(--loss)`}"></i></div><span class="num ${tcls(o.d)}">${sgn$(o.d)}</span><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></div>`).join("")}</div>`;
 }
 function todayFlags(rows){
   const t=today(), tm=etISO(new Date(Date.now()+864e5)), map=S.earnings.map||{}, out=[];
@@ -4360,6 +4362,20 @@ My portfolio: ${fmtP(R)}${spy!=null?`, S&P 500 ${fmtP(spy)}`:""}${qqq!=null?`, N
 My biggest holdings, largest first, with today's move:
 ${rows.slice(0,20).map(o=>`${o.x} ${fmtP(o.r)}`).join("\n")}
 Keep it short and friendly with a little cowboy flavor: what drove the biggest moves, anything unusual, and what to watch tomorrow. Not investment advice.`);
+}
+// five quick bullets on the day: bottom line, breadth, concentration, leaders and laggards, choppiness
+function todayExec(rows,D,R,up,dn,spy,mi){
+  if(rows.length<2) return "";
+  const V=rows.reduce((s,o)=>s+o.v,0)||1, gross=rows.reduce((s,o)=>s+Math.abs(o.d),0)||1, byD=rows.slice().sort((a,b)=>b.d-a.d), best=byD[0], worst=byD[byD.length-1];
+  const big=rows.slice().sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,3), share=big.reduce((s,o)=>s+Math.abs(o.d),0)/gross*100;
+  const chop=rows.reduce((s,o)=>s+Math.abs(o.r)*o.v,0)/V, lead=rows[0], vs=spy==null?null:R-spy, pu=up/rows.length*100, names=l=>l.map(o=>`<b>${esc(o.x)}</b>`).join(", ").replace(/, ([^,]*)$/," and $1");
+  const L=[
+    `${mi} <b>Bottom line:</b> ${D>=0?"up":"down"} ${money(fmt$(Math.abs(D),0))} (${fmtP(R)})${vs==null?"":vs>=0?`, ${vs.toFixed(2)} pts ahead of the S&amp;P 500 (${fmtP(spy)})`:`, ${Math.abs(vs).toFixed(2)} pts behind the S&amp;P 500 (${fmtP(spy)})`}.`,
+    `🐾 <b>Breadth:</b> ${up} of ${rows.length} stocks rode higher (${pu.toFixed(0)}%), ${dn} slipped. ${pu>=65?"The whole herd ran together.":pu<=35?"Most of the herd stumbled.":"A split herd: stock picking mattered today."}`,
+    `🎯 <b>Concentration:</b> ${names(big)} made ${share.toFixed(0)}% of today's dollar swing${share>=60?", so a few big horses decided the day":""}.`,
+    `🏆 <b>Leader and laggard:</b> ${best.d>0?`<b>${esc(best.x)}</b> ${sgn$(best.d)} (${fmtP(best.r)})`:"nobody gained"}; ${worst.d<0?`<b>${esc(worst.x)}</b> ${sgn$(worst.d)} (${fmtP(worst.r)})`:"nobody lost"}.`,
+    `🌡️ <b>Choppiness:</b> your stocks moved ${chop.toFixed(2)}% on average, weighted by size${spy==null?"":chop>Math.abs(spy)*1.8?`, a bumpy ride next to the S&amp;P's ${Math.abs(spy).toFixed(2)}%`:`, about as calm as the S&amp;P's ${Math.abs(spy).toFixed(2)}%`}. Biggest holding <b>${esc(lead.x)}</b> is ${(lead.v/V*100).toFixed(0)}% of you and went ${fmtP(lead.r)}.`];
+  return `<div class="card pexec"><h4>🤠 Quick executive summary</h4><ul class="pbul">${L.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
 }
 function renderToday(){
   const el=$("tab-today"); if(!el) return;
@@ -4393,7 +4409,7 @@ function renderToday(){
     ${S.tdView==="list"?tdSortBar()+tdList(tdSorted(shown)):S.tdView==="bubble"?tdBubbles(shown):tdHeat(shown,rest)}
     ${(()=>{ const sd=shown.reduce((s,o)=>s+o.d,0), sv=shown.reduce((s,o)=>s+o.v,0), sr=sv-sd?sd/(sv-sd)*100:0; return `<p class="tdsum">${N&&rest.length?`Your top ${shown.length} are ${sh.toFixed(0)}% of you and moved `:"Together they moved "}<b class="num ${tcls(sd)}">${sgn$(sd)} (${fmtP(sr)})</b> today.</p>`; })()}`:""}`;
   setHTML($("tdMain"),main);
-  setHTML($("tdRest"),rows.length?`<a class="claude" href="${todayAsk(rows,R,W)}" target="_blank" rel="noopener">✨ Ask Claude why my stocks moved</a>
+  setHTML($("tdRest"),rows.length?`${todayExec(rows,D,R,up,dn,spy,mi)}<a class="claude" href="${todayAsk(rows,R,W)}" target="_blank" rel="noopener">✨ Ask Claude why my stocks moved</a>
     <p class="hint" style="font-size:11.5px;margin:0">Moves are against the previous close.${rows.some(o=>o.mf)?" Mutual funds price once a day after the close.":""} Ask Claude gets percentages only, never dollar amounts or share counts. Not investment advice.</p>`:"");
   renderTodayNews();
 }
