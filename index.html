@@ -331,13 +331,6 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body.printing #sheet{position:static!important;transform:none!important;max-height:none!important;overflow:visible!important;border:0;border-radius:0;background:#fff;padding:0}
   body.printing .sheet-in{max-width:none;display:block}
-  body.printing .pg-x{margin:0!important}
-  body.printing .pg-h.pg-x{margin-bottom:10px!important}
-  body.printing .pg-f.pg-x{margin-top:10px!important}
-  body.printing .pg-f.pg-x b{color:#111820;font-weight:700;white-space:nowrap}
-  body.printing .pg-sp{break-inside:avoid}
-  body.printing .pg-brk{break-after:page;page-break-after:always}
-  body.printing .pg-x+*{margin-top:0!important}
   body.printing table.pg-run{width:100%;border-collapse:collapse;border:0}
   body.printing .pg-run>*>tr>th,body.printing .pg-run>*>tr>td{padding:0;border:0;text-align:left;font-weight:400}
   body.printing .pg-run>thead{display:table-header-group}
@@ -419,6 +412,11 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   body.printing .pposter{background:#FBF1DC!important;break-inside:avoid;padding:8px}
   body.printing .pposter b{font-size:18px}
   body.printing .pawards{grid-template-columns:repeat(4,1fr)}
+  /* Safari won't keep grid items whole across a page break; inline boxes sit on one line, and a line is never split */
+  body.printing .pawards,body.printing .pposters{display:block}
+  body.printing .paward,body.printing .pposter{display:inline-flex;vertical-align:top;box-sizing:border-box;margin:3px}
+  body.printing .paward{width:calc(25% - 6px)}
+  body.printing .pposter{width:calc(50% - 6px)}
   body.printing .ptrail svg{max-height:90px}
   body.printing .prisk{display:grid!important;grid-template-columns:1fr 1fr;column-gap:6px}
   body.printing .prisk>h4,body.printing .prisk>p{grid-column:1/-1;margin:0}
@@ -2389,8 +2387,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.52";
+const APP_VERSION="3.53";
 const CHANGELOG=[
+  {v:"3.53",date:"2026-10-23",title:"iPhone PDF pages fixed",items:["Saved PDFs on iPhone no longer cut award cards in half or spill each page onto the next","The header line repeats on every page; Safari adds its own footer with the page number"]},
   {v:"3.52",date:"2026-10-22",title:"Footer line on every page on iPhone",items:["Saved PDFs on iPhone and Safari now have the footer line and \"Page X of Y\" at the bottom of every page, not just the last one"]},
   {v:"3.51",date:"2026-10-23",title:"Report print fixes",items:["Fixed stock lists jumping to the end of the report after saving a PDF on iPhone","One line between the page header and the report title instead of two, and the best and worst lists keep their layout in the PDF","Save PDF opens the print dialog right away on iPhone instead of asking to allow printing"]},
   {v:"3.50",date:"2026-10-22",title:"Solid header and footer lines on every printed page",items:["Saved PDFs and prints now have a solid line under the header and above the footer on every page, including the first","Works on iPhone/Safari too: the header and footer repeat on each page there (page numbers show in Chrome and Edge)"]},
@@ -3925,8 +3924,9 @@ function printSheet(title){
 }
 // the browser's own Print (Ctrl+P) with a sheet open prints just that sheet, the same as Save PDF
 // running header and footer on every printed page, each with a solid rule line.
-// Chrome/Edge draw them in the page margins (with "Page X of Y"); Safari and Firefox can't, so there the pages
-// are laid out by hand just before printing (pagePaginate).
+// Chrome/Edge draw them in the page margins (with "Page X of Y"); Safari and Firefox can't, so there the sheet
+// is wrapped in a table whose header row repeats on every page. Laying pages out by hand doesn't work there:
+// iPhone Safari prints at its own width and page size, so measured pages overflow and cards get cut in half.
 const PG_MB=(()=>{ try{ const s=new CSSStyleSheet(); s.replaceSync("@page{@top-left{content:'a'}}"); const r=s.cssRules[0]; return !!(r&&r.cssRules&&r.cssRules.length); }catch(e){ return false; } })();
 function pageBoxes(){
   let st=$("pgStyle"); if(!st){ st=document.createElement("style"); st.id="pgStyle"; document.head.appendChild(st); }
@@ -3939,39 +3939,13 @@ function pageBoxes(){
     return;
   }
   st.textContent="";
-  pagePaginate(left,title,foot);
-}
-// Safari/Firefox: lay the pages out here, so each page ends with its own footer line (they won't repeat a table footer)
-function pagePaginate(left,title,foot){
-  const inr=$("sheetIn"); if(!inr||inr.querySelector(".pg-x")) return;
-  const box=$("prep")&&inr.contains($("prep"))?$("prep"):inr, blocks=[...box.children];
-  // measure with the print styles switched on for the screen, at the printed page width
-  const meds=[]; for(const sh of document.styleSheets){ let rs; try{ rs=sh.cssRules; }catch(e){ continue; } for(const r of rs) if(r.media&&/print/.test(r.media.mediaText)&&!/screen/.test(r.media.mediaText)){ try{ r.media.appendMedium("screen"); meds.push(r); }catch(e){} } }
-  const oldW=inr.style.width; inr.style.width="186mm";
-  const mm=96/25.4, avail=246*mm;  // fits both A4 and US Letter paper
-  const mk=(cls,html)=>{ const d=document.createElement("div"); d.className="pg-x "+cls; d.innerHTML=html; return d; };
-  const head=()=>mk("pg-h",`<b>${esc(left)}</b><span>${esc(title)}</span>`);
-  const probeH=head(), probeF=mk("pg-f","<span>x</span>"); box.insertBefore(probeH,box.firstChild); box.appendChild(probeF);
-  const full=el=>{ const c=getComputedStyle(el); return el.getBoundingClientRect().height+parseFloat(c.marginTop)+parseFloat(c.marginBottom); };
-  const hH=full(probeH), fH=full(probeF); probeH.remove(); probeF.remove();
-  const ms=blocks.map(el=>{ const c=getComputedStyle(el), h=el.getBoundingClientRect().height; return {el,h,g:h?parseFloat(c.marginTop)||0:0,brk:/page|always/.test(c.breakBefore+" "+c.pageBreakBefore)}; });
-  meds.forEach(r=>{ try{ r.media.deleteMedium("screen"); }catch(e){} }); inr.style.width=oldW;
-  const pages=[]; let cur={start:0,used:hH,any:false};
-  ms.forEach((m,i)=>{ if(!m.h) return;
-    if(cur.any&&(m.brk||cur.used+m.g+m.h>avail-fH)){ pages.push(cur); cur={start:i,used:hH,any:false}; }
-    let h=cur.used+m.g+m.h; if(h>avail-fH){ const over=h-hH; h=hH+(over%(avail-hH-fH)||over); }  // taller than a page: spills onto the next
-    cur.used=h; cur.any=true; });
-  pages.push(cur);
-  const N=pages.length;
-  pages.forEach((pg,n)=>{
-    const before=pg.start>0?ms[pg.start].el:box.firstChild;
-    box.insertBefore(head(),before);
-    const end=n+1<N?ms[pages[n+1].start].el:null, sp=mk("pg-sp",""), f=mk("pg-f",`<span>${esc(foot)}</span><b>Page ${n+1} of ${N}</b>`);
-    sp.style.height=Math.max(0,avail-pg.used-fH)+"px"; if(n+1<N) f.classList.add("pg-brk");
-    box.insertBefore(sp,end); box.insertBefore(f,end); });
+  const inr=$("sheetIn"); if(!inr||$("pgRun")) return;
+  const t=document.createElement("table"); t.id="pgRun"; t.className="pg-run";
+  t.innerHTML=`<thead><tr><th><div class="pg-h"><b>${esc(left)}</b><span>${esc(title)}</span></div></th></tr></thead><tfoot><tr><td><div class="pg-f"><span>${esc(foot)}</span></div></td></tr></tfoot><tbody></tbody>`;
+  const tb=t.tBodies[0]; [...inr.childNodes].forEach(n=>{ const tr=document.createElement("tr"), td=document.createElement("td"); tr.className="pg-row"; td.appendChild(n); tr.appendChild(td); tb.appendChild(tr); });
+  inr.appendChild(t);
 }
 function pageUnwrap(){
-  document.querySelectorAll(".pg-x").forEach(e=>e.remove());
   const t=$("pgRun"); if(!t) return; const inr=$("sheetIn");
   t.querySelectorAll(":scope>tbody>tr>td").forEach(td=>{ while(td.firstChild) inr.insertBefore(td.firstChild,t); });
   t.remove();
