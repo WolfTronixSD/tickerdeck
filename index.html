@@ -2470,8 +2470,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.61";
+const APP_VERSION="3.62";
 const CHANGELOG=[
+  {v:"3.62",date:"2026-10-24",title:"Biggest movers first",items:["MyToday list: $ today and % today sort by the size of the move, up or down, so the rows line up with the bar lengths (tap again for smallest first)"]},
   {v:"3.61",date:"2026-10-24",title:"$ bars are back",items:["MyToday list: bars show today's $ change again in every sort except % today (which shows % change), so your biggest dollar movers always get the longest bars"]},
   {v:"3.60",date:"2026-10-24",title:"Value bars",items:["MyToday list: when sorted by value, the bars show each holding's size, so the longest bar is your biggest position"]},
   {v:"3.59",date:"2026-10-23",title:"Bars match the sort",items:["MyToday list: when sorted by % today, the bars show each stock's % change, so the longest bar is the biggest % mover"]},
@@ -4343,7 +4344,8 @@ function tdBubbles(rows){
   return `<div class="card tdbub"><svg viewBox="0 ${y0.toFixed(0)} ${W} ${(y1-y0).toFixed(0)}" role="img" aria-label="Bubble chart of today's moves">${g}</svg></div><p class="hint" style="font-size:11px;margin:0">Bubble size = what the holding is worth, color = today's move. Tap one for details.</p>`;
 }
 const TD_SORTS=[["d","$ today"],["r","% today"],["v","Value"],["x","A–Z"]];
-function tdSorted(rows){ const k=S.tdSort, dir=S.tdDir===1?1:-1, f=k==="x"?(a,b)=>a.x.localeCompare(b.x)*-dir:(a,b)=>(a[k]-b[k])*dir; return rows.slice().sort(f); }
+// $ and % sorts go by the size of the move (the bar length), gains and losses together
+function tdSorted(rows){ const k=S.tdSort, dir=S.tdDir===1?1:-1, m=k==="d"||k==="r"?Math.abs:v=>v, f=k==="x"?(a,b)=>a.x.localeCompare(b.x)*-dir:(a,b)=>(m(a[k])-m(b[k]))*dir; return rows.slice().sort(f); }
 function tdSortBar(){ return `<div class="tdsort"><span>Sort</span><div class="pseg">${TD_SORTS.map(([k,l])=>`<button data-tdsort="${k}" aria-pressed="${S.tdSort===k}">${l}${S.tdSort===k?(S.tdDir===1?" ▲":" ▼"):""}</button>`).join("")}</div></div>`; }
 // bars follow % change when the list is sorted by %, else today's $ change
 function tdList(rows){
