@@ -2470,8 +2470,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.59";
+const APP_VERSION="3.60";
 const CHANGELOG=[
+  {v:"3.60",date:"2026-10-24",title:"Value bars",items:["MyToday list: when sorted by value, the bars show each holding's size, so the longest bar is your biggest position"]},
   {v:"3.59",date:"2026-10-23",title:"Bars match the sort",items:["MyToday list: when sorted by % today, the bars show each stock's % change, so the longest bar is the biggest % mover"]},
   {v:"3.58",date:"2026-10-23",title:"MyToday summary",items:["MyToday ends with a quick executive summary: bottom line, breadth, concentration, leader and laggard, and choppiness","Today's roundup list shows $ before %, in smaller type, so the bars get more room"]},
   {v:"3.57",date:"2026-10-23",title:"Pick your sky",items:["New theme button at the top: 🌙 Midnight (dark), 🌆 Dusk (medium), 🌵 Desert day (light), or 🌗 Sun clock, which follows the time of day","MyToday: every heat map tile and award card shows both $ and %","MyToday list sorts by $ today (biggest first) and can sort by % today, value or A–Z; tap again to flip the order"]},
@@ -4343,10 +4344,10 @@ function tdBubbles(rows){
 const TD_SORTS=[["d","$ today"],["r","% today"],["v","Value"],["x","A–Z"]];
 function tdSorted(rows){ const k=S.tdSort, dir=S.tdDir===1?1:-1, f=k==="x"?(a,b)=>a.x.localeCompare(b.x)*-dir:(a,b)=>(a[k]-b[k])*dir; return rows.slice().sort(f); }
 function tdSortBar(){ return `<div class="tdsort"><span>Sort</span><div class="pseg">${TD_SORTS.map(([k,l])=>`<button data-tdsort="${k}" aria-pressed="${S.tdSort===k}">${l}${S.tdSort===k?(S.tdDir===1?" ▲":" ▼"):""}</button>`).join("")}</div></div>`; }
-// bars follow % change when the list is sorted by %, else $ change
+// bars follow % change when the list is sorted by %, holding value when sorted by value, else $ change
 function tdList(rows){
-  const k=S.tdSort==="r"?"r":"d", mx=Math.max(...rows.map(o=>Math.abs(o[k])))||1;
-  return `<div class="card tdlist">${rows.map(o=>`<div class="tdrow" data-sym="${esc(o.x)}" role="button" tabindex="0"><div class="tdw"><b>${esc(o.x)}</b><small class="num">${fmt$(o.p)}</small></div><div class="pctr-t"><i style="${o[k]>=0?`left:50%;width:${o[k]/mx*50}%;background:var(--gain)`:`right:50%;width:${-o[k]/mx*50}%;background:var(--loss)`}"></i></div><span class="num ${tcls(o.d)}">${sgn$(o.d)}</span><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></div>`).join("")}</div>`;
+  const k=S.tdSort==="r"?"r":S.tdSort==="v"?"v":"d", mx=Math.max(...rows.map(o=>Math.abs(o[k])))||1;
+  return `<div class="card tdlist">${rows.map(o=>`<div class="tdrow" data-sym="${esc(o.x)}" role="button" tabindex="0"><div class="tdw"><b>${esc(o.x)}</b><small class="num">${fmt$(o.p)}</small></div><div class="pctr-t"><i style="${k==="v"?`left:0;width:${o.v/mx*100}%;background:var(--accent)`:o[k]>=0?`left:50%;width:${o[k]/mx*50}%;background:var(--gain)`:`right:50%;width:${-o[k]/mx*50}%;background:var(--loss)`}"></i></div><span class="num ${tcls(o.d)}">${sgn$(o.d)}</span><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></div>`).join("")}</div>`;
 }
 function todayFlags(rows){
   const t=today(), tm=etISO(new Date(Date.now()+864e5)), map=S.earnings.map||{}, out=[];
