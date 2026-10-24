@@ -2470,8 +2470,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.64";
+const APP_VERSION="3.65";
 const CHANGELOG=[
+  {v:"3.65",date:"2026-10-24",title:"Top 10 / 20 / All",items:["StockPlotter: \"Your holdings today\" has Top 10, Top 20 and All buttons; Top 10 and 20 show your biggest positions in the sort you picked"]},
   {v:"3.64",date:"2026-10-24",title:"Top dogs to losers",items:["MyToday list: $ today and % today run from the biggest winner at the top down to the biggest loser at the bottom (tap again to flip)"]},
   {v:"3.63",date:"2026-10-24",title:"Simpler sort",items:["MyToday list: the Value sort is gone; sort by $ today, % today or A–Z"]},
   {v:"3.62",date:"2026-10-24",title:"Biggest movers first",items:["MyToday list: $ today and % today sort by the size of the move, up or down, so the rows line up with the bar lengths (tap again for smallest first)"]},
@@ -3325,7 +3326,7 @@ function opticsExtraHTML(){
     </ul><p class="hint">Not investment advice.</p></details>`;
 }
 /* ---------- StockPlotter: your holdings plotted from daily closes. Holdings are typed or pasted in and stay on this device. ---------- */
-S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pcross=LS.get("pcross",true); S.psort=LS.get("psort","value"); S.pview=LS.get("pview","list"); S.pheatN=LS.get("pheatN",0); S.pmonD=LS.get("pmonD",false); S.pHideIdeas=LS.get("phideideas",[]); S.raceMute=LS.get("racemute",false); S.raceMode=LS.get("racemode","fast"); S.raceTop=LS.get("racetop",5); S.pOpen={}; S.pIdx=null; S.pSym=null; S.pBusy=0;
+S.plot=LS.get("plot",{}); S.prange=LS.get("prange","1y"); S.pbm=LS.get("pbm",LS.get("pbench",true)===false?null:"SPY"); S.ptrack=LS.get("ptrack",{}); S.pmas=LS.get("pmas",LS.get("pma",true)?[50,200]:[]); S.pcross=LS.get("pcross",true); S.psort=LS.get("psort","value"); S.pN=LS.get("pN",0); if(![10,20,0].includes(S.pN)) S.pN=0; S.pview=LS.get("pview","list"); S.pheatN=LS.get("pheatN",0); S.pmonD=LS.get("pmonD",false); S.pHideIdeas=LS.get("phideideas",[]); S.raceMute=LS.get("racemute",false); S.raceMode=LS.get("racemode","fast"); S.raceTop=LS.get("racetop",5); S.pOpen={}; S.pIdx=null; S.pSym=null; S.pBusy=0;
 const PRANGES=[["1d","1D",1],["1w","1W",5],["2w","2W",10],["1m","1M",21],["3m","3M",63],["6m","6M",126],["ytd","YTD",0],["1y","1Y",252],["all","Max",1e9]];
 // calendar periods: a week (Monday to Friday), a month or a year, keyed cw:2026-10-19, cm:2026-10, cy:2026
 const isCal=k=>/^c[wmy]:/.test(k||"");
@@ -3532,14 +3533,17 @@ function plotSel(){
   const dt=$("pDate"); if(dt) dt.value=ymdLocal(d.t);
   // table: each holding's price and value on the chosen day, and how it has done since
   const shares=x=>d.q&&d.q[x]!=null?d.q[x]:(S.plot[x]||0), list=isNow?P.syms:[...new Set(P.syms.concat(P.have))].filter(x=>shares(x)>0);
-  const rows=list.map(x=>{ const has=P.have.includes(x), p=has?d.px[x]:pxNow(x), pn=pxNow(x)??(has?now.px[x]:null), n=isNow?S.plot[x]:shares(x);
+  let rows=list.map(x=>{ const has=P.have.includes(x), p=has?d.px[x]:pxNow(x), pn=pxNow(x)??(has?now.px[x]:null), n=isNow?S.plot[x]:shares(x);
     const r=isNow?(r1d(x)??(has&&idx>0&&!d.live?(d.px[x]/R[idx-1].px[x]-1)*100:null)):(p&&pn?(pn/p-1)*100:null);
-    return {x,p,n,v:p!=null?p*n:null,r}; }).sort(S.psort==="az"?(a,b)=>a.x.localeCompare(b.x):S.psort==="day"?(a,b)=>(b.r??-1e9)-(a.r??-1e9):(a,b)=>(b.v??-1)-(a.v??-1));
-  const tot=rows.reduce((a,o)=>a+(o.v||0),0), seg=(attr,cur,opts)=>`<div class="pseg">${opts.map(([k,l])=>`<button ${attr}="${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`;
+    return {x,p,n,v:p!=null?p*n:null,r}; });
+  // Top 10 / 20 = the biggest positions by value, then shown in the chosen sort
+  const all=rows.length, tot=rows.reduce((a,o)=>a+(o.v||0),0); if(S.pN&&all>S.pN) rows=rows.slice().sort((a,b)=>(b.v??-1)-(a.v??-1)).slice(0,S.pN);
+  rows.sort(S.psort==="az"?(a,b)=>a.x.localeCompare(b.x):S.psort==="day"?(a,b)=>(b.r??-1e9)-(a.r??-1e9):(a,b)=>(b.v??-1)-(a.v??-1));
+  const seg=(attr,cur,opts)=>`<div class="pseg">${opts.map(([k,l])=>`<button ${attr}="${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`;
   const body=S.pview==="bars"?holdBars(rows,tot):S.pview==="bubbles"?holdBubbles(rows,tot):`<div class="list">${rows.map(o=>`<button class="prow${S.pSym===o.x?" on":""}" data-psym="${esc(o.x)}">${logo(o.x)}<div class="who"><b>${esc(o.x)}</b><span>${money(fmtQ(o.n))} sh · ${fmt$(o.p)}</span></div><div class="px"><span class="num">${money(fmt$(o.v,0))}</span><small>${tot&&o.v?(o.v/tot*100).toFixed(1)+"%":""}</small></div><span class="pill ${cls(o.r)}">${fmtP(o.r)}</span></button>`).join("")}</div>`;
   $("pTable").innerHTML=`<div class="section-h"><h2>${isNow?"Your holdings today":"Holdings on "+dateL}</h2><small>${isNow?"day change":"change since then"}</small></div>
-    <div class="pctlbar">${seg("data-psort",S.psort,[["value","💰 Value"],["day",isNow?"📈 Day %":"📈 Change"],["az","🔤 A–Z"]])}${seg("data-pview",S.pview,[["list","☰"],["bars","▤"],["bubbles","◉"]])}</div>
-    ${body}
+    <div class="pctlbar">${seg("data-psort",S.psort,[["value","💰 Value"],["day",isNow?"📈 Day %":"📈 Change"],["az","🔤 A–Z"]])}${seg("data-pview",S.pview,[["list","☰"],["bars","▤"],["bubbles","◉"]])}${seg("data-pn",S.pN,[[10,"Top 10"],[20,"Top 20"],[0,"All"]])}</div>
+    ${body}${S.pN&&all>S.pN?`<p class="hint">Showing your ${S.pN} biggest of ${all} holdings.</p>`:""}
     <p class="hint">Tap a stock to plot its price with the same slider; tap it again to go back to the whole portfolio.</p>`;
 }
 // holdings as bars: length = value, color = change
@@ -4273,6 +4277,7 @@ function wirePlot(){
     const bust=()=>{ S.pVer=(S.pVer||0)+1; renderPlotPro(); };
     if(e.target.closest("[data-pcross]")){ S.pcross=!S.pcross; LS.set("pcross",S.pcross); renderPlot(true); return; }
     const so=e.target.closest("[data-psort]"); if(so){ S.psort=so.dataset.psort; LS.set("psort",S.psort); plotSel(); return; }
+    const pn=e.target.closest("[data-pn]"); if(pn){ S.pN=+pn.dataset.pn; LS.set("pN",S.pN); plotSel(); return; }
     const vw=e.target.closest("[data-pview]"); if(vw){ S.pview=vw.dataset.pview; LS.set("pview",S.pview); plotSel(); return; }
     const hn=e.target.closest("[data-pheatn]"); if(hn){ S.pheatN=+hn.dataset.pheatn; LS.set("pheatN",S.pheatN); bust(); return; }
     const md=e.target.closest("[data-pmond]"); if(md){ S.pmonD=md.dataset.pmond==="1"; LS.set("pmonD",S.pmonD); bust(); return; }
