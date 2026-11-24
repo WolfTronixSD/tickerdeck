@@ -102,6 +102,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .sess span{height:100%;display:grid;place-items:center;font-size:10px;font-weight:600;letter-spacing:.04em;color:var(--muted)}
 .sess .pre,.sess .aft{background:rgba(255,181,71,.10)}
 .sess .reg{background:rgba(43,217,154,.14);color:#BFF5DF}
+:root[data-theme="light"] .sess .reg{color:#0B6B47}
 .sess i{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--text);box-shadow:0 0 8px var(--text)}
 .sess-lab{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);font-family:var(--mono);margin-top:-6px}
 .clock-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
@@ -213,7 +214,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 .pctr-t i{position:absolute;top:0;bottom:0;border-radius:5px}
 .pheat{display:flex;flex-wrap:wrap;gap:3px;border-radius:var(--r);overflow:hidden}
 .pheat button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;padding:4px 2px;border-radius:6px;color:#fff;min-width:0;overflow:hidden}
-.pheat b{font-size:11px;white-space:nowrap}
+.pheat b{font-size:11px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .pheat span{font-size:10px}
 .pheat small{font-size:9px;opacity:.8}
 .pmon{display:grid;grid-template-columns:22px repeat(12,1fr);gap:2px;font-size:9.5px;text-align:center;color:var(--faint)}
@@ -603,6 +604,16 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
   .actions::-webkit-scrollbar{display:block;height:6px}
   .actions::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
   .racebox{scrollbar-width:thin}
+}
+/* PC with a mouse: every Home tool visible at once instead of a sideways strip */
+@media (hover:hover) and (pointer:fine) and (min-width:600px){
+  .actions{grid-template-rows:none;grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));grid-auto-rows:48px;overflow-x:visible;margin-inline:0;padding:0}
+  .actions button,.actions #askList{line-height:1.15;text-align:left}
+}
+/* big PC screens: use more of the width */
+@media (min-width:1000px){
+  .wrap,.sheet-in{max-width:760px}
+  .tabbar{padding-left:max(4px,calc((100% - 760px)/2));padding-right:max(4px,calc((100% - 760px)/2))}
 }
 .mvchips button{padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--muted)}
 .mvchips button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#0B0F14}
@@ -1640,7 +1651,7 @@ function hero(){
   const w=syms.map(s=>({s,r:ret(s,S.tf)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r), best=w[0], worst=w[w.length-1], up=w.filter(x=>x.r>=0).length;
   html+=`<div class="hero-stats"><div class="hs"><b>Top · ${S.tf.toUpperCase()}</b><span class="num tup">${best?esc(best.s)+" "+fmtP(best.r):"—"}</span></div>
     <div class="hs"><b>Bottom</b><span class="num ${worst&&worst.r<0?"tdown":"tup"}">${worst?esc(worst.s)+" "+fmtP(worst.r):"—"}</span></div>
-    <div class="hs"><b>Breadth</b><span class="num">${w.length?up+" up · "+(w.length-up)+" dn":"—"}</span></div></div>`;
+    <div class="hs"><b>Breadth</b><span class="num">${w.length?`<span class="tup">${up}▲</span> <span class="tdown">${w.length-up}▼</span>`:"—"}</span></div></div>`;
   setHTML($("hero"),html);
 }
 function tape(){ const it=S.list.filter(s=>price(s)!=null).map(s=>{const r=r1d(s);return `<span><b>${esc(s)}</b><span class="num">${fmt$(price(s))}</span> <span class="num ${tcls(r)}">${fmtP(r)}</span></span>`;}).join(""); setHTML($("tape"),it+it); }
@@ -1700,7 +1711,9 @@ function renderBubbles(){
   Object.keys(old).forEach(s=>{ if(!keep.has(s)) old[s].remove(); });
 }
 function renderList(){ const L=$("list"), l=sorted(); L.className="list"+(S.editing?" editing":""); L.innerHTML=l.length?l.map(rowHTML).join(""):`<div class="row"><div></div><div class="who"><b>Your watchlist is empty</b><span>Tap ＋ to add a stock.</span></div></div>`; }
-function heatColor(r,tf){ if(r==null) return "background:#1A222D;color:#9AA8BA"; const k=Math.min(1,Math.abs(r)/({"1d":4,"1w":8,"2w":10,"1m":15,"3m":30,"5y":300,"all":1000}[tf||S.tf]||80)), a=.18+k*.72; return r>=0?`background:rgba(22,160,108,${a});color:#EFFFF8`:`background:rgba(214,52,76,${a});color:#FFF1F3`; }
+// light theme: pale tiles get dark text, white text only on the strong colors
+const lightInk=(a,up)=>document.documentElement.dataset.theme==="light"&&a<.7?(up?"#0B3B27":"#5A1020"):"";
+function heatColor(r,tf){ if(r==null) return "background:#1A222D;color:#9AA8BA"; const k=Math.min(1,Math.abs(r)/({"1d":4,"1w":8,"2w":10,"1m":15,"3m":30,"5y":300,"all":1000}[tf||S.tf]||80)), a=.18+k*.72; return r>=0?`background:rgba(22,160,108,${a});color:${lightInk(a,1)||"#EFFFF8"}`:`background:rgba(214,52,76,${a});color:${lightInk(a,0)||"#FFF1F3"}`; }
 function renderHeat(){ if(S.view!=="heat") return; setHTML($("heat"),sorted().map(s=>{const r=ret(s,S.tf);return `<button class="tile" data-sym="${esc(s)}" style="${heatColor(r)}"><b>${esc(s)}</b><div><div class="num">${fmtP(r)}</div><small class="num">${fmt$(price(s))}</small></div></button>`;}).join("")); }
 function renderBoard(){
   const rows=S.list.map(s=>({s,r:ret(s,S.tf)})).filter(x=>x.r!=null).sort((a,b)=>b.r-a.r); $("boardTf").textContent=TF[S.tf];
@@ -1955,7 +1968,7 @@ async function refreshQuotesOnly(){ for(const s of S.list.concat(IDX.map(x=>x[0]
 const THEMES_UI=[["dark","🌙","Midnight","The classic dark night on the range.",["#070B10","#0F151D","#FFB547","#2BD99A"]],["dusk","🌆","Dusk","Medium: lighter slate, easier on the eyes.",["#182030","#212B3B","#FFB547","#2BD99A"]],["light","🌵","Desert day","Light: warm sand and white cards for bright rooms.",["#F3EEE5","#FFFFFF","#C27A12","#0B8A5C"]],["auto","🌗","Sun clock","Follows your clock: Desert day 7 AM–5 PM, Dusk until 8 PM, Midnight at night.",["#F3EEE5","#182030","#070B10","#FFB547"]]];
 S.theme=LS.get("theme","dark");
 function themeNow(){ if(S.theme!=="auto") return S.theme; const h=new Date().getHours(); return h>=7&&h<17?"light":(h>=17&&h<20)||(h>=6&&h<7)?"dusk":"dark"; }
-function applyTheme(){ const t=themeNow(), root=document.documentElement; if(root.dataset.theme!==t) root.dataset.theme=t;
+function applyTheme(){ const t=themeNow(), root=document.documentElement; if(root.dataset.theme!==t){ const was=root.dataset.theme; root.dataset.theme=t; if(was&&typeof scheduleTab==="function"){ scheduleTab(); if(typeof renderHeat==="function") renderHeat(); } }
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=t==="light"?"#F3EEE5":t==="dusk"?"#182030":"#070B10";
   const b=$("themeBtn"); if(b) b.textContent=(THEMES_UI.find(x=>x[0]===S.theme)||THEMES_UI[0])[1]; }
 function openTheme(){
@@ -2009,7 +2022,8 @@ const AHEAD={w:{name:"Next week",days:7,tdays:5,span:"week"},m:{name:"Next month
 // Fed decision days (2nd day of each 2026 meeting, 2:00 PM ET); "proj" = with economic projections / dot plot
 const FOMC={"2025-01-29":0,"2025-03-19":1,"2025-05-07":0,"2025-06-18":1,"2025-07-30":0,"2025-09-17":1,"2025-10-29":0,"2025-12-10":1,"2026-01-28":0,"2026-03-18":1,"2026-04-29":0,"2026-06-17":1,"2026-07-29":0,"2026-09-16":1,"2026-10-28":0,"2026-12-09":1};
 // release dates published by the BLS (others are estimated from the usual pattern)
-const KNOWN_MACRO={"2026-10-02":"Jobs report (Sep)","2026-12-04":"Jobs report (Nov)","2026-12-10":"CPI inflation (Nov)"};
+// official BLS dates (bls.gov/schedule), through Dec 2027
+const KNOWN_MACRO={"2026-10-02":"Jobs report (Sep)","2026-11-06":"Jobs report (Oct)","2026-11-10":"CPI inflation (Oct)","2026-12-04":"Jobs report (Nov)","2026-12-10":"CPI inflation (Nov)","2027-01-08":"Jobs report (Dec)","2027-01-13":"CPI inflation (Dec)","2027-02-05":"Jobs report (Jan)","2027-02-11":"CPI inflation (Jan)","2027-03-05":"Jobs report (Feb)","2027-03-10":"CPI inflation (Feb)","2027-04-02":"Jobs report (Mar)","2027-04-13":"CPI inflation (Mar)","2027-05-07":"Jobs report (Apr)","2027-05-12":"CPI inflation (Apr)","2027-06-04":"Jobs report (May)","2027-06-10":"CPI inflation (May)","2027-07-02":"Jobs report (Jun)","2027-07-14":"CPI inflation (Jun)","2027-08-06":"Jobs report (Jul)","2027-08-11":"CPI inflation (Jul)","2027-09-03":"Jobs report (Aug)","2027-09-14":"CPI inflation (Aug)","2027-10-08":"Jobs report (Sep)","2027-10-14":"CPI inflation (Sep)","2027-11-05":"Jobs report (Oct)","2027-11-10":"CPI inflation (Oct)","2027-12-03":"Jobs report (Nov)","2027-12-10":"CPI inflation (Nov)"};
 const MOVERS=["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","AVGO","JPM","BAC","GS","WFC","NFLX","LLY","UNH","XOM","WMT","COST","ORCL","TSM","V","MA"];
 function nthWeekday(y,m,wd,n){ const d=new Date(Date.UTC(y,m,1)); let c=0; for(let i=0;i<31;i++){ const x=new Date(Date.UTC(y,m,1+i)); if(x.getUTCMonth()!==m) break; if(x.getUTCDay()===wd&&++c===n) return x; } return null; }
 function lastWeekday(y,m,wd){ for(let i=31;i>=1;i--){ const x=new Date(Date.UTC(y,m,i)); if(x.getUTCMonth()===m&&x.getUTCDay()===wd) return x; } return null; }
@@ -2470,8 +2484,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.65";
+const APP_VERSION="3.66";
 const CHANGELOG=[
+  {v:"3.66",date:"2026-11-24",title:"Checkup and polish",items:["Big PC screens: the app uses more of the width, and every Home tool shows at once instead of in a sideways strip","Desert day (light) theme: heat map, sector and watchlist tiles use dark text on pale colors so they stay readable, and the market-hours bar shows REGULAR again","Heat maps: small tiles no longer cut numbers in half, and hovering a tile shows its full move","Breadth reads 4▲ 4▼ so it fits on one line","Look ahead: official 2027 jobs report and CPI dates from the Bureau of Labor Statistics"]},
   {v:"3.65",date:"2026-10-24",title:"Top 10 / 20 / All",items:["StockPlotter: \"Your holdings today\" has Top 10, Top 20 and All buttons; Top 10 and 20 show your biggest positions in the sort you picked"]},
   {v:"3.64",date:"2026-10-24",title:"Top dogs to losers",items:["MyToday list: $ today and % today run from the biggest winner at the top down to the biggest loser at the bottom (tap again to flip)"]},
   {v:"3.63",date:"2026-10-24",title:"Simpler sort",items:["MyToday list: the Value sort is gone; sort by $ today, % today or A–Z"]},
@@ -3244,7 +3259,7 @@ function heroHTML(t,list,extra=""){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><h2>${T.title}</h2><p>${T.desc}</p></div></div>
     <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="big ${tcls(st.avg)}">${fmtP(st.avg)}</span><span class="hint">equal-weight · ${TF[S.ttf]}${sp!=null&&st.avg!=null?` · ${st.avg>=sp?"beating":"trailing"} S&amp;P by ${Math.abs(st.avg-sp).toFixed(1)} pts`:""}</span></div>
     <div class="breadth" title="Advancers vs decliners"><i style="flex:${st.up};background:var(--gain)"></i><i style="flex:${st.dn};background:var(--loss)"></i></div>
-    <div class="row3"><div><b>Leader</b><span class="tup">${st.best?esc(st.best.s)+" "+fmtP(st.best.r):"—"}</span></div><div><b>Laggard</b><span class="${st.worst&&st.worst.r<0?"tdown":"tup"}">${st.worst?esc(st.worst.s)+" "+fmtP(st.worst.r):"—"}</span></div><div><b>Breadth</b><span>${st.up} up · ${st.dn} dn</span></div></div>${extra}</section>`;
+    <div class="row3"><div><b>Leader</b><span class="tup">${st.best?esc(st.best.s)+" "+fmtP(st.best.r):"—"}</span></div><div><b>Laggard</b><span class="${st.worst&&st.worst.r<0?"tdown":"tup"}">${st.worst?esc(st.worst.s)+" "+fmtP(st.worst.r):"—"}</span></div><div><b>Breadth</b><span><span class="tup">${st.up}▲</span> <span class="tdown">${st.dn}▼</span></span></div></div>${extra}</section>`;
 }
 function trowHTML(s){
   const p=price(s), r=ret(s,S.ttf), pr=S.profile[s]||{}, inL=S.list.includes(s), A=analytics(s);
@@ -3661,7 +3676,8 @@ function heatHTML(P,R){
   const a=R[0], z=R[R.length-1], all=P.have.map(x=>({x,v:z.px[x]*z.q[x],r:(z.px[x]/a.px[x]-1)*100})).filter(o=>o.v>0).sort((p,q)=>q.v-p.v); if(all.length<2) return "";
   const N=S.pheatN, tiles=N&&all.length>N?all.slice(0,N):all, rest=all.slice(tiles.length), tot=all.reduce((s,o)=>s+o.v,0), mx=Math.max(...tiles.map(o=>Math.abs(o.r)))||1;
   const col=r=>{ const k=Math.min(1,Math.abs(r)/mx), a=.18+.7*Math.sqrt(k); return r>=0?`rgba(43,217,154,${a.toFixed(2)})`:`rgba(255,92,114,${a.toFixed(2)})`; };
-  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?78:sh>2.5?56:40}px;background:${o.bg||col(o.r)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span>${sh>2.5?`<small>${sh.toFixed(1)}%</small>`:""}</button>`; };
+  const ink=r=>{ const a=.18+.7*Math.sqrt(Math.min(1,Math.abs(r)/mx)); return lightInk(a,r>=0)||"#fff"; };
+  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} title="${esc(o.x)} ${fmtP(o.r)} · ${sh.toFixed(1)}% of the portfolio" style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(44,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?78:sh>2.5?56:40}px;background:${o.bg||col(o.r)};color:${o.bg?lightInk(.28,1)||"#fff":ink(o.r)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span>${sh>2.5?`<small>${sh.toFixed(1)}%</small>`:""}</button>`; };
   const rv=rest.reduce((s,o)=>s+o.v,0), rr=rv?rest.reduce((s,o)=>s+o.v*o.r,0)/rv:0;
   return `${plotChips()}<div class="section-h"><h2>🗺️ Heat map</h2><div class="pseg">${[[10,"Top 10"],[20,"Top 20"],[0,"All"]].map(([n,l])=>`<button data-pheatn="${n}" aria-pressed="${S.pheatN===n}">${l}</button>`).join("")}</div></div>
     <div class="pheat">${tiles.map(o=>tile(o,`data-psym="${esc(o.x)}"`)).join("")}${rest.length?tile({x:`+${rest.length} more`,v:rv,r:rr,bg:"rgba(131,146,166,.28)"},`data-pheatn="0"`):""}</div>
@@ -4331,9 +4347,10 @@ function todayWhen(){
 }
 const tdMood=r=>r>=2?["🚀","Stampede! The whole herd is running."]:r>=.75?["🤠","Yeehaw, a fine day on the trail."]:r>=.1?["☀️","Fair skies over the ranch."]:r>-.1?["🌵","Quiet day in Dodge."]:r>-.75?["🌥️","A dusty trail, nothing to fret about."]:r>-2?["🌧️","Rough ride, keep a firm grip on the reins."]:["🌪️","Twister on the prairie. Hold on to your hat."];
 const tdCol=(r,mx)=>{ const k=Math.min(1,Math.abs(r)/(mx||1)), a=.18+.7*Math.sqrt(k); return r>=0?`rgba(43,217,154,${a.toFixed(2)})`:`rgba(255,92,114,${a.toFixed(2)})`; };
+const tdInk=(r,mx)=>{ const a=.18+.7*Math.sqrt(Math.min(1,Math.abs(r)/(mx||1))); return lightInk(a,r>=0)||"#fff"; };
 function tdHeat(rows,rest){
   const tot=rows.concat(rest).reduce((s,o)=>s+o.v,0)||1, mx=Math.max(...rows.map(o=>Math.abs(o.r)))||1;
-  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(14,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?84:sh>2.5?62:52}px;background:${o.bg||tdCol(o.r,mx)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span><small class="num">${sgn$(o.d)}</small></button>`; };
+  const tile=(o,attr)=>{ const sh=o.v/tot*100; return `<button ${attr} title="${esc(o.x)} ${fmtP(o.r)}" style="flex:${Math.max(sh,1.2).toFixed(2)} 1 ${Math.max(44,Math.sqrt(sh)*34).toFixed(0)}px;min-height:${sh>8?84:sh>2.5?62:52}px;background:${o.bg||tdCol(o.r,mx)};color:${o.bg?lightInk(.28,1)||"#fff":tdInk(o.r,mx)}"><b>${esc(o.x)}</b><span class="num">${fmtP(o.r)}</span><small class="num">${sgn$(o.d)}</small></button>`; };
   const rv=rest.reduce((s,o)=>s+o.v,0), rd=rest.reduce((s,o)=>s+o.d,0);
   return `<div class="pheat">${rows.map(o=>tile(o,`data-sym="${esc(o.x)}"`)).join("")}${rest.length?tile({x:`+${rest.length} more`,v:rv,r:rv-rd?rd/(rv-rd)*100:0,d:rd,bg:"rgba(131,146,166,.28)"},`data-tdn="0"`):""}</div>
     <p class="hint" style="font-size:11px;margin:0">Size = what the holding is worth, color = today's move.${rest.length?" The gray tile adds up the rest; tap it to show all.":""}</p>`;
