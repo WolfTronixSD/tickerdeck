@@ -864,6 +864,13 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.row{grid-template-columns:auto 1fr auto}.spark{display:none}.hero-val{font-size:28px}.donut{width:70px;height:70px}.brand h1{font-size:19px;gap:6px}.hdr-actions{gap:4px}.perf{grid-template-columns:repeat(3,1fr)}}
 .media-a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:var(--text);text-decoration:none;min-height:48px}.media-a:active{transform:scale(.98)}.media-a .ic{font-size:22px;width:30px;text-align:center;flex:none}.media-a .tx{flex:1;min-width:0}.media-a .tx b{display:block;font-size:14px}.media-a .tx small{display:block;color:var(--muted);font-size:11.5px;line-height:1.3}.media-a .go{color:var(--accent);font-size:13px;flex:none}.media-row{display:flex;gap:6px}.media-row .media-a{flex:1}.media-alt{flex:none!important;padding:0 12px!important;font-size:12px;font-weight:600;color:var(--accent)!important;justify-content:center}.media-chips{display:flex;flex-wrap:wrap;gap:6px}.media-chips a{padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--text);font-size:12px;text-decoration:none;font-family:"JetBrains Mono",monospace}
+.lngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.lnf{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}.lnf .field{height:42px;font-size:15px}.lnf select.field{font-family:inherit}
+.lnul{margin:6px 0 0;padding-left:20px;font-size:13.5px;line-height:1.5;color:var(--muted)}.lnul li{margin:3px 0}
+.lnfour{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}.lnfour button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:10px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--text);font:600 14px inherit;cursor:pointer;min-height:48px}.lnfour button small{font-weight:400;font-size:12px;color:var(--muted);line-height:1.35}
+.lnpc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:8px}
+.lnst summary{display:flex;align-items:center;gap:12px;cursor:pointer;list-style:none;min-height:40px}.lnst summary::-webkit-details-marker{display:none}.lnst summary>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.lnst summary small{font-size:12px;color:var(--muted)}.lni{font-size:22px;flex:none}.lnst em{font-style:normal;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);flex:none}.lnst em.tup{border-color:currentColor}.lnst summary::after{content:"▸";color:var(--faint);transition:transform .15s}.lnst[open] summary::after{transform:rotate(90deg)}.lnst[open] summary{margin-bottom:6px}
+.lnmine{gap:0;padding-block:6px}.lnmh,.lnmr{display:grid;grid-template-columns:1.2fr .8fr 1fr 1fr;gap:8px;align-items:center;text-align:right}.lnmh{font-size:11px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--line)}.lnmh span:first-child,.lnmr b{text-align:left}.lnmr{width:100%;background:none;border:0;border-bottom:1px solid var(--line);color:var(--text);padding:9px 0;font-size:14px;cursor:pointer;min-height:48px}.lnmr:last-child{border-bottom:0}.lnmr small,.lnmh small{display:block;font-size:11px;color:var(--muted);font-weight:400}.lnmr b small{font-family:inherit}
+@media (hover:hover){.lnmr:hover,.lnfour button:hover{background:var(--accent-bg)}}
 </style>
 </head>
 <body>
@@ -926,6 +933,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:10p
     <button id="bargainBtn">📋 Bargain Scorecard</button>
     <button id="navBtn">🏷️ NAV discounts</button>
     <button id="wiseBtn">🦉 Stock wisdom</button>
+    <button id="learnBtn">🎓 Learn & protect</button>
     <button id="refreshBtn">⟳ Refresh</button>
     <button id="shareBtn">⇪ Share summary</button>
     <button id="briefBtn">☕ Briefing</button>
@@ -1921,6 +1929,16 @@ function wire(){
   $("bargainBtn").addEventListener("click",()=>openBargain());
   $("navBtn").addEventListener("click",()=>openNav());
   $("wiseBtn").addEventListener("click",()=>openWisdom());
+  $("learnBtn").addEventListener("click",()=>openLearn());
+  $("sheet").addEventListener("click",e=>{ if(S.open!=="__learn") return; const c=S.ln.c, save=()=>LS.set("lnCalc",c), clr=()=>["pk","pp","ck","cp"].forEach(k=>delete c[k]);
+    const tb=e.target.closest("[data-lntab]"); if(tb){ S.ln.tab=tb.dataset.lntab; LS.set("lnTab",S.ln.tab); renderLearn(); $("sheet").scrollTop=0; return; }
+    const kd=e.target.closest("[data-lnkind]"); if(kd){ c.kind=kd.dataset.lnkind; clr(); save(); renderLearn(); return; }
+    const tr=e.target.closest("[data-lntry]"); if(tr){ c.kind=tr.dataset.lntry; clr(); save(); S.ln.tab="calc"; LS.set("lnTab","calc"); renderLearn(); $("sheet").scrollTop=0; return; }
+    const pk=e.target.closest("[data-lnpick]"); if(pk){ c.sym=pk.dataset.lnpick; delete c.p; clr(); save(); S.ln.tab="calc"; LS.set("lnTab","calc"); renderLearn(); $("sheet").scrollTop=0; return; } });
+  const lnEdit=e=>{ if(S.open!=="__learn") return; const f=e.target.closest("[data-lnc]"); if(!f) return; const c=S.ln.c, k=f.dataset.lnc;
+    if(k==="sym"){ if(e.type!=="change") return; c.sym=f.value; delete c.p; ["pk","pp","ck","cp"].forEach(q=>delete c[q]); LS.set("lnCalc",c); renderLearn(); return; }
+    const v=f.value.replace(/[^0-9.]/g,"").slice(0,12); if(v) c[k]=v; else delete c[k]; LS.set("lnCalc",c); const o=$("lnOut"); if(o) o.innerHTML=lnOut(); };
+  $("sheet").addEventListener("input",lnEdit); $("sheet").addEventListener("change",lnEdit);
   $("sheet").addEventListener("click",e=>{ if(S.open!=="__wise") return;
     const tb=e.target.closest("[data-wstab]"); if(tb){ S.ws.tab=tb.dataset.wstab; LS.set("wsTab",S.ws.tab); renderWisdom(); $("sheet").scrollTop=0; return; }
     const sk=e.target.closest("[data-wsskip]"); if(sk){ S.ws.skip+=Number(sk.dataset.wsskip); renderWisdom(); return; }
@@ -2484,8 +2502,9 @@ document.addEventListener("visibilitychange",()=>{ if(document.hidden){ clearTim
 setInterval(()=>{ if(!document.hidden&&(!C.ws||C.ws.readyState!==1)) coinsRest(); },60000);
 coinsStart();
 
-const APP_VERSION="3.66";
+const APP_VERSION="3.67";
 const CHANGELOG=[
+  {v:"3.67",date:"2026-11-27",title:"🎓 Learn & protect",items:["New Home tool, Learn & protect: options in plain English, a covered call guide with pros and cons, and 14 practical ways to protect your money, free ones first","Calculator: see the payoff chart and numbers for a covered call, protective put, collar or cash-secured put on any of your stocks, with premiums estimated from the stock's own moves","My holdings: what insuring each position or earning call income would cost, plus tips. Also on StockPlotter as Protect & options","Ask Claude gets tickers, weights and volatility only, never dollars or share counts"]},
   {v:"3.66",date:"2026-11-24",title:"Checkup and polish",items:["Big PC screens: the app uses more of the width, and every Home tool shows at once instead of in a sideways strip","Desert day (light) theme: heat map, sector and watchlist tiles use dark text on pale colors so they stay readable, and the market-hours bar shows REGULAR again","Heat maps: small tiles no longer cut numbers in half, and hovering a tile shows its full move","Breadth reads 4▲ 4▼ so it fits on one line","Look ahead: official 2027 jobs report and CPI dates from the Bureau of Labor Statistics"]},
   {v:"3.65",date:"2026-10-24",title:"Top 10 / 20 / All",items:["StockPlotter: \"Your holdings today\" has Top 10, Top 20 and All buttons; Top 10 and 20 show your biggest positions in the sort you picked"]},
   {v:"3.64",date:"2026-10-24",title:"Top dogs to losers",items:["MyToday list: $ today and % today run from the biggest winner at the top down to the biggest loser at the bottom (tap again to flip)"]},
@@ -2955,6 +2974,128 @@ function renderWisdom(){
     <p class="hint">Figures are rounded, widely cited historical averages. General education, not investment advice.</p>`;
 }
 function openWisdom(){ S.ws=S.ws||{skip:0,chk:{}}; S.ws.tab=LS.get("wsTab","today"); S.open="__wise"; renderWisdom(); showSheet(); }
+/* ---------- 🎓 Learn & protect: options basics, covered calls, ways to protect a portfolio, a payoff calculator ---------- */
+const LN_TABS=[["start","🎓 Options 101"],["cc","📞 Covered calls"],["protect","🛡️ Protect"],["calc","🧮 Calculator"],["mine","🐺 My holdings"]];
+const LN_BASICS=[
+  ["What an option is","A contract that gives the buyer the right, but not the duty, to buy or sell 100 shares of a stock at a set price (the strike) until a set date (the expiration). The buyer pays a price for that right, called the premium. The seller collects the premium and takes on the duty."],
+  ["Call = right to buy","A call gains value when the stock rises above the strike. Buyers use calls to bet on a rise with less money down. Sellers of calls collect premium and agree to sell their shares at the strike if asked."],
+  ["Put = right to sell","A put gains value when the stock falls below the strike. Buying a put works like insurance on shares you own: below the strike, every dollar the stock loses the put gains. Sellers of puts collect premium and agree to buy shares at the strike."],
+  ["One contract = 100 shares","Prices are quoted per share. A call quoted at $2.50 costs $250 per contract. To sell a covered call you need 100 shares for each contract."],
+  ["In, at or out of the money","A call is in the money when the stock is above the strike, a put when the stock is below it. Out of the money options are cheaper because they only pay if the stock moves far enough."],
+  ["Time decay (theta)","An option loses a little value every day as expiration gets closer, faster in the last 30 days. That works against buyers and for sellers, which is why covered calls and cash-secured puts earn steady income."],
+  ["Volatility (IV)","The jumpier a stock, the more its options cost. Premiums jump before earnings and in sell-offs, which makes insurance most expensive exactly when people want it most. Buy protection when markets are calm."],
+  ["Delta, the handy rule of thumb","Delta runs from 0 to 1 for calls (0 to −1 for puts). It roughly tells how much the option moves per $1 in the stock, and is a rough guess at the chance it ends in the money. A 0.25 delta call has about a 1 in 4 chance of being exercised."],
+  ["Assignment","When an option you sold is exercised, you are assigned: you must sell your shares (call) or buy shares (put) at the strike. It usually happens at expiration if the option is in the money, sometimes early just before a dividend."],
+  ["What you need","Your broker must approve you for options. Level 1 usually allows covered calls and protective puts, level 2 adds buying calls and puts and cash-secured puts. Spreads and selling naked options need higher levels and carry far more risk."]];
+const LN_CC={how:["You own 100 shares (or more, in blocks of 100).","You sell 1 call per 100 shares, usually 30 to 45 days out, at a strike 5 to 10% above today's price (around 0.20 to 0.30 delta).","You keep the premium no matter what happens.","If the stock stays below the strike at expiration, the call expires worthless: sell another one next month.","If the stock is above the strike, your shares are sold at the strike (plus you keep the premium). You can avoid that by buying the call back and selling a later, higher one: this is called rolling."],
+  pros:["Steady extra income: often 0.5 to 2% a month on top of dividends","Cushions small drops by the premium you collected","Works best in flat or slowly rising markets","Allowed in most IRAs and at the lowest options level"],
+  cons:["Caps your upside: if the stock rockets, you give away everything above the strike","Barely protects you in a crash (only by the premium)","Shares can be called away, which can trigger capital gains tax in a taxable account","Needs 100 shares per contract and a little monthly attention"],
+  tips:["Only write calls on stocks you would be fine selling at the strike","Avoid selling calls just before earnings unless you want the higher premium and the risk","Don't sell strikes below what you paid unless you accept a loss if called away","If the stock jumps, rolling up and out usually costs a small debit: decide your rule before it happens","Large gains in a taxable account? Getting called away realizes them: check the tax bill first"]};
+// [name, emoji, what it is, protects against, cost, pros, cons, good for]
+const LN_STRATS=[
+  ["Protective put","🛡️","Buy a put below today's price on shares you own. Below the strike your losses stop.","A crash in one stock","Ongoing: often 1 to 3% of the position per quarter for a put 10% below the price, more for jumpy stocks",["Hard floor on your loss, no matter how bad it gets","You keep all the upside"],["Costs money every time you renew it, which drags returns over years","Expensive right after a sell-off, when volatility is high"],"Protecting a big gain or a concentrated position through a risky stretch (earnings, an election, a planned sale)"],
+  ["Collar","🎯","Buy a put below the price and pay for it by selling a call above the price. Often costs close to nothing.","A crash, in exchange for giving up big gains","Near zero in cash, paid for with capped upside",["Cheap or free floor on your loss","Popular for locking in a large gain without selling (and without a tax bill)"],["Caps your upside at the call strike","Shares can be called away if the stock rises above the call strike"],"A large holding you can't or don't want to sell yet, like NVDA after a big run"],
+  ["Put spread","🪜","Buy a put 5% below and sell a cheaper one 20% below. Covers a medium drop for much less than a plain put.","A 5 to 20% drop","About a third to half of a plain put",["Much cheaper insurance","Still lets you keep all the upside"],["No protection past the lower strike","Two legs to manage"],"Hedging a normal correction rather than a crash"],
+  ["Cash-secured put","💵","Sell a put at a price you'd happily buy at, with the cash set aside. You get paid to wait for a lower entry.","Not a hedge: a way to buy lower and earn income","None: you collect premium",["Income while you wait","If assigned, you buy at the strike minus the premium you already kept"],["If the stock collapses you still buy at the strike","Your cash is tied up until expiration"],"Adding to a stock you like on a dip"],
+  ["Stop-loss or trailing stop","🚦","An order to sell automatically if the price falls to a level (or a set % below its high, for a trailing stop).","A slow slide turning into a big loss","Free",["No cost, simple to set at any broker","Takes emotion out of selling"],["Overnight gaps can sell far below your stop","Normal dips can shake you out right before a rebound, and selling can trigger taxes"],"Speculative positions where you want a firm exit"],
+  ["Trim and diversify","🧺","Keep any single stock under about 10 to 20% of your portfolio and spread across sectors.","One company or sector blowing up","Free, but selling a winner can trigger capital gains tax",["The most reliable protection there is","No ongoing cost"],["You give up some upside if the big winner keeps running","Taxes on the gain you sell"],"Anyone with one stock over 20% of their money"],
+  ["Rebalance on a schedule","⚖️","Once or twice a year, sell what grew too big and buy what fell behind, back to your target mix.","Risk creeping up as winners grow","Free (taxes aside)",["Locks in gains automatically","Forces buy-low, sell-high"],["Can feel wrong selling what's working","Taxable account: use new money or dividends to rebalance where you can"],"Keeping a long-term plan on track"],
+  ["Cash and T-bill buffer","🏦","Keep 1 to 3 years of planned withdrawals in cash, T-bills or a money market fund.","Being forced to sell stocks in a crash","Lower long-run returns on that slice",["T-bills pay interest with almost no risk","You never have to sell at the bottom"],["Cash loses to stocks over long periods"],"Anyone who will need money within a few years"],
+  ["Bonds and Treasuries","📜","Hold some high-quality bonds or Treasury funds alongside stocks.","Stock bear markets (most of the time)","Lower expected return than stocks",["Often rise when stocks fall in a recession","Steady income"],["In 2022 stocks and bonds fell together","Long-term bonds swing a lot when rates change"],"Smoothing the ride as you get closer to needing the money"],
+  ["Buffered ETFs","🧱","Funds that use options for you: for example the first 10 to 15% of a yearly loss is absorbed, and gains are capped.","Moderate drops in the S&P 500","Fees around 0.8% a year plus capped upside",["Protection with no options account","Simple to buy and hold"],["Upside cap can be low","Full protection only if you buy at the start of the outcome period"],"Cautious money you still want in the market"],
+  ["Index puts or inverse ETF","🐻","Buy puts on SPY or QQQ, or hold a little of an inverse fund, to offset a market-wide drop.","A broad market crash","Puts: ongoing premium. Inverse ETFs lose value over time if held long",["One hedge covers a whole stock portfolio","Easy to size: match your portfolio's beta"],["Doesn't help if your own stocks fall while the market doesn't","Inverse ETFs are for days or weeks, not years"],"Short-term cover for a portfolio that moves with the market"],
+  ["Dollar-cost averaging","🗓️","Invest the same amount on a schedule instead of all at once.","Bad timing on a big buy","Free",["Takes timing out of it","Buys more shares when prices are low"],["Lump sums win about two-thirds of the time, because markets usually rise"],"Investing a windfall or a monthly paycheck"],
+  ["Tax-loss harvesting","🧾","Sell a loser to realize the loss, buy something similar (not identical) right away, and use the loss to offset gains.","Taxes eating your returns","Free",["Losses offset gains, plus up to $3,000 a year of income","Keeps you invested"],["Wash-sale rule: no buying the same stock 30 days before or after","Taxable accounts only"],"Turning a bad year into a lower tax bill"],
+  ["A written crash plan","📝","Decide now what you'll do if stocks fall 20% or 40%: hold, rebalance, or buy more.","Panic selling at the bottom","Free",["Most investors lose more to their own reactions than to the market","Takes 10 minutes"],["Only works if you follow it"],"Everyone. Fill it in on the Stock wisdom → Crash plan tab"]];
+// normal CDF (Abramowitz-Stegun) and Black-Scholes, with yearly volatility from a year of daily closes
+const lnN=x=>{ const t=1/(1+.2316419*Math.abs(x)), d=.3989423*Math.exp(-x*x/2), p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274)))); return x>0?1-p:p; };
+const LN_R=.04;
+function lnBS(call,S0,K,days,vol){ if(!(S0>0&&K>0&&days>0&&vol>0)) return null; const T=days/365, d1=(Math.log(S0/K)+(LN_R+vol*vol/2)*T)/(vol*Math.sqrt(T)), d2=d1-vol*Math.sqrt(T);
+  return call?S0*lnN(d1)-K*Math.exp(-LN_R*T)*lnN(d2):K*Math.exp(-LN_R*T)*lnN(-d2)-S0*lnN(-d1); }
+function lnVol(x){ const c=S.daily[x]&&S.daily[x].c; if(!c||c.length<60) return null; const a=c.slice(-253).map(b=>b[1]), r=[]; for(let i=1;i<a.length;i++) if(a[i]>0&&a[i-1]>0) r.push(Math.log(a[i]/a[i-1]));
+  const m=r.reduce((s,v)=>s+v,0)/r.length, v=Math.sqrt(r.reduce((s,q)=>s+(q-m)**2,0)/(r.length-1)*252); return isFinite(v)&&v>0?v:null; }
+const lnRound=(p,k)=>{ const v=p*k, st=v<25?.5:v<100?1:v<250?2.5:5; return Math.round(v/st)*st; };
+// profit or loss per share at expiration
+const LN_KINDS={
+  cc:{n:"Covered call",legs:["call"],pl:(s,o)=>s-o.p+o.cp-Math.max(0,s-o.ck)},
+  pp:{n:"Protective put",legs:["put"],pl:(s,o)=>s-o.p-o.pp+Math.max(0,o.pk-s)},
+  col:{n:"Collar",legs:["put","call"],pl:(s,o)=>s-o.p-o.pp+o.cp+Math.max(0,o.pk-s)-Math.max(0,s-o.ck)},
+  csp:{n:"Cash-secured put",legs:["put"],pl:(s,o)=>o.pp-Math.max(0,o.pk-s)}};
+function lnChart(f,o){
+  const W=340,H=170,lo=o.p*.6,hi=o.p*1.4,N=80, xs=Array.from({length:N+1},(_,i)=>lo+(hi-lo)*i/N), ys=xs.map(s=>f(s,o)), mn=Math.min(...ys,0), mx=Math.max(...ys,0), pad=(mx-mn)*.08||1;
+  const X=s=>(s-lo)/(hi-lo)*W, Y=v=>H-(v-mn+pad)/(mx-mn+2*pad)*H, z=Y(0), pts=xs.map((s,i)=>`${X(s).toFixed(1)},${Y(ys[i]).toFixed(1)}`).join(" "), id="lnc"+Math.random().toString(36).slice(2,7);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H+18}" role="img" aria-label="Profit or loss at expiration"><defs><clipPath id="${id}u"><rect x="0" y="0" width="${W}" height="${z.toFixed(1)}"/></clipPath><clipPath id="${id}d"><rect x="0" y="${z.toFixed(1)}" width="${W}" height="${H}"/></clipPath></defs>
+    <polygon points="0,${z.toFixed(1)} ${pts} ${W},${z.toFixed(1)}" fill="var(--gain)" fill-opacity=".22" clip-path="url(#${id}u)"/><polygon points="0,${z.toFixed(1)} ${pts} ${W},${z.toFixed(1)}" fill="var(--loss)" fill-opacity=".22" clip-path="url(#${id}d)"/>
+    <line x1="0" x2="${W}" y1="${z.toFixed(1)}" y2="${z.toFixed(1)}" stroke="var(--faint)" stroke-dasharray="3 3"/><line x1="${X(o.p).toFixed(1)}" x2="${X(o.p).toFixed(1)}" y1="0" y2="${H}" stroke="var(--accent)" stroke-dasharray="2 3"/>
+    <polyline points="${pts}" fill="none" stroke="var(--text)" stroke-width="2"/>
+    <text x="${X(o.p).toFixed(1)}" y="${H+13}" text-anchor="middle" font-size="10" fill="var(--accent)">now ${fmt$(o.p)}</text><text x="2" y="${H+13}" font-size="10" fill="var(--faint)">${fmt$(lo,0)}</text><text x="${W-2}" y="${H+13}" text-anchor="end" font-size="10" fill="var(--faint)">${fmt$(hi,0)}</text></svg>`;
+}
+function lnInputs(){ const c=S.ln.c, sym=c.sym, live=sym?pxNow(sym):null, num=k=>{ const v=parseFloat(c[k]); return isFinite(v)?v:null; };
+  const p=num("p")??live, days=Math.max(1,Math.round(num("days")??35)), vol=(sym&&lnVol(sym))||.3;
+  const ck=num("ck")??(p?lnRound(p,1.08):null), pk=num("pk")??(p?lnRound(p,S.ln.c.kind==="csp"?.95:.9):null);
+  const ecp=p&&ck?lnBS(1,p,ck,days,vol):null, epp=p&&pk?lnBS(0,p,pk,days,vol):null;
+  return {sym,p,days,vol,volEst:!(sym&&lnVol(sym)),ck,pk,cp:num("cp")??ecp,pp:num("pp")??epp,ecp,epp,n:Math.max(1,Math.round(num("n")??1)),kind:c.kind};
+}
+function lnOut(){
+  const o=lnInputs(), K=LN_KINDS[o.kind]; if(!o.p) return `<p class="hint">Pick a stock or type a price to see the numbers.</p>`;
+  const f=K.pl, sh=o.n*100, yr=365/o.days, row=(l,v,c="")=>`<div class="kv"><span>${l}</span><b class="num ${c}">${v}</b></div>`, sd=(v,d)=>(v<0?"−":"")+fmt$(Math.abs(v),d), both=ps=>`${sd(ps)} / sh · ${money(sd(ps*sh,0))}`;
+  let L=[];
+  if(o.kind==="cc"){ const mxp=o.ck-o.p+o.cp; L=[row("You collect",both(o.cp),"tup"),row("Income yield",`${(o.cp/o.p*100).toFixed(2)}% · ${(o.cp/o.p*100*yr).toFixed(1)}%/yr`),row("Best case (called away at "+fmt$(o.ck)+")",both(mxp),tcls(mxp)),row("Breakeven",fmt$(o.p-o.cp)),row("Upside you give up","everything above "+fmt$(o.ck))]; }
+  if(o.kind==="pp"){ const mxl=o.p-o.pk+o.pp; L=[row("Insurance costs",both(o.pp),"tdown"),row("Cost",`${(o.pp/o.p*100).toFixed(2)}% · ${(o.pp/o.p*100*yr).toFixed(1)}%/yr if renewed`),row("Worst case",both(-mxl),"tdown"),row("Floor","you can always sell at "+fmt$(o.pk)),row("Breakeven",fmt$(o.p+o.pp))]; }
+  if(o.kind==="col"){ const net=o.pp-o.cp, mxl=o.p-o.pk+net, mxp=o.ck-o.p-net; L=[row(net>=0?"Net cost":"Net credit",both(Math.abs(net)),net>0?"tdown":"tup"),row("Worst case (floor "+fmt$(o.pk)+")",both(-mxl),"tdown"),row("Best case (cap "+fmt$(o.ck)+")",both(mxp),tcls(mxp)),row("Protected range",`${fmtP((o.pk/o.p-1)*100)} to ${fmtP((o.ck/o.p-1)*100)}`)]; }
+  if(o.kind==="csp"){ L=[row("You collect",both(o.pp),"tup"),row("Yield on cash set aside",`${(o.pp/o.pk*100).toFixed(2)}% · ${(o.pp/o.pk*100*yr).toFixed(1)}%/yr`),row("Cash to set aside",money(fmt$(o.pk*sh,0))),row("If assigned you pay",fmt$(o.pk-o.pp)+" / sh effective"),row("Worst case (stock to $0)",both(-(o.pk-o.pp)),"tdown")]; }
+  return `${lnChart(f,o)}<p class="hint" style="font-size:11px;margin:-4px 0 0">Profit or loss per share at expiration across prices, for ${o.n} contract${o.n>1?"s":""} (${sh} shares).</p>${L.join("")}
+    <p class="hint">${o.volEst?"No price history for this stock yet, so premiums assume 30% yearly volatility.":`Premiums left blank are estimated from ${o.sym}'s last year of moves (${(o.vol*100).toFixed(0)}% yearly volatility).`} Real quotes differ, often higher before earnings: check your broker's option chain before trading.</p>`;
+}
+function lnCalcHTML(){
+  const c=S.ln.c, o=lnInputs(), K=LN_KINDS[c.kind], syms=[...new Set(plotSyms().concat(S.list))], fld=(k,l,ph)=>`<label class="lnf"><span>${l}</span><input class="field" inputmode="decimal" data-lnc="${k}" value="${esc(c[k]??"")}" placeholder="${ph==null?"":esc(ph)}" autocomplete="off"></label>`, est=v=>v==null?"":(+v).toFixed(2);
+  return `<div class="chipbar coil-chips">${Object.entries(LN_KINDS).map(([k,v])=>`<button data-lnkind="${k}" aria-pressed="${c.kind===k}">${v.n}</button>`).join("")}</div>
+    <div class="card"><div class="lngrid"><label class="lnf"><span>Stock</span><select class="field" data-lnc="sym"><option value="">Type a price →</option>${syms.map(x=>`<option ${x===c.sym?"selected":""}>${esc(x)}</option>`).join("")}</select></label>${fld("p","Price now",o.sym&&pxNow(o.sym)?pxNow(o.sym).toFixed(2):"")}${fld("days","Days to expiration","35")}${fld("n","Contracts (×100 sh)","1")}
+      ${K.legs.includes("put")?fld("pk","Put strike",o.pk?o.pk.toFixed(2):"")+fld("pp","Put premium",o.epp?"≈ "+est(o.epp):""):""}${K.legs.includes("call")?fld("ck","Call strike",o.ck?o.ck.toFixed(2):"")+fld("cp","Call premium",o.ecp?"≈ "+est(o.ecp):""):""}</div>
+      <p class="hint" style="font-size:11px">Leave a box empty to use the suggested value shown in gray.</p></div>
+    <div class="card" id="lnOut">${lnOut()}</div>`;
+}
+function lnMine(){
+  const syms=plotSyms(); if(!syms.length) return `<div class="card"><p class="hint">Add your holdings on the StockPlotter tab to see what protecting them or earning income on them would cost. They stay on this device.</p></div>`;
+  const rows=syms.map(x=>{ const p=pxNow(x), n=S.plot[x]||0, v=p?p*n:0, vol=lnVol(x); return {x,p,n,v,vol}; }).filter(o=>o.v>0).sort((a,b)=>b.v-a.v), tot=rows.reduce((s,o)=>s+o.v,0)||1;
+  rows.forEach(o=>{ if(!o.vol) return; o.put=lnBS(0,o.p,lnRound(o.p,.9),91,o.vol); o.call=lnBS(1,o.p,lnRound(o.p,1.08),35,o.vol); o.k=Math.floor(o.n/100); });
+  const top=rows.slice(0,5), ins=top.filter(o=>o.put!=null), insC=ins.reduce((s,o)=>s+o.put*o.n,0), insV=ins.reduce((s,o)=>s+o.v,0), inc=rows.filter(o=>o.k&&o.call!=null).reduce((s,o)=>s+o.call*o.k*100,0), big=rows.filter(o=>o.v/tot>.2);
+  const tips=[];
+  if(big.length) tips.push(`🎯 <b>${big.map(o=>esc(o.x)).join(", ")}</b> ${big.length>1?"are each":"is"} over 20% of your money. The cheapest protection is trimming; a collar locks in the gain without selling.`);
+  if(ins.length) tips.push(`🛡️ Insuring your top ${ins.length} for 3 months with puts 10% below today's price would cost about ${money(fmt$(insC,0))}, or ${(insC/insV*100).toFixed(1)}% of their value (about ${(insC/insV*400).toFixed(1)}% a year if you kept renewing).`);
+  if(inc>0) tips.push(`📞 Selling one-month calls 8% above the price on every 100-share block you own could bring in about ${money(fmt$(inc,0))} a month, in exchange for capping those stocks' upside.`);
+  const hi=rows.filter(o=>o.vol&&o.vol>.5).map(o=>esc(o.x)); if(hi.length) tips.push(`🌪️ ${hi.join(", ")} move${hi.length>1?"":"s"} more than 50% a year, so options on ${hi.length>1?"them":"it"} are pricey: insurance costs more, and covered calls pay more.`);
+  const ask=`I want to protect my stock portfolio and maybe earn option income. My holdings by weight, with yearly volatility:\n${rows.slice(0,20).map(o=>`${o.x} ${(o.v/tot*100).toFixed(1)}%${o.vol?`, vol ${(o.vol*100).toFixed(0)}%`:""}`).join("\n")}\n\nExplain in plain English which protection strategies fit (protective puts, collars, put spreads, covered calls, trimming, rebalancing, index hedges), with pros and cons for my situation, rough costs as a % of value, and the risks. Search the web for current option prices and volatility on my biggest holdings. Not investment advice.`;
+  return `<div class="card">${tips.map(t=>`<p class="hint" style="color:var(--text)">${t}</p>`).join("")||`<p class="hint">Price history is still loading.</p>`}</div>
+    <div class="section-h"><h2>Holding by holding</h2><small>estimates from 1-year volatility</small></div>
+    <div class="card lnmine"><div class="lnmh"><span>Stock</span><span>Weight</span><span>Insure 3 mo<br><small>put 10% below</small></span><span>Income 1 mo<br><small>call 8% above</small></span></div>
+      ${rows.map(o=>`<button class="lnmr" data-lnpick="${esc(o.x)}"><b>${esc(o.x)}<small>${o.vol?(o.vol*100).toFixed(0)+"% vol":"loading"}</small></b><span class="num">${(o.v/tot*100).toFixed(1)}%</span><span class="num">${o.put!=null?`${(o.put/o.p*100).toFixed(1)}%<small>${money(fmt$(o.put*o.n,0))}</small>`:"—"}</span><span class="num">${o.call!=null?`${(o.call/o.p*100).toFixed(1)}%<small>${o.k?money(fmt$(o.call*o.k*100,0)):"under 100 sh"}</small>`:"—"}</span></button>`).join("")}</div>
+    <p class="hint">Tap a stock to try it in the calculator. Dollar figures stay on this device.</p>
+    <a class="claude" href="${esc(claudeURL(ask))}" target="_blank" rel="noopener">✨ Ask Claude how to protect my portfolio</a>
+    <p class="hint" style="font-size:11px">Claude gets your tickers, weights and volatility only: never share counts or dollar amounts.</p>`;
+}
+function renderLearn(){
+  if(S.open!=="__learn") return;
+  const t=S.ln.tab, li=a=>`<ul class="lnul">${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`; let body="";
+  if(t==="start") body=`<div class="card" style="gap:0">${LN_BASICS.map((x,i)=>`<div class="ws-it" style="--c:var(--accent)"><div class="ws-h"><span class="ws-n">${i+1}</span><b>${esc(x[0])}</b></div><p>${esc(x[1])}</p></div>`).join("")}</div>
+    <div class="card"><b>The four you'll actually use</b><div class="lnfour">${[["cc","📞 Covered call","Own 100 shares, sell a call: earn income, cap upside"],["pp","🛡️ Protective put","Own shares, buy a put: set a floor on losses"],["col","🎯 Collar","Put + call together: cheap floor, capped upside"],["csp","💵 Cash-secured put","Get paid to wait for a lower buy price"]].map(([k,a,b])=>`<button data-lntry="${k}"><b>${a}</b><small>${b}</small></button>`).join("")}</div></div>`;
+  else if(t==="cc") body=`<div class="card"><b>How it works</b><ol class="lnul">${LN_CC.how.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+      <p class="hint">Example: you own 100 shares at $100 and sell a 35-day $108 call for $1.80. You get $180 now. If the stock ends under $108 you keep the shares and the $180 (a 1.8% month). If it ends at $130 your shares go at $108: you make $800 + $180 = $980, but miss the extra $2,200.</p>
+      ${lnChart(LN_KINDS.cc.pl,{p:100,ck:108,cp:1.8})}<button class="ghost" data-lntry="cc">🧮 Try it with my numbers</button></div>
+    <div class="lnpc"><div class="card"><b class="tup">👍 Pros</b>${li(LN_CC.pros)}</div><div class="card"><b class="tdown">👎 Cons</b>${li(LN_CC.cons)}</div></div>
+    <div class="card"><b>Rules of thumb</b>${li(LN_CC.tips)}</div>`;
+  else if(t==="protect") body=`<p class="hint">From cheapest and simplest to most hands-on. Most long-term investors need only the free ones: diversify, rebalance, hold a cash buffer and write a crash plan. Options shine for a big single-stock position or a known risky stretch.</p>
+    ${LN_STRATS.slice().sort((a,b)=>(/^Free/.test(b[4])?1:0)-(/^Free/.test(a[4])?1:0)).map(([n,i,w,ag,cost,pros,cons,good])=>`<details class="card lnst"><summary><span class="lni">${i}</span><span><b>${esc(n)}</b><small>${esc(ag)}</small></span><em class="${/^Free|^None/.test(cost)?"tup":""}">${/^Free|^None/.test(cost)?"Free":"Costs"}</em></summary>
+      <p class="hint" style="color:var(--text)">${esc(w)}</p><div class="kv"><span>Cost</span><b style="text-align:right;font-weight:600">${esc(cost)}</b></div>
+      <div class="lnpc"><div><b class="tup">Pros</b>${li(pros)}</div><div><b class="tdown">Cons</b>${li(cons)}</div></div><p class="hint"><b>Good for:</b> ${esc(good)}</p></details>`).join("")}`;
+  else if(t==="calc") body=lnCalcHTML();
+  else body=lnMine();
+  $("sheetIn").innerHTML=`<div class="grab"></div><div class="d-head"><div><h3>🎓 Learn & protect</h3><p>Options, covered calls and practical ways to insure your money</p></div><button class="iconbtn close" data-close aria-label="Close">✕</button></div>
+    <div class="chipbar coil-chips">${LN_TABS.map(([k,l])=>`<button data-lntab="${k}" aria-pressed="${t===k}">${l}</button>`).join("")}</div>
+    ${body}
+    <p class="hint">General education, not investment advice. Options can lose money fast and aren't right for everyone: read your broker's options disclosure (Characteristics and Risks of Standardized Options) first.</p>`;
+}
+function openLearn(tab){ S.ln=S.ln||{c:LS.get("lnCalc",{kind:"cc"})}; if(!LN_KINDS[S.ln.c.kind]) S.ln.c.kind="cc"; S.ln.tab=tab||LS.get("lnTab","start"); S.open="__learn"; renderLearn(); showSheet(); }
 /* ---------- Spring Coil: price below both the 50-day and 200-day averages ---------- */
 // popular large caps scanned on top of the watchlist and every theme
 const COIL_EXTRA=["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA","AVGO","BRK.B","JPM","V","MA","UNH","LLY","JNJ","PG","KO","PEP","WMT","COST","HD","MCD","NKE","SBUX","DIS","NFLX","ADBE","CRM","ORCL","INTC","AMD","QCOM","TXN","CSCO","IBM","PYPL","BA","CAT","DE","GE","MMM","UPS","FDX","PFE","MRK","ABBV","BMY","CVS","T","VZ","TGT","LOW","GS","MS","BAC","WFC","C","XOM","CVX","F","GM","UBER","ABNB","SHOP","PLTR"];
@@ -4238,7 +4379,7 @@ function renderPlot(force){
     </div>`;
   $("plotRest").innerHTML=`<div id="pTable"></div>
     ${log.length?`<div class="section-h"><h2>Close log</h2><small>logged after each close</small></div><div class="card" style="background:var(--panel)">${log.map(([d,o],i)=>{ const pv=log[i+1], ch=pv?(o.v/pv[1].v-1)*100:null; return `<div class="kv"><span>${new Date(d+"T12:00:00").toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"})}</span><b class="num">${money(fmt$(o.v,0))}${ch!=null?` <span class="${tcls(ch)}">${fmtP(ch)}</span>`:""}</b></div>`; }).join("")}</div>`:""}
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-pedit>✎ Edit holdings</button><button class="ghost" data-ppriv>${S.priv?"Show $":"Hide $"}</button><button class="ghost" data-pcopy>Copy list</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" data-pedit>✎ Edit holdings</button><button class="ghost" data-ppriv>${S.priv?"Show $":"Hide $"}</button><button class="ghost" data-pcopy>Copy list</button><button class="ghost" data-plearn>🛡️ Protect & options</button></div>
     <p class="hint">🔒 Holdings are saved only on this device (and in your private setup link), never in the app's code or sent anywhere except the ticker symbols needed to fetch prices. Not investment advice.</p>`;
   if(n) plotSel(); else { $("pTable").innerHTML=""; plotSelNoHist(); }
   renderPlotPro();
@@ -4294,6 +4435,7 @@ function wirePlot(){
     if(e.target.closest("[data-pcross]")){ S.pcross=!S.pcross; LS.set("pcross",S.pcross); renderPlot(true); return; }
     const so=e.target.closest("[data-psort]"); if(so){ S.psort=so.dataset.psort; LS.set("psort",S.psort); plotSel(); return; }
     const pn=e.target.closest("[data-pn]"); if(pn){ S.pN=+pn.dataset.pn; LS.set("pN",S.pN); plotSel(); return; }
+    if(e.target.closest("[data-plearn]")){ openLearn("mine"); return; }
     const vw=e.target.closest("[data-pview]"); if(vw){ S.pview=vw.dataset.pview; LS.set("pview",S.pview); plotSel(); return; }
     const hn=e.target.closest("[data-pheatn]"); if(hn){ S.pheatN=+hn.dataset.pheatn; LS.set("pheatN",S.pheatN); bust(); return; }
     const md=e.target.closest("[data-pmond]"); if(md){ S.pmonD=md.dataset.pmond==="1"; LS.set("pmonD",S.pmonD); bust(); return; }
